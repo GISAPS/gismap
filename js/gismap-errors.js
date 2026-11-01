@@ -5,9 +5,9 @@
 /** Every code the public API uses, with the hint an agent should act on. */
 export const ERROR_CODES = Object.freeze({
   INVALID_URL: "Pass a complete https:// URL to a service, layer or file.",
-  HTTPS_REQUIRED: "Use the https:// form of the URL; GIS Map Online only loads remote data over HTTPS.",
+  HTTPS_REQUIRED: "Use the https:// form of the URL; GISMap Online only loads remote data over HTTPS.",
   CREDENTIAL_IN_URL: "Remove the token, key or password from the URL. Only public services can be shared.",
-  UNSUPPORTED_LAYER_TYPE: "Use one of the layer types listed in capabilities.json (arcgis-auto, feature, map-image, imagery, geojson, wms, wfs, kml).",
+  UNSUPPORTED_LAYER_TYPE: "Use one of the layer types in map.layerTypes in capabilities.json.",
   TOO_MANY_LAYERS: "A map holds at most 10 data layers. Remove one with layers.remove before adding another.",
   LAYER_LOAD_FAILED: "Check the URL in a browser with ?f=pjson appended. The service may be down, private or not a layer URL.",
   CORS_BLOCKED: "The publisher does not allow browser access to this service. Use another source, or download the data and add it as a file.",

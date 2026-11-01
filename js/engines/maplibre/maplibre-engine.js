@@ -12,6 +12,7 @@
 // Zoom: GIS Map zoom levels follow ArcGIS (256-pixel tiles); MapLibre's are
 // one lower for the same scale (512-pixel tiles). Everything that crosses the
 // boundary uses GIS Map levels, so links and projects mean the same view.
+import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
 import { GisMapError } from "../../gismap-errors.js?v=0.28.0";
 import { unsupported } from "../engine-interface.js?v=0.52.4";
@@ -190,7 +191,7 @@ export class MaplibreEngine {
       bearing: heading,
       pitch: tilt,
       maxPitch: MAX_PITCH,
-      attributionControl: { compact: true },
+      attributionControl: { compact: true, ...(madeWithForPage() ? { customAttribution: madeWithHtml() } : {}) },
       // Captures (Smart images, briefing PDFs) read the canvas after drawing.
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });

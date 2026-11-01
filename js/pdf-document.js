@@ -1,4 +1,4 @@
-// A small PDF writer for the app's reports: letter pages with the GIS Map Online
+// A small PDF writer for the app's reports: letter pages with the GISMap Online
 // header band, wrapped Helvetica text, and JPEG images. No dependencies.
 const textEncoder = new TextEncoder();
 
@@ -65,7 +65,7 @@ export const pdfColor = (hex) => {
   return [0, 2, 4].map((index) => (parseInt(value.slice(index, index + 2), 16) / 255).toFixed(3)).join(" ");
 };
 
-/** The GIS Map Online mark as a JPEG asset that blends into the PDF header band. */
+/** The GISMap Online mark as a JPEG asset that blends into the PDF header band. */
 export const loadBrandLogo = (palette = PRINT_PALETTES.gismap) => imageToJpeg(BRAND_LOGO, { width: 120, height: 120, background: palette.band });
 
 /** A QR code for a link, as a JPEG asset (the same encoding as the share cards). */
@@ -91,7 +91,7 @@ const loadImage = (source) => new Promise((resolve) => {
  */
 export async function brandedQrCanvas(url, {
   canvas = null,
-  title = "GIS Map Online",
+  title = "GISMap Online",
   lines = [],
   footer = "Complete GISMap link encoded in this QR",
   palette = PRINT_PALETTES.gismap,
@@ -126,7 +126,7 @@ export async function brandedQrCanvas(url, {
   context.letterSpacing = "0px";
   context.fillStyle = "#ffffff";
   context.font = "700 38px Georgia, serif";
-  context.fillText(String(title || "GIS Map Online").slice(0, 54), 58, 218, 644);
+  context.fillText(String(title || "GISMap Online").slice(0, 54), 58, 218, 644);
   context.fillStyle = "rgb(255 255 255 / 72%)";
   context.font = "20px system-ui, sans-serif";
   lines.slice(0, 2).forEach((line, index) => context.fillText(String(line), 58, 250 + index * 28, 644));
@@ -160,7 +160,7 @@ export async function brandedQrFile(url, { fileName = "gismap-qr.png", ...option
 
 /**
  * Frames a map snapshot like the QR cards, for every PDF the app makes: a border
- * in the skin palette, the GIS Map Online mark and name, a title and subtitle above, and an
+ * in the skin palette, the GISMap Online mark and name, a title and subtitle above, and an
  * optional pin legend below. `legend` items are { shape: "diamond" | "small-diamond"
  * | "circle", label }. `footerText` provides a plain left-aligned alternative
  * for exports, such as Smart Images, that do not have a truthful symbol legend.

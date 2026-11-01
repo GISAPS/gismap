@@ -166,7 +166,7 @@ function geometryToKml(geometry) {
 }
 
 export function featureCollectionToKml(collection) {
-  const documentName = escapeXml(collection.name || "GIS Map Online export");
+  const documentName = escapeXml(collection.name || "GISMap Online export");
   const placemarks = (collection.features ?? []).map((feature, index) => {
     const properties = feature.properties ?? {};
     const name = escapeXml(properties.name ?? properties.title ?? `Feature ${index + 1}`);

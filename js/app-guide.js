@@ -1,6 +1,6 @@
 import { INTERFACE_SKINS } from "./skin-catalog.js?v=0.57.0-skins2";
 /**
- * Where things are in GIS Map Online, for the Map assistant (and anyone else
+ * Where things are in GISMap Online, for the Map assistant (and anyone else
  * answering "how do I…?"). Keep it in step with the menus in index.html and
  * the Layout & display dialog in ui.js: a test checks the menu labels.
  */
@@ -34,6 +34,8 @@ export const APP_GUIDE = Object.freeze([
   { path: "Project → About", keywords: "about version build home gismap online", text: "Shows this installation's version and the GISMap Online home version." },
   // Data menu
   { path: "Data → Add local spatial file", keywords: "file upload kml kmz shapefile shp geojson local", text: "Adds a file from this computer." },
+  { path: "Data → Add local spatial file or spreadsheet", keywords: "csv tsv excel xlsx ods spreadsheet latitude longitude x y", text: "Adds a spreadsheet as points. Coordinate columns are recognized by name, or you choose them." },
+  { path: "Data → Add Google Sheet", keywords: "google sheets spreadsheet public", text: "Reads a sheet that anyone with the link can view, once, as a local layer." },
   { path: "Data → Add Geo URL", keywords: "geojson url feed", text: "Adds supported GeoJSON or GeoParquet from a web address." },
   { path: "Data → Add ArcGIS REST service", keywords: "arcgis rest featureserver mapserver imageserver service url layer add", text: "Adds an ArcGIS FeatureServer, MapServer or ImageServer layer by URL." },
   { path: "Data → Add WMS service · Add WFS service", keywords: "wms wfs ogc", text: "Adds an OGC WMS or WFS service." },

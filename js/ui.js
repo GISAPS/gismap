@@ -9,6 +9,7 @@ import { openMapNotesPanel } from "./map-notes-panel.js?v=0.14.0";
 import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
 import { POPULAR_SERVICES } from "./catalog.js?v=0.18.2";
+import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.57.0-skins1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.61.1-dashboard-agent";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
@@ -2004,6 +2005,9 @@ export class UIController {
         case "data-arcgis":
           this.#serviceDialog("arcgis-auto");
           break;
+        case "data-google-sheet":
+          void this.#addGoogleSheet();
+          break;
         case "data-geojson":
           this.#serviceDialog("geojson");
           break;
@@ -2387,7 +2391,7 @@ export class UIController {
         <div class="share-export__grid">
           ${card("share", "Share map", "Link and QR code with the layers, styles, filters, view, basemap and skin.", { icon: "⌗", disabled: layers.length > local.length ? "" : "Add a web layer to share a link." })}
           ${card("pdf", "Map PDF", "Choose a page template (report, poster, field sheet, slide and more) and download it as a PDF.", { icon: "▤" })}
-          ${card("smart-image", "Smart map image", "Any page template as a PNG that anyone can view, and that reopens the whole project when dropped on GIS Map Online.", { icon: "◩" })}
+          ${card("smart-image", "Smart map image", "Any page template as a PNG that anyone can view, and that reopens the whole project when dropped on GISMap Online.", { icon: "◩" })}
           ${card("briefing-share", "Share as a briefing", `One click: slides from ${layer ? `“${escapeHtml(layer.title || "this layer")}”` : "the layer"}'s ${styled ? "style, " : ""}filter and top features${this.aiController.isConfigured() ? ", described by AI" : ""}, ready to share.`, { icon: "✦", disabled: queryable ? "" : "Choose a feature layer to brief on." })}
           ${card("briefing", "Create briefing", `Start a briefing on ${layer ? `“${escapeHtml(layer.title || "this layer")}”` : "a layer"}${styled ? " with its style" : ""} and write the slides yourself.`, { icon: "▣", disabled: queryable ? "" : "Choose a feature layer to brief on." })}
           ${card("tour", "Start a tour here", "Save this view as the first chapter of a guided tour.", { icon: "➤" })}
@@ -2874,7 +2878,7 @@ export class UIController {
       if (code) pdf.addImageAt(code, { x: column.x, y: 196, width: 120, height: 120, link: link.url });
       pdf.addTextAt("Open the live map", { x: column.x, y: code ? 64 : 120, width: column.width, size: 10, bold: true, link: link.url });
     }
-    pdf.addTextAt(`Made with GIS Map Online · ${now.toLocaleString()}`, { x: 48, y: 22, width: 400, size: 7.5, color: "0.36 0.44 0.41" });
+    pdf.addTextAt(`Made with GISMap Online · ${now.toLocaleString()}`, { x: 48, y: 22, width: 400, size: 7.5, color: "0.36 0.44 0.41" });
     const stem = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "map";
     return new File([pdf.toBlob()], `${stem}-map.pdf`, { type: "application/pdf" });
   }
@@ -7115,7 +7119,7 @@ export class UIController {
       } },
       { label: "Mobile share", handler: async () => {
         const url = selectedUrl();
-        let share = { title, text: `Open the ${title} guided tour in GIS Map Online.`, url };
+        let share = { title, text: `Open the ${title} guided tour in GISMap Online.`, url };
         const shareWithImage = this.tourShareImageFile ? { ...share, files: [this.tourShareImageFile] } : null;
         if (shareWithImage && navigator.canShare?.(shareWithImage)) share = shareWithImage;
         if (navigator.share) await navigator.share(share);
@@ -7219,7 +7223,7 @@ export class UIController {
   }
 
   /**
-   * Draws the GIS Map Online QR card (logo, title, two lines of guidance, the QR
+   * Draws the GISMap Online QR card (logo, title, two lines of guidance, the QR
    * and a footer) onto a 760×960 canvas and returns it as a PNG file, or null if
    * a newer render replaced this one.
    */
@@ -7227,7 +7231,7 @@ export class UIController {
     if (!globalThis.QRCode?.toCanvas) throw new Error("QR generator unavailable");
     // The card wears the current skin's print colours, like the PDFs.
     const palette = printPalette(document.documentElement.dataset.skin);
-    const safeTitle = String(title || "GIS Map Online").slice(0, 54);
+    const safeTitle = String(title || "GISMap Online").slice(0, 54);
     await brandedQrCanvas(url, { canvas, title: safeTitle, lines, footer, palette });
     if (!isCurrent()) return null;
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
@@ -8484,7 +8488,7 @@ export class UIController {
     const text = await decodeQrFromImage(file);
     if (!text) throw new Error("No GIS Map project or QR code was found in this picture. Try a sharper or closer picture of the QR code.");
     const target = gisMapLinkFrom(text);
-    if (!target) throw new Error(`This QR code is not a GIS Map Online link${/^https?:/i.test(text) ? ` (it opens ${new URL(text).hostname})` : ""}, so it was not opened.`);
+    if (!target) throw new Error(`This QR code is not a GISMap Online link${/^https?:/i.test(text) ? ` (it opens ${new URL(text).hostname})` : ""}, so it was not opened.`);
     this.toast(`Opening the ${describeGisMapLink(target)} from the QR code…`);
     setTimeout(() => openGisMapLink(target), 400);
   }
@@ -8535,11 +8539,60 @@ export class UIController {
     this.toast(missing.length ? `Clip “${clip.title}” imported. Add ${missing.join(", ")} to the map to play it.` : `Clip “${clip.title}” imported.`);
   }
 
+  /** A spreadsheet as a GeoJSON file, asking for its coordinate columns when their names aren't recognized. */
+  async #spreadsheetAsGeoJson(file) {
+    const table = await readSpreadsheet(file);
+    const columns = detectCoordinateColumns(table.headers) || await this.#chooseCoordinateColumns(file.name, table.headers);
+    if (!columns) return null;
+    const { collection, skipped } = rowsToGeoJson(table, columns);
+    if (!collection.features.length) throw new Error(`No rows in ${file.name} have valid coordinates in ${columns.pair || `${columns.x} and ${columns.y}`}. Longitude and latitude must be decimal degrees.`);
+    if (skipped) this.toast(`${skipped} of ${table.rows.length} rows had no valid coordinates and were left out.`);
+    return new File([JSON.stringify(collection)], `${file.name.replace(/\.[^.]+$/, "")}.geojson`, { type: "application/geo+json" });
+  }
+
+  #chooseCoordinateColumns(name, headers) {
+    const options = headers.map((header) => `<option value="${escapeHtml(header)}">${escapeHtml(header)}</option>`).join("");
+    return new Promise((resolve) => {
+      this.openDialog({
+        eyebrow: "Spreadsheet",
+        title: "Choose the coordinate columns",
+        content: `<div class="workspace-tool"><p class="form-note">${escapeHtml(name)} has no columns recognized as longitude and latitude. Choose them, in decimal degrees.</p><label class="field"><span>Longitude (X)</span><select data-column-x>${options}</select></label><label class="field"><span>Latitude (Y)</span><select data-column-y>${options}</select></label><button type="button" class="button" data-column-apply>Add to map</button></div>`,
+      });
+      const root = this.dialog;
+      root.addEventListener("close", () => resolve(null), { once: true });
+      root.querySelector("[data-column-apply]").addEventListener("click", () => {
+        resolve({ x: root.querySelector("[data-column-x]").value, y: root.querySelector("[data-column-y]").value });
+        root.close();
+      });
+    });
+  }
+
+  /** A public Google Sheet, read once as a local layer. */
+  async #addGoogleSheet() {
+    const link = globalThis.prompt?.("Paste the link of a Google Sheet that anyone with the link can view.");
+    if (!link) return;
+    const url = googleSheetCsvUrl(link);
+    try {
+      if (!url) throw new Error("That is not a Google Sheets link.");
+      const response = await fetch(url).catch(() => null);
+      const text = response?.ok ? await response.text() : "";
+      if (!text || /^\s*<!doctype html/i.test(text)) throw new Error("That sheet could not be read. Set its sharing to Anyone with the link can view.");
+      const event = { target: { files: [new File([text], "Google Sheet.csv", { type: "text/csv" })], value: "" } };
+      await this.#addFiles(event);
+    } catch (error) {
+      this.events.publish("app:error", { message: error.message });
+    }
+  }
+
   async #addFiles(event) {
     const files = [...event.target.files];
     event.target.value = "";
-    for (const file of files) {
+    for (let file of files) {
       try {
+        if (isSpreadsheetName(file.name)) {
+          file = await this.#spreadsheetAsGeoJson(file);
+          if (!file) continue;
+        }
         const { isParquetName, addGeoParquetLayer } = await import("./geoparquet-layer.js?v=0.54.0-queryui1");
         const result = isParquetName(file.name) ? await addGeoParquetLayer(this, { file }) : null;
         if (result?.tableOnly) {
@@ -9738,7 +9791,7 @@ export class UIController {
     if (mapImage) {
       report.newPage();
       addLines("Map snapshot", { size: 13, leading: 18, color: "0.08 0.36 0.30", bold: true });
-      addLines(`The map view at the time this Location Intelligence Report was created.${placeLink ? " Click it to open this place in GIS Map Online." : ""}`, { size: 9, leading: 14, color: "0.36 0.44 0.41" });
+      addLines(`The map view at the time this Location Intelligence Report was created.${placeLink ? " Click it to open this place in GISMap Online." : ""}`, { size: 9, leading: 14, color: "0.36 0.44 0.41" });
       report.addImage(mapImage, { maxHeight: 420, link: placeLink });
       const details = this.mapController.getCurrentExtentDetails();
       addLines(`Map extent: ${details?.west.toFixed(4)}, ${details?.south.toFixed(4)} to ${details?.east.toFixed(4)}, ${details?.north.toFixed(4)}`, { size: 9, leading: 14, color: "0.36 0.44 0.41" });
@@ -9916,7 +9969,7 @@ export class UIController {
     this.mapController.setMapNoteMarkers(points);
   }
 
-  openDialog({ eyebrow = "GIS Map Online", title, content, actions = [], presentationSheet = false }) {
+  openDialog({ eyebrow = "GISMap Online", title, content, actions = [], presentationSheet = false }) {
     this.dialogSession = (this.dialogSession || 0) + 1;
     const remainsDocked = this.utilityDialogOpen && this.dialog.open;
     this.dialog.classList.remove("app-dialog--docked", "app-dialog--presentation-sheet", "app-dialog--floating");

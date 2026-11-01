@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/map-v1.schema.json",
-  "title": "GIS Map Online map spec (map-v1)",
+  "title": "GISMap Online map spec (map-v1)",
   "description": "A whole map as one JSON object: layers with styles and filters, basemap, look and camera. Open it at https://gismap.online/#map=json:<URI-encoded JSON> (written by hand, up to 8 KB), as the compressed #map= form from mapSpec.createLink, or host the file and open https://gismap.online/?spec=<https URL>. Invalid parts are skipped and reported; the rest of the map still opens.",
   "type": "object",
   "required": ["layers"],
@@ -56,7 +56,7 @@
       "required": ["url"],
       "properties": {
         "url": { "type": "string", "format": "uri", "pattern": "^https://", "description": "HTTPS URL of an ArcGIS REST layer or service (FeatureServer/0, MapServer, ImageServer), a GeoJSON file, or a WMS/WFS/KML service. Public only: no tokens or keys. The service must allow browser (CORS) access. Append ?f=pjson to an ArcGIS URL to see its fields." },
-        "type": { "enum": ["arcgis-auto", "feature", "map-image", "imagery", "geojson", "geoparquet", "wms", "wfs", "kml", "pointcloud", "model"], "default": "arcgis-auto", "description": "The layer type; arcgis-auto detects it from the service, and from .las/.laz/.xyz (pointcloud) or .glb/.gltf/.obj/.ply (model) file extensions. pointcloud and model draw with three.js on the MapLibre engine." },
+        "type": { "enum": ["arcgis-auto", "feature", "map-image", "imagery", "geojson", "geoparquet", "wms", "wfs", "kml", "pointcloud", "model", "vector-tiles"], "default": "arcgis-auto", "description": "The layer type; arcgis-auto detects it from the service, and from .las/.laz/.xyz (pointcloud) or .glb/.gltf/.obj/.ply (model) file extensions. pointcloud and model draw with three.js on the MapLibre engine." },
         "title": { "type": "string", "maxLength": 160, "description": "The name shown in the Layers panel and legend." },
         "where": { "type": "string", "maxLength": 2000, "description": "A read-only SQL filter on the layer's fields, such as \"CORN_SALES_IN_DOLLARS >= 0\" or \"STATE = 'Iowa'\". No statements, comments or semicolons." },
         "renderer": { "$ref": "https://gismap.online/schemas/renderer-v1.schema.json", "description": "The style. Field names must match the service exactly; a misspelled field keeps the service's own style and is reported." },

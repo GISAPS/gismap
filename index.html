@@ -19,7 +19,7 @@
     <meta property="og:image" content="https://gismap.online/assets/gis-map-online-mark-v2.png" />
     <meta property="og:image:width" content="1254" />
     <meta property="og:image:height" content="1254" />
-    <meta property="og:image:alt" content="GIS Map Online logo" />
+    <meta property="og:image:alt" content="GISMap Online logo" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="GISMap Online: Free Geospatial Application" />
     <meta name="twitter:description" content="Explore, analyze, create and share maps, briefings, tours and field tasks in a free browser-based geospatial application." />
@@ -29,16 +29,16 @@
         "@context": "https://schema.org",
         "@type": ["SoftwareApplication", "WebApplication"],
         "name": "GISMap Online",
-        "alternateName": "GISMap",
+        "alternateName": "GIS Map Online",
         "url": "https://gismap.online/",
         "description": "A free, open-source browser application for opening ArcGIS REST services, FeatureServer and MapServer endpoints, GeoJSON, KML, shapefiles, WMS, WFS and other geospatial data in interactive 2D and 3D maps.",
-        "applicationCategory": "DeveloperApplication",
+        "applicationCategory": "DesignApplication",
         "applicationSubCategory": "Geographic information system",
         "operatingSystem": "Any operating system with a modern web browser",
         "browserRequirements": "Requires JavaScript and a modern browser with WebGL support",
         "isAccessibleForFree": true,
-        "license": "https://www.apache.org/licenses/LICENSE-2.0",
-        "sameAs": "https://github.com/geolibrerian/gismap",
+        "license": "https://github.com/geolibrerian/gismap/blob/main/LICENSE",
+        "sameAs": ["https://github.com/geolibrerian/gismap"],
         "author": {
           "@type": "Person",
           "name": "Silas Toms"
@@ -51,21 +51,21 @@
       }
     </script>
     <link rel="icon" href="./assets/gis-map-online-mark-v2.png" type="image/png" />
-    <!-- Installed as an app, GIS Map Online opens .gis, .gisx, .gisatlas, .gisbrief and .gisclip files and shows its icon on them. -->
+    <!-- Installed as an app, GISMap Online opens .gis, .gisx, .gisatlas, .gisbrief and .gisclip files and shows its icon on them. -->
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#f5f5ef" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b231e" media="(prefers-color-scheme: dark)" />
     <!-- For language models and agents: a Markdown summary, the machine-readable API, and the agent guide. -->
-    <link rel="alternate" type="text/plain" href="./llms.txt" title="GIS Map Online for language models" />
+    <link rel="alternate" type="text/plain" href="./llms.txt" title="GISMap Online for language models" />
     <link rel="describedby" type="text/plain" href="./llms.txt" />
     <link rel="describedby" type="application/json" href="./api/capabilities.json" />
     <link rel="help" href="./guides/ai-agents/" />
     <link rel="preconnect" href="https://js.arcgis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="./css/app.css?v=0.65.6-white-label" />
-    <link rel="stylesheet" href="./css/fieldwork.css?v=0.65.3-si-preview-embed" />
+    <link rel="stylesheet" href="./css/app.css?v=0.65.8-made-with" />
+    <link rel="stylesheet" href="./css/fieldwork.css?v=0.65.8-made-with" />
     <!-- three.js for point clouds, models and 3D animation; loaded only when a 3D layer is added. -->
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -131,7 +131,8 @@
           <div class="menu">
             <button class="menu__trigger" aria-expanded="false">Data</button>
             <div class="menu__content" role="menu">
-              <button data-action="data-file">Add local spatial file</button>
+              <button data-action="data-file">Add local spatial file or spreadsheet</button>
+              <button data-action="data-google-sheet">Add Google Sheet</button>
               <button data-action="data-geojson">Add Geo URL</button>
               <button data-action="data-arcgis">Add ArcGIS REST service</button>
               <button data-action="data-wms">Add WMS service</button>
@@ -484,7 +485,7 @@
       <form method="dialog" class="dialog__shell">
         <button id="mobile-dialog-resize" class="mobile-sheet-resize" type="button" aria-label="Resize dialog" title="Drag up or down to resize"><span aria-hidden="true"></span></button>
         <header class="dialog__header">
-          <div><span id="dialog-eyebrow" class="eyebrow">GIS Map Online</span><h2 id="dialog-title">Dialog</h2></div>
+          <div><span id="dialog-eyebrow" class="eyebrow">GISMap Online</span><h2 id="dialog-title">Dialog</h2></div>
           <div class="dialog__header-actions"><button id="dialog-dock" class="icon-button" type="button" aria-label="Move dialog to the right panel" title="Move to right panel">↗</button><button class="icon-button" value="cancel" formnovalidate aria-label="Close">×</button></div>
         </header>
         <div id="dialog-content" class="dialog__content"></div>
@@ -521,7 +522,7 @@
     <input id="project-file-input" type="file" accept=".gis,.gisx,.gisbrief,.gisclip,.gmo,.gmop,.gisatlas,.gmoatlas,.json,.gismap,.zip,.png,image/png" hidden />
     <!-- Any picture: phones offer the photo library and camera. -->
     <input id="image-file-input" type="file" accept="image/*" hidden />
-    <input id="data-file-input" type="file" accept=".json,.geojson,.kml,.kmz,.zip,.parquet,.geoparquet,.las,.laz,.xyz,.glb,.gltf,.obj,.ply" multiple hidden />
+    <input id="data-file-input" type="file" accept=".csv,.tsv,.tab,.txt,.xlsx,.xlsm,.ods,.xls,.json,.geojson,.kml,.kmz,.zip,.parquet,.geoparquet,.las,.laz,.xyz,.glb,.gltf,.obj,.ply" multiple hidden />
     <input id="tool-file-input" type="file" accept=".js,.mjs" hidden />
 
     <section class="sr-only" aria-labelledby="agent-docs-title">
@@ -539,6 +540,6 @@
     </section>
     <noscript>GISMap Online is a geospatial application and needs JavaScript. Without it, a map can still be described as a link: see <a href="./llms.txt">/llms.txt</a> and the <a href="./guides/ai-agents/">guide for AI agents</a>.</noscript>
 <script src="./installation-config.js"></script>
-<script type="module" src="./js/app.js?v=0.65.7-installation-branding"></script>
+<script type="module" src="./js/app.js?v=0.65.8-made-with"></script>
   </body>
 </html>

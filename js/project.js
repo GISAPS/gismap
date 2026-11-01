@@ -190,7 +190,7 @@ export class ProjectManager {
 
   async load(project, packageFiles = new Map()) {
     if (!project || project.version !== 1 || !Array.isArray(project.layers)) {
-      throw new Error("This is not a supported GIS Map Online project file.");
+      throw new Error("This is not a supported GISMap Online project file.");
     }
     // Validate before changing the current map or accepting an imported project.
     const notes = normalizeNotes(project.notes ?? []);
@@ -375,7 +375,7 @@ export class ProjectManager {
     zip.file("project.json", JSON.stringify(project, null, 2));
     zip.file(
       "README.txt",
-      "GIS Map Online project package\nOpen https://gismap.online and choose Project > Import project file.\n",
+      "GISMap Online project package\nOpen https://gismap.online and choose Project > Import project file.\n",
     );
     const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     downloadBlob(blob, `${this.#exportName(project)}.gisx`);

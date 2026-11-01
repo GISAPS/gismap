@@ -51,7 +51,7 @@ export async function smokeLlms(base, { matchLocal = false, fetcher = fetch } = 
     const { response, content } = await request(path);
     assert.equal(response.status, 200, `${path} must be served directly`);
     assert.match(response.headers.get('content-type') || '', /^text\/plain\s*;\s*charset\s*=\s*utf-8\s*$/i, `${path} must be UTF-8 plain text`);
-    assert.match(content, /^# GIS Map Online\r?\n/, `${path} must start with the GISMap heading`);
+    assert.match(content, /^# GISMap Online\r?\n/, `${path} must start with the GISMap heading`);
     assert.doesNotMatch(content, /^\s*(?:<!doctype\s+html|<html\b)/i, `${path} must not be an HTML fallback`);
     for (const reference of ['/schemas/map-v1.schema.json', '/api/capabilities.json', '/skills/']) assert.ok(content.includes(reference), `${path} is missing ${reference}`);
     if (matchLocal) assert.equal(content, await readFile(new URL(`..${path}`, import.meta.url), 'utf8'), `${path} differs from the checked-out deployment artifact (stale cache or wrong deployment)`);

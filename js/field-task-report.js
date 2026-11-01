@@ -136,10 +136,10 @@ export async function fieldTaskPdf(task, { mapImage = null, reportUrl = null, sk
   if (qr) {
     report.gap(10);
     report.heading2(task.role === "assignee" || task.status === "returned" ? "Completed report link" : "Task link");
-    report.addLines("Scan or click to open this task in GIS Map Online, with its places, features and steps. Photos are only in this PDF.", muted);
+    report.addLines("Scan or click to open this task in GISMap Online, with its places, features and steps. Photos are only in this PDF.", muted);
     report.gap(4);
     report.addImage(qr, { maxHeight: 150, maxWidth: 150, gapAfter: 8, link: reportUrl });
-    report.addLines("Open in GIS Map Online", { link: reportUrl, bold: true });
+    report.addLines("Open in GISMap Online", { link: reportUrl, bold: true });
   }
   const points = fieldTaskPoints(task);
   const legend = [
@@ -153,7 +153,7 @@ export async function fieldTaskPdf(task, { mapImage = null, reportUrl = null, sk
   if (map) {
     report.gap(10);
     report.heading2("Map");
-    if (reportUrl) report.addLines("Click the map to open the task in GIS Map Online.", muted);
+    if (reportUrl) report.addLines("Click the map to open the task in GISMap Online.", muted);
     report.addImage(map, { maxHeight: 420, link: reportUrl });
   }
   const photos = (await Promise.all((task.photos || []).map((photo) => imageToJpeg(photo, { maxSide: 1200, quality: 0.85 })))).filter(Boolean);

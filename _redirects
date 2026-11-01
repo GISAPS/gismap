@@ -3,5 +3,8 @@
 # Common singular spelling of the agent skill landing page.
 /skill /skills/ 301
 /skill/ /skills/ 301
+# The address the "Made with" credit on embeds links to.
+/ai /discover/ai/ 302
+/ai/ /discover/ai/ 302
 # A memorable direct address for the 404 dragon game.
 /dragons /dragons/ 301

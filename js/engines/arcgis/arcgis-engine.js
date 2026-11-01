@@ -3,6 +3,7 @@
 // callers get layer handles, features with plain JSON geometry and view
 // states, never SDK objects. Only native() hands the SDK's own map and view
 // out, for custom tools and the in-page API's escape hatches.
+import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
 import { arcgisMetadata } from "../../source-inspector.js?v=0.53.0";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
@@ -293,6 +294,11 @@ export class ArcGISEngine {
     });
     await this.view.when();
     this.view.ui.empty("top-left");
+    if (madeWithForPage()) {
+      const credit = document.createElement("div");
+      credit.innerHTML = madeWithHtml();
+      this.view.ui.add(credit, "bottom-right");
+    }
     this.view.on("click", async (event) => {
       try {
         const response = await this.view.hitTest(event, { include: [this.tourLayer] });

@@ -1,6 +1,6 @@
 // The Map assistant: a chat with the AI model the user configured (Ollama, OpenAI,
 // Anthropic or an OpenAI-compatible endpoint) that can build maps, briefings, tours
-// and field tasks through tools. GIS Map Online calls the model itself, so the
+// and field tasks through tools. GISMap Online calls the model itself, so the
 // model's instructions are simply the system message sent with every turn: written
 // here from the app's own contracts and the live map state. Nothing is registered
 // with the provider. Pure functions apart from the tool handlers, which call the
@@ -27,7 +27,7 @@ export const ASSISTANT_TOOLS = Object.freeze([
   { name: "inspect_source", description: "Read a public data source's metadata before using it: fields (exact names and types), geometry type, feature count, codes that mean no data (sentinels), scale range and last edit date. For a service root it lists its layers.", parameters: { type: "object", required: ["url"], properties: { url: { type: "string", description: "HTTPS URL of an ArcGIS REST layer or service, GeoJSON, WMS, WFS or KML." } } } },
   { name: "describe_layer", description: "Everything known about a layer on the map: its service's description, summary, credits, licence, tags, last edit date, feature count, time field, and its schema (every field with type, alias, description and coded values). Use it to answer questions about the data.", parameters: { type: "object", required: ["layer"], properties: { layer: layerRef } } },
   { name: "summarize_field", description: "Summarize one field's values in a layer, computed by the service over all features: for numbers and dates min, max, mean and spread; for text and codes the most common values with counts. Use it to interpret what a field holds.", parameters: { type: "object", required: ["layer", "field"], properties: { layer: layerRef, field: { type: "string" }, where: { type: "string", description: "Optional SQL filter." } } } },
-  { name: "search_datasets", description: "Search GIS Map Online's curated public datasets by topic (wildfires, earthquakes, hurricanes, air quality, census…). Returns titles and layer URLs.", parameters: { type: "object", required: ["query"], properties: { query: { type: "string" } } } },
+  { name: "search_datasets", description: "Search GISMap Online's curated public datasets by topic (wildfires, earthquakes, hurricanes, air quality, census…). Returns titles and layer URLs.", parameters: { type: "object", required: ["query"], properties: { query: { type: "string" } } } },
   { name: "add_layer", description: "Add a public layer to the map, optionally filtered and styled, and zoom to it.", parameters: { type: "object", required: ["url"], properties: { url: { type: "string" }, title: { type: "string" }, where: { type: "string", description: "Read-only SQL filter on the layer's fields, such as \"POP > 1000\"." }, renderer, opacity: { type: "number", minimum: 0, maximum: 1 } } } },
   { name: "update_layer", description: "Change a layer on the map: title, filter, style, opacity or visibility.", parameters: { type: "object", required: ["layer"], properties: { layer: layerRef, title: { type: "string" }, where: { type: ["string", "null"], description: "SQL filter; null clears it." }, renderer, opacity: { type: "number", minimum: 0, maximum: 1 }, visible: { type: "boolean" } } } },
   { name: "remove_layer", description: "Remove a layer from the map.", parameters: { type: "object", required: ["layer"], properties: { layer: layerRef } } },
@@ -67,7 +67,7 @@ export const ASSISTANT_TOOLS = Object.freeze([
     description: "Draft a field task (a checklist that sends someone to places on the map). It opens for the user to check, then save and share as a link or QR code.",
     parameters: { type: "object", required: ["title", "steps"], properties: { title: { type: "string" }, notes: { type: "string", description: "Instructions, at most 500 characters." }, steps: { type: "array", maxItems: 10, items: { type: "string" } }, location: { type: "string" }, longitude: { type: "number" }, latitude: { type: "number" }, features: { type: "array", maxItems: 5, items: { type: "object", required: ["layer", "objectId"], properties: { layer: layerRef, objectId: { type: ["number", "string"] }, label: { type: "string" } } } } } },
   },
-  { name: "app_help", description: "Where a menu, setting or feature of GIS Map Online is and what it does. Call it for any question about the app itself (how do I…, where is…, can I change…) before answering; never guess menu names.", parameters: { type: "object", required: ["question"], properties: { question: { type: "string" } } } },
+  { name: "app_help", description: "Where a menu, setting or feature of GISMap Online is and what it does. Call it for any question about the app itself (how do I…, where is…, can I change…) before answering; never guess menu names.", parameters: { type: "object", required: ["question"], properties: { question: { type: "string" } } } },
   { name: "get_display_settings", description: "The current display settings (Map → Layout & display…): appearance, navigation, panel positions, and map click feedback such as the selection style.", parameters: { type: "object", properties: {} } },
   { name: "change_display_setting", description: "Change one display setting for the user, such as the selection style (highlightStyle: fill or outline), the feedback colour or dark mode.", parameters: { type: "object", required: ["setting", "value"], properties: { setting: { enum: Object.keys(DISPLAY_SETTINGS) }, value: { type: ["string", "boolean"], description: Object.entries(DISPLAY_SETTINGS).map(([key, definition]) => `${key}: ${Array.isArray(definition.values) ? definition.values.join("|") : definition.values}`).join("; ") } } } },
   { name: "set_mode", description: "Switch the app's mode: briefing (slides), tours (guided tours), tasks (field tasks) or map (the standard map).", parameters: { type: "object", required: ["mode"], properties: { mode: { enum: ["briefing", "tours", "tasks", "map"] } } } },
@@ -79,10 +79,10 @@ export const ASSISTANT_TOOLS = Object.freeze([
   { name: "get_map_embed", description: "Return a ready-to-paste iframe and embed URL for the currently configured public map. The embed preserves public layers, styles, filters, view, basemap and skin; local or credentialed data cannot be embedded.", parameters: { type: "object", properties: { title: { type: "string" }, height: { type: "integer", minimum: 280, maximum: 1200 } } } },
 ]);
 
-/** The model's instructions: how GIS Map Online works, the rules for using it well, and the map right now. */
+/** The model's instructions: how GISMap Online works, the rules for using it well, and the map right now. */
 export function buildAssistantInstructions({ state = null, textTools = false } = {}) {
   const lines = [
-    "You are the Map assistant inside GIS Map Online, a free browser GIS. You build and change the user's map with tools: interactive maps from public data, briefings (slides that present the map), guided tours, and field tasks.",
+    "You are the Map assistant inside GISMap Online, a free browser GIS. You build and change the user's map with tools: interactive maps from public data, briefings (slides that present the map), guided tours, and field tasks.",
     "",
     "How to work:",
     "- A question is answered by reading, not by changing the map: for questions about the loaded data use get_map_state, describe_layer and summarize_field. Add, change or remove layers only when the user asks for it.",

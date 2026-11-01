@@ -1,6 +1,6 @@
 // Worked examples for chatbots and AI agents (/examples/ai/), as data, so the
 // web pages and llms-full.txt say the same thing. Every link, briefing and map
-// spec here was opened in GIS Map Online and checked slide by slide; the
+// spec here was opened in GISMap Online and checked slide by slide; the
 // committed files beside each page (link.txt, map.json, briefing.json, qr.png)
 // are what the pages offer, and tests/ai-examples.test.mjs keeps them in step.
 import { CORN_LINK, CORN_SPEC, CORN_URL } from "./agent-docs.mjs";
@@ -20,7 +20,7 @@ export const AI_EXAMPLES = Object.freeze([
     kind: "Chatbot",
     eyebrow: "Chatbot or agent · two layers · briefing link and QR code",
     description: "Philadelphia's six police divisions, with the police districts inside them, as a nine-slide interactive briefing on a dark 3D map, opened from one link or QR code.",
-    intro: "Nine slides on a dark 3D map: a title slide, a count, one slide framed on each of Philadelphia's six police divisions with the police districts drawn over them, and a sources slide. This version was drafted in GIS Map Online itself, with Make a briefing from this view; the prompt and the agent recipe below make the same kind of briefing from scratch. Either way, the whole presentation travels in one link: layers, styles, basemap, look and slides.",
+    intro: "Nine slides on a dark 3D map: a title slide, a count, one slide framed on each of Philadelphia's six police divisions with the police districts drawn over them, and a sources slide. This version was drafted in GISMap Online itself, with Make a briefing from this view; the prompt and the agent recipe below make the same kind of briefing from scratch. Either way, the whole presentation travels in one link: layers, styles, basemap, look and slides.",
     shows: [
       "Two layers in one briefing: the divisions it is about, and the districts as context",
       "A slide per division, each framed on its feature, with its attributes",
@@ -134,7 +134,7 @@ const { url, qr } = await mapSpec.createLink(spec); // compressed #map= link; qr
     kind: "Chatbot",
     eyebrow: "Chatbot · no code · readable link",
     description: "Any chatbot, even one that cannot run code, can make a styled county map by writing one JSON object into a link: corn sales by county, with \"Not Disclosed\" counties kept out of the colour classes.",
-    intro: "The whole map is one JSON object after #map=json: in the address. A model that can only write text can produce it; GIS Map Online validates it, opens whatever is valid and lists anything it skipped. Two details make the map honest: -1 means \"Not Disclosed\" in this data, so it is excluded, and \"method\": \"auto\" lets the app choose class breaks that suit the skewed values.",
+    intro: "The whole map is one JSON object after #map=json: in the address. A model that can only write text can produce it; GISMap Online validates it, opens whatever is valid and lists anything it skipped. Two details make the map honest: -1 means \"Not Disclosed\" in this data, so it is excluded, and \"method\": \"auto\" lets the app choose class breaks that suit the skewed values.",
     shows: [
       "A readable #map=json: link that a chat-only model can write by hand",
       "\"exclude\": [-1]: the publisher's \"Not Disclosed\" code is drawn as No data instead of distorting the classes",
@@ -145,7 +145,7 @@ const { url, qr } = await mapSpec.createLink(spec); // compressed #map= link; qr
     qr: { file: "qr.png", caption: "Scan to open the map on a phone." },
     chat: {
       intro: "This works in any chatbot, with or without tools:",
-      prompt: `Make a GIS Map Online link for U.S. corn sales by county. The layer is ${CORN_URL}; look at its fields with ?f=pjson and use CORN_SALES_IN_DOLLARS. Write a map-v1 spec (${SITE}/schemas/map-v1.schema.json) with a choropleth renderer, ramp "greens", method "auto" and a gray basemap. The publisher codes undisclosed counties as -1, so exclude -1. URI-encode the JSON and put it after ${SITE}/#map=json: and give me the link.`,
+      prompt: `Make a GISMap Online link for U.S. corn sales by county. The layer is ${CORN_URL}; look at its fields with ?f=pjson and use CORN_SALES_IN_DOLLARS. Write a map-v1 spec (${SITE}/schemas/map-v1.schema.json) with a choropleth renderer, ramp "greens", method "auto" and a gray basemap. The publisher codes undisclosed counties as -1, so exclude -1. URI-encode the JSON and put it after ${SITE}/#map=json: and give me the link.`,
     },
     agent: {
       heading: "For a code-running agent",

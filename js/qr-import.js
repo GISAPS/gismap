@@ -1,7 +1,7 @@
 // Opening GIS Map links from pictures: a QR card, a screenshot or a photo of
 // one. The browser's own BarcodeDetector is used where it exists (Chrome,
 // Android); elsewhere (Safari, Firefox) the vendored jsQR decoder is loaded on
-// first use. Only links to GIS Map Online itself are opened.
+// first use. Only links to GISMap Online itself are opened.
 
 const JSQR_URL = new URL("./vendor/jsqr-1.4.0.js", import.meta.url).href;
 // Photos are scaled down for speed first; a small QR in a large photo gets a second, sharper pass.
@@ -78,7 +78,7 @@ export async function decodeQrFromImage(file) {
 const GISMAP_HOSTS = /^(?:www\.)?gismap\.online$|(?:^|[.-])gismap\.silasmerlin\.workers\.dev$|^localhost$|^127\.0\.0\.1$/i;
 
 /**
- * A QR's text as a link to open in this copy of the app: links to GIS Map Online
+ * A QR's text as a link to open in this copy of the app: links to GISMap Online
  * (the site, its preview builds or this host) keep their path, query and
  * fragment but open here. Anything else returns null and is never followed.
  */

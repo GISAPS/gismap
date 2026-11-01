@@ -1,12 +1,36 @@
-# GIS Map Online
+# GISMap Online
 
 > GISMap.online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
+
+## If you have no tools
+
+- If you cannot fetch URLs: use a layer URL the user gave you or a curated dataset below, use `style=auto`, and don't invent field names.
+- If the user gave places, not a layer: build a guided tour (`#tour=json:`) with their places as stops, and say the coordinates came from your own knowledge and should be checked.
+- Report the result as prepared.
+
+Curated datasets (the link needs no field names):
+
+- `https://gismap.online/?example=usa-wildfires`: Current wildfire incidents and daily fire perimeter data for the United States. Key fields: IncidentName, DailyAcres, PercentContained.
+- `https://gismap.online/?example=modis-active-fires`: Recent thermal anomalies detected by the MODIS satellite instruments. Key fields: BRIGHTNESS, FRP, ACQ_DATE.
+- `https://gismap.online/?example=active-hurricanes`: Current tropical cyclone tracks, forecasts, and related observations. Key fields: STORMNAME, MAXWIND.
+- `https://gismap.online/?example=recent-hurricanes`: Recent tropical cyclone tracks and observations published for hurricane analysis. Key fields: STORMNAME, INTENSITY.
+- `https://gismap.online/?example=air-quality-pm25`: Latest particulate matter air-quality observations and results. Key fields: city, country, value.
+- `https://gismap.online/?example=air-quality-pm25-3d-columns`: PM2.5 monitoring stations rendered as 3D columns whose height represents particulate-matter concentration. Key fields: city, country, value.
+- `https://gismap.online/?example=air-quality-pm25-3d-graduated`: PM2.5 monitoring stations rendered as colored 3D columns by particulate-matter concentration. Key fields: city, country, value.
+- `https://gismap.online/?example=usgs-seismic-activity`: Recent earthquake and seismic activity reported by the USGS. Key fields: mag, place, eventTime.
+- `https://gismap.online/?example=usgs-recent-earthquakes-map-service`: A USGS ArcGIS MapServer presenting recent earthquake activity. Key fields: mag, place, depth.
+- `https://gismap.online/?example=ndfd-wind-gusts`: Forecast wind-gust conditions from the National Digital Forecast Database. Key fields: label, fromdate.
+- `https://gismap.online/?example=ndfd-precipitation`: Forecast precipitation from the National Digital Forecast Database. Key fields: label, fromdate.
+- `https://gismap.online/?example=ndfd-daily-temperature`: Daily temperature forecasts from the National Digital Forecast Database. Key fields: Temp, Period.
+- `https://gismap.online/?example=historical-quakes`: A stable historical earthquake archive published as an ArcGIS FeatureServer, with source-authored magnitude symbols. Key fields: mag, magType.
+- `https://gismap.online/?example=usgs-earthquakes`: Continuously updated GeoJSON feed of global earthquake activity. Key fields: mag, place, time.
+- `https://gismap.online/?example=world-countries-generalized`: Generalized country boundaries from an ArcGIS feature service. Key fields: COUNTRY, ISO.
 
 The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
 
 ## Links a chatbot can write (no code, no account)
 
-Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after `json:`. Return the link to the user; it opens the finished result.
+Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after `json:`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with `?via=<agent>`, as in `https://gismap.online/?via=<agent>#map=json:…` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
 
 - Map: `https://gismap.online/#map=json:{"version":1,"layers":[{"url":"<layer URL>","where":"<filter>","renderer":{"type":"choropleth","field":"<FIELD>","ramp":"purples"}}],"basemap":"gray-vector"}`
 - Briefing (slides): add `"briefing":{"layerId":"<layer URL>","selection":{"useAll":true},"slides":[{"template":"title","title":"…"},{"template":"key-numbers","title":"At a glance","blocks":[{"type":"stat","stat":"count","label":"Features"}]},{"template":"feature","title":"…","featureId":"<OBJECTID>","fit":"feature","blocks":[{"type":"text","markdown":"…"}]}]}` to the map JSON; the link opens presenting (schema: [briefing-v1](https://gismap.online/schemas/briefing-v1.schema.json)).
@@ -14,7 +38,7 @@ Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURI
 - LiDAR or 3D model (MapLibre engine): a map layer with `"type":"pointcloud"` (LAS, LAZ, XYZ) or `"type":"model"` (glTF/GLB, OBJ, PLY) and `"scene3d":{"crs":"EPSG:26910","classes":[3,4,5,14],"colorBy":"classification"}` or, for models, `"scene3d":{"anchor":[lon,lat,0],"heading":0,"scale":1}`.
 - Field task: `https://gismap.online/?workflow=tasks#fieldTask=json:{"title":"…","location":"…","lat":37.75972,"lon":-122.42713,"notes":"…","steps":["…","…"]}` (up to 10 steps and 5 features: `{"layerUrl","objectId","lat","lon","label"}`).
 
-Readable links hold up to 8,192 characters. Inspect real fields first (`<layer URL>?f=pjson`) and never invent coordinates. Use `usgs-imagery` for aerial imagery on the default MapLibre engine. Step-by-step: [agent recipes](https://gismap.online/agent-recipes/).
+Readable links hold up to 8,192 characters. Inspect real fields first (`<layer URL>?f=pjson`) when you can fetch. Use `usgs-imagery` for aerial imagery on the default MapLibre engine; it covers the United States only and is blank elsewhere. Step-by-step: [agent recipes](https://gismap.online/agent-recipes/).
 
 ## What can AI agents create with GISMap?
 
@@ -47,7 +71,7 @@ Cinematic mode is for observed records or explicit numeric scenarios, not an inf
 
 ## Embed a configured public map
 
-When a user wants to publish a configured map on another site, use `get_map_embed` in a running assistant session or `createEmbedUrl` / `createEmbedIframe` from [embed-share.js](https://gismap.online/js/embed-share.js). A map embed preserves public layers, styles, filters, camera, basemap and skin from the share URL. It cannot carry local files, device-only layers, private service URLs, credentials or tokens. Test the final iframe in its destination page; generating its HTML is only prepared, not verified.
+When a user wants to publish a configured map on another site, use `get_map_embed` if you are the in-app Map assistant (input: optional `title` and `height`; output: the embed URL and iframe HTML) or `createEmbedUrl` / `createEmbedIframe` from [embed-share.js](https://gismap.online/js/embed-share.js). A map embed preserves public layers, styles, filters, camera, basemap and skin from the share URL. It cannot carry local files, device-only layers, private service URLs, credentials or tokens. Test the final iframe in its destination page.
 
 ## Make a map from a URL (no code)
 - One layer: `https://gismap.online/?layer=<HTTPS service URL>&layerType=feature`
@@ -61,8 +85,8 @@ When a user wants to publish a configured map on another site, use `get_map_embe
 1. Retrieve source metadata (append ?f=pjson), inspect actual fields and query real filter values; do not guess field names. Check the publisher's null and sentinel conventions.
 2. Construct a map-v1 spec and validate it and its renderer. In code, mapSpec.prepareVerification(spec) returns a URL and an offline report; metadata, filtering, rendering and reopening remain not_checked until independently tested.
 3. Generate the canonical URL using mapSpec.createLink or URI-encoded #map=json: JSON. Return the actual URL to the user.
-4. With browser access, open it, wait for layers, check issues and verify the intended features, filter, style and camera. Reopen the share URL and check again. State explicitly what you could not check.
-5. Use precise status: prepared (constructed), validated (validator accepted, review warnings), loaded (layers loaded), verified (intended map and reopened link confirmed). A plausible URL alone is not verified. See the agent guide for tested filters and a Michigan county example.
+4. With browser access, open it, wait for layers, check issues and the intended features, filter, style and camera, then reopen the share URL.
+5. **Reporting.** Always return the actual URL. Then state one status (prepared, validated, loaded or verified) and one line listing what you could not check. Don't withhold a link because you couldn't verify it. Definitions: [sharing](https://gismap.online/skills/gismap/references/sharing.md#status-definitions).
 
 Follow-up refinement: [derive year and acreage maps from one filtered California fire map](https://gismap.online/examples/ai/california-fire-refinement/). Preserve the source, filter, basemap and camera; use map-v1 when a simple URL is insufficient. The linked example reports which checks remain unverified.
 
@@ -91,12 +115,29 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [A styled map in one link, written by a chatbot](https://gismap.online/examples/ai/corn-sales-one-link/): Any chatbot, even one that cannot run code, can make a styled county map by writing one JSON object into a link: corn sales by county, with "Not Disclosed" counties kept out of the colour classes.
 - [A guided tour of eight classic ballparks](https://gismap.online/examples/tours/classic-ballparks/): A guided tour that flies the 3D map from Fenway Park to Petco Park, with a caption at each of eight ballparks, opened from one link or QR code.
 - [A field task and its report, sent as two links](https://gismap.online/examples/field-tasks/opening-day-wayfinding/): A two-ballpark field check sent as a link or QR code, and the completed report that comes back the same way: check-in, steps, features and notes, with no server.
+- [A trip as a guided tour](https://gismap.online/examples/ai/trip-tour/): Prompt: "Make me a map of our three days in Kyoto: Fushimi Inari, Kiyomizu-dera, then Kinkaku-ji." Status reached: loaded.
+- [A coffee crawl as a guided tour](https://gismap.online/examples/ai/coffee-crawl-tour/): Prompt: "Plot a coffee crawl around Seattle's Pike Place and Capitol Hill." Status reached: loaded.
+- [Colour states by a value](https://gismap.online/examples/ai/colour-states/): Prompt: "Colour US states by population density." Status reached: loaded.
+- [Earthquakes this week](https://gismap.online/examples/ai/earthquakes-this-week/): Prompt: "Show me this week's earthquakes on a map." Status reached: loaded.
+- [Wildfire perimeters](https://gismap.online/examples/ai/wildfire-perimeters/): Prompt: "Map the current US wildfire perimeters." Status reached: loaded.
+- [A county choropleth with sentinels](https://gismap.online/examples/ai/county-choropleth-sentinels/): Prompt: "Map corn sales by county, and don't let undisclosed counties skew the colours." Status reached: loaded.
+- [A two-layer map](https://gismap.online/examples/ai/two-layer-map/): Prompt: "Show state populations with the Major League ballparks on top." Status reached: loaded.
+- [A briefing](https://gismap.online/examples/ai/state-briefing/): Prompt: "Turn US state population density into a short presentation." Status reached: loaded.
+- [A contact-page embed](https://gismap.online/examples/ai/contact-page-embed/): Prompt: "Add a map of Fenway Park to my contact page." Status reached: loaded.
+- [A 3D extrusion](https://gismap.online/examples/ai/3d-extrusion/): Prompt: "Show air quality around the world as 3D columns." Status reached: loaded.
+- [A themed map](https://gismap.online/examples/ai/vibe-map/): Prompt: "Make a moody, late-night map of US state populations." Status reached: loaded.
+- [A LiDAR view](https://gismap.online/examples/ai/lidar-view/): Prompt: "Show this LiDAR file in 3D: autzen_trim.las from the PDAL samples." Status reached: loaded.
+- [A field task](https://gismap.online/examples/ai/field-task/): Prompt: "Send a colleague to check the signs at Oracle Park's main gate." Status reached: loaded.
+- [A refinement of an existing link](https://gismap.online/examples/ai/refine-a-link/): Prompt: "Take my California fire map and colour it by year, keeping the 2000 to 2010 filter." Status reached: loaded.
+- [A failure: CORS_BLOCKED](https://gismap.online/examples/ai/cors-blocked/): Prompt: "Put https://example.com/ on a map as GeoJSON." Status reached: prepared.
 
 ## Data
 - [Curated public datasets (JSON)](https://gismap.online/api/catalog.json): 15 services with ready links
 
 ## Limits
 - At most 10 layers per map; HTTPS only; URLs containing tokens or keys are refused; sources must allow browser (CORS) access.
+- Layer types: arcgis-auto, feature, map-image, imagery, geojson, geoparquet, wms, wfs, kml, pointcloud, model, vector-tiles.
+- Renderer types: service, simple, choropleth, graduated-symbols, categories, heatmap, arcgis, auto.
 - Basemaps: topo-3d, navigation-3d, navigation-dark-3d, osm-3d, gray-3d, dark-gray-3d, streets-3d, streets-dark-3d, topo-vector, streets-vector, navigation, gray-vector, dark-gray-vector, osm, satellite, hybrid, usgs-imagery, usgs-imagery-topo, open-liberty, open-bright, open-positron, open-dark, open-fiord, skin.
 - Colour ramps: greens, blues, reds, oranges, purples, viridis, magma, red-blue-diverging, brown-teal-diverging.
 
@@ -109,7 +150,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 
 ## Agent guide: Making maps with an AI agent
 
-GIS Map Online opens a map from a link. An agent that can only write text can make a map by writing one JSON object into a URL; agents that run code or drive a browser get validation, statistics and live control. No API key, account or server call is needed.
+GISMap Online opens a map from a link. An agent that can only write text can make a map by writing one JSON object into a URL; agents that run code or drive a browser get validation, statistics and live control. No API key, account or server call is needed.
 
 ### 1. Chat-only model: write a link
 
@@ -244,9 +285,9 @@ Every error from the API is a GisMapError with a code and a hint written for age
 | Code | What to do |
 | --- | --- |
 | `INVALID_URL` | Pass a complete https:// URL to a service, layer or file. |
-| `HTTPS_REQUIRED` | Use the https:// form of the URL; GIS Map Online only loads remote data over HTTPS. |
+| `HTTPS_REQUIRED` | Use the https:// form of the URL; GISMap Online only loads remote data over HTTPS. |
 | `CREDENTIAL_IN_URL` | Remove the token, key or password from the URL. Only public services can be shared. |
-| `UNSUPPORTED_LAYER_TYPE` | Use one of the layer types listed in capabilities.json (arcgis-auto, feature, map-image, imagery, geojson, wms, wfs, kml). |
+| `UNSUPPORTED_LAYER_TYPE` | Use one of the layer types in map.layerTypes in capabilities.json. |
 | `TOO_MANY_LAYERS` | A map holds at most 10 data layers. Remove one with layers.remove before adding another. |
 | `LAYER_LOAD_FAILED` | Check the URL in a browser with ?f=pjson appended. The service may be down, private or not a layer URL. |
 | `CORS_BLOCKED` | The publisher does not allow browser access to this service. Use another source, or download the data and add it as a file. |
@@ -284,7 +325,7 @@ Top-level properties:
 Layer properties:
 
 - `layers[].url`: HTTPS URL of an ArcGIS REST layer or service (FeatureServer/0, MapServer, ImageServer), a GeoJSON file, or a WMS/WFS/KML service. Public only: no tokens or keys. The service must allow browser (CORS) access. Append ?f=pjson to an ArcGIS URL to see its fields.
-- `layers[].type`: The layer type; arcgis-auto detects it from the service, and from .las/.laz/.xyz (pointcloud) or .glb/.gltf/.obj/.ply (model) file extensions. pointcloud and model draw with three.js on the MapLibre engine. One of: arcgis-auto, feature, map-image, imagery, geojson, geoparquet, wms, wfs, kml, pointcloud, model.
+- `layers[].type`: The layer type; arcgis-auto detects it from the service, and from .las/.laz/.xyz (pointcloud) or .glb/.gltf/.obj/.ply (model) file extensions. pointcloud and model draw with three.js on the MapLibre engine. One of: arcgis-auto, feature, map-image, imagery, geojson, geoparquet, wms, wfs, kml, pointcloud, model, vector-tiles.
 - `layers[].title`: The name shown in the Layers panel and legend.
 - `layers[].where`: A read-only SQL filter on the layer's fields, such as "CORN_SALES_IN_DOLLARS >= 0" or "STATE = 'Iowa'". No statements, comments or semicolons.
 - `layers[].renderer`: The style. Field names must match the service exactly; a misspelled field keeps the service's own style and is reported.
@@ -299,7 +340,7 @@ Layer properties:
 
 ## RendererSpec (styles)
 
-A declarative layer style. GIS Map Online compiles it to an ArcGIS renderer, computing class breaks from the layer's data. Not sure which style suits a field? Use { "type": "auto", "field": ... } or "method": "auto" and the app decides from the data. Field names must match the service's fields exactly (sources.inspect(url).fields lists them).
+A declarative layer style. GISMap Online compiles it to an ArcGIS renderer, computing class breaks from the layer's data. Not sure which style suits a field? Use { "type": "auto", "field": ... } or "method": "auto" and the app decides from the data. Field names must match the service's fields exactly (sources.inspect(url).fields lists them).
 
 - `service`: Keep the publisher's own style (the default).
 - `simple`: One colour for every feature. Properties: color, outline, size.
@@ -339,6 +380,7 @@ Query (after ?):
 - `tutorial`: With briefingExample=historical-quakes, begin its step-by-step walkthrough after the finished briefing loads. Values: 1. Example: `1`.
 - `spec`: HTTPS URL of a CORS-enabled map-v1 JSON file. Example: `https://example.org/corn.map.json`.
 - `briefing`: HTTPS URL of a briefing file (briefing-v1 document, project or the app's briefing file). Example: `https://example.org/corn.briefing.json`.
+- `via`: Optional name of the agent or tool that wrote the link, for aggregate counts only. Never personal data. Example: `claude`.
 
 Fragment (after #):
 
@@ -349,9 +391,9 @@ Fragment (after #):
 ## Error codes
 
 - `INVALID_URL`: Pass a complete https:// URL to a service, layer or file.
-- `HTTPS_REQUIRED`: Use the https:// form of the URL; GIS Map Online only loads remote data over HTTPS.
+- `HTTPS_REQUIRED`: Use the https:// form of the URL; GISMap Online only loads remote data over HTTPS.
 - `CREDENTIAL_IN_URL`: Remove the token, key or password from the URL. Only public services can be shared.
-- `UNSUPPORTED_LAYER_TYPE`: Use one of the layer types listed in capabilities.json (arcgis-auto, feature, map-image, imagery, geojson, wms, wfs, kml).
+- `UNSUPPORTED_LAYER_TYPE`: Use one of the layer types in map.layerTypes in capabilities.json.
 - `TOO_MANY_LAYERS`: A map holds at most 10 data layers. Remove one with layers.remove before adding another.
 - `LAYER_LOAD_FAILED`: Check the URL in a browser with ?f=pjson appended. The service may be down, private or not a layer URL.
 - `CORS_BLOCKED`: The publisher does not allow browser access to this service. Use another source, or download the data and add it as a file.
@@ -570,7 +612,7 @@ What it shows:
 
 Prompt for a chatbot:
 
-> Make a GIS Map Online link for U.S. corn sales by county. The layer is https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Corn/FeatureServer/0; look at its fields with ?f=pjson and use CORN_SALES_IN_DOLLARS. Write a map-v1 spec (https://gismap.online/schemas/map-v1.schema.json) with a choropleth renderer, ramp "greens", method "auto" and a gray basemap. The publisher codes undisclosed counties as -1, so exclude -1. URI-encode the JSON and put it after https://gismap.online/#map=json: and give me the link.
+> Make a GISMap Online link for U.S. corn sales by county. The layer is https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Corn/FeatureServer/0; look at its fields with ?f=pjson and use CORN_SALES_IN_DOLLARS. Write a map-v1 spec (https://gismap.online/schemas/map-v1.schema.json) with a choropleth renderer, ramp "greens", method "auto" and a gray basemap. The publisher codes undisclosed counties as -1, so exclude -1. URI-encode the JSON and put it after https://gismap.online/#map=json: and give me the link.
 
 For a code-running agent: An agent can find the -1 code itself instead of being told: sources.inspect reads the publisher's own style and reports it as a sentinel.
 

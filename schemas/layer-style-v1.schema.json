@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/layer-style-v1.schema.json",
-  "title": "GIS Map Online layer style",
+  "title": "GISMap Online layer style",
   "description": "A reusable layer file made in the Cartography Lab (Tools › Cartography Lab): how one layer is drawn — colour (a RendererSpec), optional 3D height (a spatialChart), a filter and opacity — apart from any map. GISMap saves styles with the project and in the browser's style library; a style downloads as a .gismap-style.json file. In the page: gisMapOnline.layerStyles.save(style), .apply(layer, id), .toMapSpec(id) (a map-v1 spec), .createLink(id) and .toBriefing(id).",
   "type": "object",
   "required": ["type", "version", "name", "source"],

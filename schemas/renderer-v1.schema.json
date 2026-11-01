@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/renderer-v1.schema.json",
-  "title": "GIS Map Online RendererSpec",
-  "description": "A declarative layer style. GIS Map Online compiles it to an ArcGIS renderer, computing class breaks from the layer's data. Not sure which style suits a field? Use { \"type\": \"auto\", \"field\": ... } or \"method\": \"auto\" and the app decides from the data. Field names must match the service's fields exactly (sources.inspect(url).fields lists them).",
+  "title": "GISMap Online RendererSpec",
+  "description": "A declarative layer style. GISMap Online compiles it to an ArcGIS renderer, computing class breaks from the layer's data. Not sure which style suits a field? Use { \"type\": \"auto\", \"field\": ... } or \"method\": \"auto\" and the app decides from the data. Field names must match the service's fields exactly (sources.inspect(url).fields lists them).",
   "oneOf": [
     {
       "type": "object",

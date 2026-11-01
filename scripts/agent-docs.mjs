@@ -24,6 +24,41 @@ export const MICHIGAN_SPEC = Object.freeze({ version: 1, title: "Michigan county
 export const MICHIGAN_LINK = readableLink(MICHIGAN_SPEC);
 export const CORN_STYLED_LAYER_LINK = `${SITE}/?layer=${encodeURIComponent(CORN_URL)}&layerType=feature&style=choropleth&field=CORN_SALES_IN_DOLLARS&method=auto&ramp=greens&exclude=-1&basemap=gray-vector`;
 
+/** Field names read from each service's metadata on 2026-11-01; a model with no tools can use these without guessing. */
+const CURATED_KEY_FIELDS = Object.freeze({
+  "usa-wildfires": ["IncidentName", "DailyAcres", "PercentContained"], "modis-active-fires": ["BRIGHTNESS", "FRP", "ACQ_DATE"],
+  "active-hurricanes": ["STORMNAME", "MAXWIND"], "recent-hurricanes": ["STORMNAME", "INTENSITY"],
+  "air-quality-pm25": ["city", "country", "value"], "air-quality-pm25-3d-columns": ["city", "country", "value"], "air-quality-pm25-3d-graduated": ["city", "country", "value"],
+  "usgs-seismic-activity": ["mag", "place", "eventTime"], "usgs-recent-earthquakes-map-service": ["mag", "place", "depth"],
+  "ndfd-wind-gusts": ["label", "fromdate"], "ndfd-precipitation": ["label", "fromdate"], "ndfd-daily-temperature": ["Temp", "Period"],
+  "historical-quakes": ["mag", "magType"], "usgs-earthquakes": ["mag", "place", "time"], "world-countries-generalized": ["COUNTRY", "ISO"],
+});
+
+export const REPORTING_RULE = "**Reporting.** Always return the actual URL. Then state one status (prepared, validated, loaded or verified) and one line listing what you could not check. Don't withhold a link because you couldn't verify it.";
+
+/** The no-tools path, for llms.txt and SKILL.md. */
+export function noToolsPath() {
+  const list = POPULAR_SERVICES.map((item) => {
+    const slug = item.slug || item.id;
+    const fields = CURATED_KEY_FIELDS[slug];
+    return `- \`${SITE}/?example=${slug}\`: ${item.description}${fields ? ` Key fields: ${fields.join(", ")}.` : ""}`;
+  }).join("\n");
+  return `- If you cannot fetch URLs: use a layer URL the user gave you or a curated dataset below, use \`style=auto\`, and don't invent field names.
+- If the user gave places, not a layer: build a guided tour (\`#tour=json:\`) with their places as stops, and say the coordinates came from your own knowledge and should be checked.
+- Report the result as prepared.
+
+Curated datasets (the link needs no field names):
+
+${list}`;
+}
+
+/** SKILL.md with its generated no-tools list brought up to date. */
+export function generateSkillMarkdown(text) {
+  const pattern = /(<!-- generated: no-tools path -->\n)[\s\S]*?(\n<!-- end generated -->)/;
+  if (!pattern.test(text)) throw new Error("SKILL.md has lost its generated no-tools block.");
+  return text.replace(pattern, (_, start, end) => `${start}${noToolsPath()}\n\n${REPORTING_RULE}${end}`);
+}
+
 /** Every link parameter, from share.js's own constants. */
 export function buildUrlParameters() {
   const aligned = (description, example, extra = {}) => ({ type: "string", repeatable: true, indexAligned: "layer", description, example, ...extra });
@@ -55,6 +90,7 @@ export function buildUrlParameters() {
       tutorial: { type: "string", values: ["1"], description: "With briefingExample=historical-quakes, begin its step-by-step walkthrough after the finished briefing loads.", example: "1" },
       spec: { type: "string", format: "uri", description: "HTTPS URL of a CORS-enabled map-v1 JSON file.", example: "https://example.org/corn.map.json" },
       briefing: { type: "string", format: "uri", description: "HTTPS URL of a briefing file (briefing-v1 document, project or the app's briefing file).", example: "https://example.org/corn.briefing.json" },
+      via: { type: "string", pattern: "^[a-z0-9-]{1,32}$", description: "Optional name of the agent or tool that wrote the link, for aggregate counts only. Never personal data.", example: "claude" },
     },
     fragment: {
       map: { type: "string", description: `json:<URI-encoded map-v1 JSON> (readable, at most ${MAP_SPEC_JSON_LIMIT} characters) or the compressed z… form from mapSpec.createLink.`, example: CORN_LINK.split("#")[1].slice(4) },
@@ -95,8 +131,8 @@ const code = (lang, text) => ({ code: { lang, text } });
 export function agentGuide({ errorCodes = {} } = {}) {
   return {
     title: "Making maps with an AI agent",
-    description: "How a language model or agent makes a GIS Map Online map: a link written by hand, code that builds one, or a browser it drives.",
-    intro: "GIS Map Online opens a map from a link. An agent that can only write text can make a map by writing one JSON object into a URL; agents that run code or drive a browser get validation, statistics and live control. No API key, account or server call is needed.",
+    description: "How a language model or agent makes a GISMap Online map: a link written by hand, code that builds one, or a browser it drives.",
+    intro: "GISMap Online opens a map from a link. An agent that can only write text can make a map by writing one JSON object into a URL; agents that run code or drive a browser get validation, statistics and live control. No API key, account or server call is needed.",
     sections: [
       {
         heading: "1. Chat-only model: write a link",
@@ -230,15 +266,19 @@ export function renderGuideMarkdown(guide) {
  * { items: [{ title, url, summary }], markdown } (scripts/ai-examples.mjs).
  */
 export function buildLlmsTxt({ capabilities, examples = null }) {
-  return `# GIS Map Online
+  return `# GISMap Online
 
 > GISMap.online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
+
+## If you have no tools
+
+${noToolsPath()}
 
 The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
 
 ## Links a chatbot can write (no code, no account)
 
-Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after \`json:\`. Return the link to the user; it opens the finished result.
+Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after \`json:\`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with \`?via=<agent>\`, as in \`${SITE}/?via=<agent>#map=json:…\` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
 
 - Map: \`https://gismap.online/#map=json:{"version":1,"layers":[{"url":"<layer URL>","where":"<filter>","renderer":{"type":"choropleth","field":"<FIELD>","ramp":"purples"}}],"basemap":"gray-vector"}\`
 - Briefing (slides): add \`"briefing":{"layerId":"<layer URL>","selection":{"useAll":true},"slides":[{"template":"title","title":"…"},{"template":"key-numbers","title":"At a glance","blocks":[{"type":"stat","stat":"count","label":"Features"}]},{"template":"feature","title":"…","featureId":"<OBJECTID>","fit":"feature","blocks":[{"type":"text","markdown":"…"}]}]}\` to the map JSON; the link opens presenting (schema: [briefing-v1](${SITE}/schemas/briefing-v1.schema.json)).
@@ -246,7 +286,7 @@ Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURI
 - LiDAR or 3D model (MapLibre engine): a map layer with \`"type":"pointcloud"\` (LAS, LAZ, XYZ) or \`"type":"model"\` (glTF/GLB, OBJ, PLY) and \`"scene3d":{"crs":"EPSG:26910","classes":[3,4,5,14],"colorBy":"classification"}\` or, for models, \`"scene3d":{"anchor":[lon,lat,0],"heading":0,"scale":1}\`.
 - Field task: \`https://gismap.online/?workflow=tasks#fieldTask=json:{"title":"…","location":"…","lat":37.75972,"lon":-122.42713,"notes":"…","steps":["…","…"]}\` (up to 10 steps and 5 features: \`{"layerUrl","objectId","lat","lon","label"}\`).
 
-Readable links hold up to 8,192 characters. Inspect real fields first (\`<layer URL>?f=pjson\`) and never invent coordinates. Use \`usgs-imagery\` for aerial imagery on the default MapLibre engine. Step-by-step: [agent recipes](${SITE}/agent-recipes/).
+Readable links hold up to 8,192 characters. Inspect real fields first (\`<layer URL>?f=pjson\`) when you can fetch. Use \`usgs-imagery\` for aerial imagery on the default MapLibre engine; it covers the United States only and is blank elsewhere. Step-by-step: [agent recipes](${SITE}/agent-recipes/).
 
 ## What can AI agents create with GISMap?
 
@@ -279,7 +319,7 @@ Cinematic mode is for observed records or explicit numeric scenarios, not an inf
 
 ## Embed a configured public map
 
-When a user wants to publish a configured map on another site, use \`get_map_embed\` in a running assistant session or \`createEmbedUrl\` / \`createEmbedIframe\` from [embed-share.js](${SITE}/js/embed-share.js). A map embed preserves public layers, styles, filters, camera, basemap and skin from the share URL. It cannot carry local files, device-only layers, private service URLs, credentials or tokens. Test the final iframe in its destination page; generating its HTML is only prepared, not verified.
+When a user wants to publish a configured map on another site, use \`get_map_embed\` if you are the in-app Map assistant (input: optional \`title\` and \`height\`; output: the embed URL and iframe HTML) or \`createEmbedUrl\` / \`createEmbedIframe\` from [embed-share.js](${SITE}/js/embed-share.js). A map embed preserves public layers, styles, filters, camera, basemap and skin from the share URL. It cannot carry local files, device-only layers, private service URLs, credentials or tokens. Test the final iframe in its destination page.
 
 ## Make a map from a URL (no code)
 - One layer: \`${SITE}/?layer=<HTTPS service URL>&layerType=feature\`
@@ -293,8 +333,8 @@ When a user wants to publish a configured map on another site, use \`get_map_emb
 1. Retrieve source metadata (append ?f=pjson), inspect actual fields and query real filter values; do not guess field names. Check the publisher's null and sentinel conventions.
 2. Construct a map-v1 spec and validate it and its renderer. In code, mapSpec.prepareVerification(spec) returns a URL and an offline report; metadata, filtering, rendering and reopening remain not_checked until independently tested.
 3. Generate the canonical URL using mapSpec.createLink or URI-encoded #map=json: JSON. Return the actual URL to the user.
-4. With browser access, open it, wait for layers, check issues and verify the intended features, filter, style and camera. Reopen the share URL and check again. State explicitly what you could not check.
-5. Use precise status: prepared (constructed), validated (validator accepted, review warnings), loaded (layers loaded), verified (intended map and reopened link confirmed). A plausible URL alone is not verified. See the agent guide for tested filters and a Michigan county example.
+4. With browser access, open it, wait for layers, check issues and the intended features, filter, style and camera, then reopen the share URL.
+5. ${REPORTING_RULE} Definitions: [sharing](${SITE}/skills/gismap/references/sharing.md#status-definitions).
 
 Follow-up refinement: [derive year and acreage maps from one filtered California fire map](${SITE}/examples/ai/california-fire-refinement/). Preserve the source, filter, basemap and camera; use map-v1 when a simple URL is insufficient. The linked example reports which checks remain unverified.
 
@@ -322,6 +362,8 @@ ${examples?.items?.length ? `\n## Worked examples\n${examples.items.map((item) =
 
 ## Limits
 - At most ${SHARE_LIMITS.maxLayers} layers per map; HTTPS only; URLs containing tokens or keys are refused; sources must allow browser (CORS) access.
+- Layer types: ${(capabilities.layerTypes || []).join(", ")}.
+- Renderer types: ${(capabilities.rendererTypes || []).join(", ")}.
 - Basemaps: ${(capabilities.basemaps || [...SHARE_BASEMAPS]).join(", ")}.
 - Colour ramps: ${(capabilities.ramps || []).join(", ")}.
 

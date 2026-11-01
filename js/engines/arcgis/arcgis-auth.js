@@ -70,7 +70,7 @@ function publicCredentialSummary(credential) {
 /**
  * Registers ArcGIS identity metadata and delegates credentials entirely to the
  * ArcGIS Maps SDK IdentityManager. Tokens, passwords, and client secrets never
- * enter GIS Map Online project serialization or local settings.
+ * enter GISMap Online project serialization or local settings.
  */
 export class AuthController {
   constructor(events) {

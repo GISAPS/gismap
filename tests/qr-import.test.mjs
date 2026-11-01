@@ -5,7 +5,7 @@ import { describeGisMapLink, gisMapLinkFrom } from "../js/qr-import.js";
 
 const here = { hostname: "gismap.online", origin: "https://gismap.online", pathname: "/", search: "" };
 
-test("only GIS Map Online links in a QR code are opened, and they open in this copy of the app", () => {
+test("only GISMap Online links in a QR code are opened, and they open in this copy of the app", () => {
   assert.equal(gisMapLinkFrom("https://gismap.online/#map=zABC", { here }), "https://gismap.online/#map=zABC");
   assert.equal(gisMapLinkFrom("https://www.gismap.online/?workflow=tasks#fieldTask=x", { here }), "https://gismap.online/?workflow=tasks#fieldTask=x");
   assert.equal(gisMapLinkFrom("https://0cf64f34-gismap.silasmerlin.workers.dev/#briefing=z1", { here }), "https://gismap.online/#briefing=z1", "preview-build links open here");

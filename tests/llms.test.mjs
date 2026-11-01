@@ -118,7 +118,7 @@ test("catalog.json links open their datasets", () => {
 
 test("llms.txt follows llmstxt.org and its links resolve to files in the site", async () => {
   const llms = await text("llms.txt");
-  assert.match(llms, /^# GIS Map Online\n\n> .+\n/);
+  assert.match(llms, /^# GISMap Online\n\n> .+\n/);
   assert.match(llms, /#map=json:/);
   assert.doesNotMatch(llms, /#spec=/);
   for (const [, href] of llms.matchAll(/\]\((https:\/\/gismap\.online\/[^)]*)\)/g)) {

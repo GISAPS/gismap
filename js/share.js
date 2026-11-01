@@ -136,6 +136,8 @@ export function createShareUrl({ baseUrl, layers = [], basemap = null }) {
   return url.href;
 }
 
+// Read by nothing in the app: `via` credits the tool that wrote a link, for aggregate counts.
+export const SHARE_IGNORED_PARAMETERS = Object.freeze(["via"]);
 export const SHARE_LIMITS = Object.freeze({ maxLayers: MAX_LAYERS, maxUrlLength: MAX_URL_LENGTH });
 export const SHARE_LAYER_TYPES = SUPPORTED_TYPES;
 export const SHARE_BASEMAPS = SUPPORTED_BASEMAPS;

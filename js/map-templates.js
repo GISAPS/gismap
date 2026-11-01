@@ -58,7 +58,7 @@ function band(context, x, y, width, height, palette) {
   context.fillRect(x, y, width, height);
 }
 
-/** The GIS Map Online mark and wordmark, `size` tall. */
+/** The GISMap Online mark and wordmark, `size` tall. */
 // Links the page adds on its own (the wordmark, a centre coordinate), collected per render.
 let pageLinks = [];
 
@@ -295,7 +295,7 @@ function overlays(context, data, rect) {
 }
 
 function footer(context, data, x, y, width, size) {
-  const credit = [data.credits, `Made with GIS Map Online · ${data.date}`].filter(Boolean).join(" · ");
+  const credit = [data.credits, `Made with GISMap Online · ${data.date}`].filter(Boolean).join(" · ");
   text(context, credit, x, y, width, { size, color: "#5c6966", maxLines: 2 });
 }
 

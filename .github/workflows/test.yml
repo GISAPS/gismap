@@ -64,9 +64,17 @@ jobs:
           node --check scripts/agent-docs.mjs
           node --check scripts/ai-examples.mjs
           node --check scripts/workflow-examples.mjs
+          node --check scripts/contracts.mjs
+          node --check scripts/check-contracts.mjs
 
       - name: Verify generated examples and guides
         run: node scripts/build-examples.mjs --check
+
+      - name: Verify the skill ZIP and page
+        run: python3 scripts/build-skill-zip.py --check
+
+      - name: Check contracts, links and worked examples
+        run: node scripts/check-contracts.mjs
 
       - name: Verify discovery files
         run: |

@@ -1,4 +1,4 @@
-// Worked examples of GIS Map Online's other two workflows, guided tours and
+// Worked examples of GISMap Online's other two workflows, guided tours and
 // field tasks, as data for the /examples/tours/ and /examples/field-tasks/
 // pages. Each link here was opened in the app and checked (every tour chapter's
 // view; the task's features, check-in and report); the committed files beside

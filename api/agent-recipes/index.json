@@ -1,6 +1,143 @@
 {
   "$schema": "https://gismap.online/schemas/agent-recipe-v1.schema.json",
   "description": "GISMap agent recipes. Each step names its interface: declarative URL, standalone JavaScript, in-browser API (globalThis.gisMapOnline) or an outside tool. None is a hosted REST endpoint.",
+  "promptExamples": [
+    {
+      "title": "A trip as a guided tour",
+      "prompt": "Make me a map of our three days in Kyoto: Fushimi Inari, Kiyomizu-dera, then Kinkaku-ji.",
+      "link": "https://gismap.online/?tourOnly=1#tour=json:%7B%22title%22%3A%22Three%20days%20in%20Kyoto%22%2C%22autoplay%22%3Atrue%2C%22stops%22%3A%5B%7B%22name%22%3A%22Fushimi%20Inari%22%2C%22caption%22%3A%22Day%201%22%2C%22lat%22%3A34.96714%2C%22lon%22%3A135.77267%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%2C%7B%22name%22%3A%22Kiyomizu-dera%22%2C%22caption%22%3A%22Day%202%22%2C%22lat%22%3A34.99485%2C%22lon%22%3A135.78504%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%2C%7B%22name%22%3A%22Kinkaku-ji%22%2C%22caption%22%3A%22Day%203%22%2C%22lat%22%3A35.03937%2C%22lon%22%3A135.72924%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/trip-tour/",
+      "screenshot": "https://gismap.online/examples/ai/trip-tour/screenshot.png"
+    },
+    {
+      "title": "A coffee crawl as a guided tour",
+      "prompt": "Plot a coffee crawl around Seattle's Pike Place and Capitol Hill.",
+      "link": "https://gismap.online/?tourOnly=1#tour=json:%7B%22title%22%3A%22Seattle%20coffee%20crawl%22%2C%22autoplay%22%3Atrue%2C%22stops%22%3A%5B%7B%22name%22%3A%22Pike%20Place%20Market%22%2C%22caption%22%3A%22Start%20at%20the%20market%22%2C%22lat%22%3A47.60971%2C%22lon%22%3A-122.3422%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%2C%7B%22name%22%3A%22Pine%20Street%22%2C%22caption%22%3A%22Walk%20uphill%20along%20Pine%22%2C%22lat%22%3A47.6149%2C%22lon%22%3A-122.3284%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%2C%7B%22name%22%3A%22Capitol%20Hill%22%2C%22caption%22%3A%22Finish%20at%20Cal%20Anderson%20Park%22%2C%22lat%22%3A47.6174%2C%22lon%22%3A-122.3195%2C%22zoom%22%3A15%2C%22tilt%22%3A45%2C%22heading%22%3A0%2C%22basemap%22%3A%22open-liberty%22%2C%22seconds%22%3A6%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/coffee-crawl-tour/",
+      "screenshot": "https://gismap.online/examples/ai/coffee-crawl-tour/screenshot.png"
+    },
+    {
+      "title": "Colour states by a value",
+      "prompt": "Colour US states by population density.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSA_States_Generalized_Boundaries%2FFeatureServer%2F0%22%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22POP_SQMI%22%2C%22method%22%3A%22auto%22%2C%22ramp%22%3A%22purples%22%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/colour-states/",
+      "screenshot": "https://gismap.online/examples/ai/colour-states/screenshot.png"
+    },
+    {
+      "title": "Earthquakes this week",
+      "prompt": "Show me this week's earthquakes on a map.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22dark-gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fearthquake.usgs.gov%2Fearthquakes%2Ffeed%2Fv1.0%2Fsummary%2Fall_week.geojson%22%2C%22type%22%3A%22geojson%22%2C%22title%22%3A%22USGS%20earthquakes%2C%20past%20week%22%2C%22renderer%22%3A%7B%22type%22%3A%22auto%22%2C%22field%22%3A%22mag%22%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/earthquakes-this-week/",
+      "screenshot": "https://gismap.online/examples/ai/earthquakes-this-week/screenshot.png"
+    },
+    {
+      "title": "Wildfire perimeters",
+      "prompt": "Map the current US wildfire perimeters.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices9.arcgis.com%2FRHVPKKiFTONKtxq3%2FArcGIS%2Frest%2Fservices%2FUSA_Wildfires_v1%2FFeatureServer%2F1%22%2C%22title%22%3A%22Current%20wildfire%20perimeters%22%2C%22ignoreServiceScaleRange%22%3Atrue%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/wildfire-perimeters/",
+      "screenshot": "https://gismap.online/examples/ai/wildfire-perimeters/screenshot.png"
+    },
+    {
+      "title": "A county choropleth with sentinels",
+      "prompt": "Map corn sales by county, and don't let undisclosed counties skew the colours.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2FArcGIS%2Frest%2Fservices%2FCorn%2FFeatureServer%2F0%22%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22CORN_SALES_IN_DOLLARS%22%2C%22method%22%3A%22auto%22%2C%22ramp%22%3A%22greens%22%2C%22exclude%22%3A%5B-1%5D%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/county-choropleth-sentinels/",
+      "screenshot": "https://gismap.online/examples/ai/county-choropleth-sentinels/screenshot.png"
+    },
+    {
+      "title": "A two-layer map",
+      "prompt": "Show state populations with the Major League ballparks on top.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSA_States_Generalized_Boundaries%2FFeatureServer%2F0%22%2C%22opacity%22%3A0.8%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22POPULATION%22%2C%22method%22%3A%22auto%22%2C%22ramp%22%3A%22blues%22%7D%7D%2C%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FMajor_League_Baseball_Stadiums%2FFeatureServer%2F0%22%2C%22title%22%3A%22Major%20League%20ballparks%22%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/two-layer-map/",
+      "screenshot": "https://gismap.online/examples/ai/two-layer-map/screenshot.png"
+    },
+    {
+      "title": "A briefing",
+      "prompt": "Turn US state population density into a short presentation.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSA_States_Generalized_Boundaries%2FFeatureServer%2F0%22%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22POP_SQMI%22%2C%22method%22%3A%22auto%22%2C%22ramp%22%3A%22purples%22%7D%7D%5D%2C%22briefing%22%3A%7B%22layerId%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSA_States_Generalized_Boundaries%2FFeatureServer%2F0%22%2C%22selection%22%3A%7B%22useAll%22%3Atrue%7D%2C%22slides%22%3A%5B%7B%22template%22%3A%22title%22%2C%22title%22%3A%22US%20population%20density%22%7D%2C%7B%22template%22%3A%22key-numbers%22%2C%22title%22%3A%22At%20a%20glance%22%2C%22blocks%22%3A%5B%7B%22type%22%3A%22stat%22%2C%22stat%22%3A%22count%22%2C%22label%22%3A%22States%20and%20DC%22%7D%5D%7D%5D%7D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/state-briefing/",
+      "screenshot": "https://gismap.online/examples/ai/state-briefing/screenshot.png"
+    },
+    {
+      "title": "A contact-page embed",
+      "prompt": "Add a map of Fenway Park to my contact page.",
+      "link": "https://gismap.online/?embed=1&embedKind=map#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22streets-vector%22%2C%22camera%22%3A%7B%22center%22%3A%5B-71.0972%2C42.3467%5D%2C%22zoom%22%3A15%7D%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FMajor_League_Baseball_Stadiums%2FFeatureServer%2F0%22%2C%22where%22%3A%22TEAM%20%3D%20'Boston%20Red%20Sox'%22%2C%22title%22%3A%22Fenway%20Park%22%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/contact-page-embed/",
+      "screenshot": "https://gismap.online/examples/ai/contact-page-embed/screenshot.png"
+    },
+    {
+      "title": "A 3D extrusion",
+      "prompt": "Show air quality around the world as 3D columns.",
+      "link": "https://gismap.online/?example=air-quality-pm25-3d-columns",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/3d-extrusion/",
+      "screenshot": "https://gismap.online/examples/ai/3d-extrusion/screenshot.png"
+    },
+    {
+      "title": "A themed map",
+      "prompt": "Make a moody, late-night map of US state populations.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22open-dark%22%2C%22skin%22%3A%22velvet-orbit%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSA_States_Generalized_Boundaries%2FFeatureServer%2F0%22%2C%22opacity%22%3A0.85%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22POPULATION%22%2C%22method%22%3A%22auto%22%2C%22ramp%22%3A%22magma%22%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/vibe-map/",
+      "screenshot": "https://gismap.online/examples/ai/vibe-map/screenshot.png"
+    },
+    {
+      "title": "A LiDAR view",
+      "prompt": "Show this LiDAR file in 3D: autzen_trim.las from the PDAL samples.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22title%22%3A%22Autzen%20Stadium%20LiDAR%22%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fraw.githubusercontent.com%2FPDAL%2FPDAL%2Fmaster%2Ftest%2Fdata%2Flas%2Fautzen_trim.las%22%2C%22type%22%3A%22pointcloud%22%2C%22title%22%3A%22Autzen%20Stadium%20LiDAR%22%2C%22scene3d%22%3A%7B%22colorBy%22%3A%22rgb%22%2C%22pointSize%22%3A2%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/lidar-view/",
+      "screenshot": "https://gismap.online/examples/ai/lidar-view/screenshot.png"
+    },
+    {
+      "title": "A field task",
+      "prompt": "Send a colleague to check the signs at Oracle Park's main gate.",
+      "link": "https://gismap.online/?workflow=tasks#fieldTask=json:%7B%22title%22%3A%22Check%20gate%20signage%22%2C%22location%22%3A%22Oracle%20Park%20main%20gate%22%2C%22lat%22%3A37.77859%2C%22lon%22%3A-122.38927%2C%22notes%22%3A%22Photograph%20anything%20damaged.%22%2C%22steps%22%3A%5B%22Signs%20are%20readable%22%2C%22Access%20is%20clear%22%2C%22Photos%20taken%22%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/field-task/",
+      "screenshot": "https://gismap.online/examples/ai/field-task/screenshot.png"
+    },
+    {
+      "title": "A refinement of an existing link",
+      "prompt": "Take my California fire map and colour it by year, keeping the 2000 to 2010 filter.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22title%22%3A%22Fires%20by%20year%202000%E2%80%932010%22%2C%22basemap%22%3A%22gray-vector%22%2C%22camera%22%3A%7B%22center%22%3A%5B-120%2C37.5%5D%2C%22zoom%22%3A5%7D%2C%22legend%22%3Atrue%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices1.arcgis.com%2FjUJYIo9tSA7EHvfZ%2FArcGIS%2Frest%2Fservices%2FCalifornia_Historic_Fire_Perimeters%2FFeatureServer%2F0%22%2C%22type%22%3A%22feature%22%2C%22title%22%3A%22California%20historical%20fire%20perimeters%22%2C%22where%22%3A%22YEAR_%20%3E%3D%202000%20AND%20YEAR_%20%3C%3D%202010%22%2C%22opacity%22%3A0.8%2C%22renderer%22%3A%7B%22type%22%3A%22categories%22%2C%22field%22%3A%22YEAR_%22%2C%22maxCategories%22%3A11%2C%22colors%22%3A%7B%222000%22%3A%22%238e0152%22%2C%222001%22%3A%22%23d73027%22%2C%222002%22%3A%22%23f46d43%22%2C%222003%22%3A%22%23fdae61%22%2C%222004%22%3A%22%23fee08b%22%2C%222005%22%3A%22%2366a61e%22%2C%222006%22%3A%22%231b9e77%22%2C%222007%22%3A%22%231f78b4%22%2C%222008%22%3A%22%236a3d9a%22%2C%222009%22%3A%22%23a6761d%22%2C%222010%22%3A%22%234d4d4d%22%7D%7D%7D%5D%7D",
+      "status": "loaded",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/refine-a-link/",
+      "screenshot": "https://gismap.online/examples/ai/refine-a-link/screenshot.png"
+    },
+    {
+      "title": "A failure: CORS_BLOCKED",
+      "prompt": "Put https://example.com/ on a map as GeoJSON.",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22basemap%22%3A%22gray-vector%22%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fexample.com%2F%22%2C%22type%22%3A%22geojson%22%2C%22title%22%3A%22Blocked%20source%22%7D%5D%7D",
+      "status": "prepared",
+      "checked": "2026-11-01",
+      "page": "https://gismap.online/examples/ai/cors-blocked/",
+      "screenshot": "https://gismap.online/examples/ai/cors-blocked/screenshot.png"
+    }
+  ],
   "lifecycle": [
     "discover",
     "inspect",

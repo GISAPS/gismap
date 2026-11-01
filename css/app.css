@@ -3175,3 +3175,7 @@ body.briefing-v2 .briefing-data-dock :is(.briefing-select__add-slides, .briefing
 .cartography-lab__result .field { margin: 8px 0 4px; }
 .cartography-lab [hidden] { display: none !important; }
 .cartography-lab__actions button { flex: none; white-space: nowrap; }
+
+/* The "Made with" credit in the map's attribution row: skin colours, so it stays legible over any basemap. */
+.gismap-made-with { display: inline-block; padding: 0 4px; border-radius: 2px; background: var(--surface); color: var(--ink) !important; font-weight: 600; text-decoration: underline; }
+.gismap-made-with:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }

@@ -254,6 +254,12 @@
       "format": "uri",
       "description": "HTTPS URL of a briefing file (briefing-v1 document, project or the app's briefing file).",
       "example": "https://example.org/corn.briefing.json"
+    },
+    "via": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,32}$",
+      "description": "Optional name of the agent or tool that wrote the link, for aggregate counts only. Never personal data.",
+      "example": "claude"
     }
   },
   "fragment": {

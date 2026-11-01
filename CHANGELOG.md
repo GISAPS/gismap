@@ -6,6 +6,16 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## [Unreleased]
 
+### Spreadsheets
+
+- Add CSV, TSV, XLSX, XLSM, ODS and public Google Sheets as point layers. X/Y, Long/Lat, Longitude/Latitude and other column names are recognized, and a dialog asks for the columns when they are not.
+
+### Agent discovery
+
+- Rewrite the agent skill (0.2.0) with a fastest path, a no-tools path and one reporting rule. Generate contract enums from the app's constants and check them, links and worked examples in CI.
+- Add a "Made with" credit on embeds and shared links, the `via` link parameter, 15 prompt examples and JSON-LD. Use the name GISMap Online throughout.
+- Fix `?tourOnly=1` tours opening with a zero-width map on desktop.
+
 ### Embedding
 
 - `?layer=…&embed=1` now opens the chrome-free embedded map, as embedded `#map` links do. Embedded maps no longer show the mobile tool strip, and desktop-width embeds no longer render the map zero pixels wide. GISMap SI uses it to show a dataset inside its Dataset Studio. The map sends `{type: "gismap.ready"}` only to gismap.si parent pages.

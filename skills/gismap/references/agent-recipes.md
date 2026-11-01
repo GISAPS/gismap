@@ -4,6 +4,8 @@ Choose every recipe needed for the user's request, not just one. Use **discover 
 
 <a id="interactive-map"></a>
 
+<a id="interactive-map"></a>
+
 ## interactive-map — filtered, styled interactive map
 
 **Prompt:** “Map this data and color it by population.” **Inputs:** source URL or local file, intended geography, field, filter, renderer, basemap and desired outputs. Inspect source metadata and real field types and values, construct an attribute or supported spatial filter, select a compatible renderer, then build a [map-v1](https://gismap.online/schemas/map-v1.schema.json) specification. `sources.inspect`, `renderers.validate`, `mapSpec.validate`, and `mapSpec.createLink` are standalone utilities; `gisMapOnline.layers` and `mapSpec.load` need a running browser. `mapSpec.prepareVerification` reports offline checks, not a rendered map. Verify source, filter, features, renderer, camera and reopening. Return the actual link and disclose unperformed checks. PDF, QR and Smart Map PNG outputs depend on the applicable UI and export support; a PDF is static, and Smart Map PNG embeds configuration, not all remote data. Keep the original PNG because image processing may strip metadata. See the [corn map example](https://gismap.online/examples/ai/corn-sales-one-link/) and [map spec](map-spec.md).
@@ -14,9 +16,13 @@ Choose every recipe needed for the user's request, not just one. Use **discover 
 
 Do not stop at instructions if the requested style is supported. From a simple URL use `parseShareParameters` from `https://gismap.online/js/share.js` and `mapSpec.fromShareParameters`; for `#map=` use `mapSpec.decode`, including compressed payloads. In an authorized page, use `gisMapOnline.mapSpec.fromCurrent()`. If decoding is unavailable, request the original JSON or an uncompressed `#map=json:` link. Clone the base for each result, update only the requested renderer or filter, validate, and return each actual share URL. Preserve unrelated settings and disclose unperformed checks. The [California fire refinement example](https://gismap.online/examples/ai/california-fire-refinement/) includes both JSON specifications and URLs. Check categories and quantile classes against the loaded data; a numeric year slider is not specified in map-v1.
 
+<a id="interactive-briefing"></a>
+
 ## interactive-briefing — map-based briefing
 
 **Prompt:** “Create slides about these districts.” **Inputs:** primary layer, stable feature IDs or selection, slide order, supporting layers, narratives, and desired outputs. Use [briefing-v1](https://gismap.online/schemas/briefing-v1.schema.json) and the documented `briefing` and `mapSpec` namespaces. Validate slide references and verify each slide's camera, selection and narrative in the browser. Verify spatial relationships with an actual supported query; an overlay alone does not establish containment, and sample counts are not complete counts. Test desktop/mobile navigation and link reopening, and inspect any requested PDF. See the [Philadelphia briefing](https://gismap.online/examples/ai/philadelphia-police-divisions/) (boundaries, not crime counts), [ballparks spatial briefing](https://gismap.online/examples/ai/mlb-ballparks-by-state/) and [briefing reference](briefs.md).
+
+<a id="geographic-tour"></a>
 
 <a id="geographic-tour"></a>
 
@@ -26,15 +32,21 @@ Do not stop at instructions if the requested style is supported. From a simple U
 
 <a id="field-tasks"></a>
 
+<a id="field-tasks"></a>
+
 ## field-tasks — location-based fieldwork
 
 **Prompt:** “Inspect this location and complete these tasks.” **Inputs:** verified location, task title, instructions, requested tasks and evidence. When five tasks are requested, retain all five; for larger requests preserve every task and report how batches relate. Use the existing Field Tasks workflow rather than inventing a batch or hosted authoring API. A task and its steps are not necessarily five independently persisted tasks; disclose model limits. Check the location and task/step content, mobile workflow and reopened assignment. A check-in, photo or returned report is participant evidence, not independently verified completion. The [opening-day assignment and sample report](https://gismap.online/examples/field-tasks/opening-day-wayfinding/) show the current link workflow; never present the sample as real completed work. See [field tasks](field-tasks.md).
 
 <a id="3d-extrusion"></a>
 
+<a id="3d-extrusion"></a>
+
 ## 3d-extrusion — 3D extruded map
 
 **Prompt:** “Make the county heights represent acreage.” **Inputs:** polygon source, verified numeric field or fixed height, height scaling and units, colors, engine and 3D camera. Inspect geometry, field type, nulls, sentinels, negatives and outliers. Use only the actual engine's supported renderer and 3D settings; do not invent a portable field or assume source units are meters. Verify visible heights and camera in the selected engine, and test whether the shared artifact restores them. Clearly report unsupported settings or dropped height configuration. See [styling and 3D](map-styling.md) and the [3D examples](https://gismap.online/examples/air-quality-pm25-3d-columns/).
+
+<a id="spatial-3d-chart"></a>
 
 <a id="spatial-3d-chart"></a>
 
@@ -61,9 +73,13 @@ Review the preview, then repeat with `previewOnly: false`. Verify the flat overv
 
 <a id="lidar-and-3d-models"></a>
 
+<a id="lidar-and-3d-models"></a>
+
 ## lidar-and-3d-models — point clouds and CAD in 3D
 
 **Prompt:** “Show only vegetation and conductor wires from this LAZ file.” **Inputs:** an HTTPS (CORS-enabled) LAS, LAZ or XYZ file, or a glTF/GLB, OBJ or PLY model; the CRS when the file has none; ASPRS classes; colour mode; for models an anchor or the CRS of their coordinates. Add a layer with `"type": "pointcloud"` or `"type": "model"` and `scene3d` options to a map-v1 link, or call `layers.add(url, { type, scene3d })` in an open page. This uses the MapLibre engine with three.js on the flat map. Large clouds are thinned to `maxPoints`; COPC/EPT streaming, picking, clearance analysis and IFC/DWG are not available yet. See [3D data](3d-data.md).
+
+<a id="vibe-map"></a>
 
 <a id="vibe-map"></a>
 

@@ -240,9 +240,9 @@
   },
   "errorCodes": {
     "INVALID_URL": "Pass a complete https:// URL to a service, layer or file.",
-    "HTTPS_REQUIRED": "Use the https:// form of the URL; GIS Map Online only loads remote data over HTTPS.",
+    "HTTPS_REQUIRED": "Use the https:// form of the URL; GISMap Online only loads remote data over HTTPS.",
     "CREDENTIAL_IN_URL": "Remove the token, key or password from the URL. Only public services can be shared.",
-    "UNSUPPORTED_LAYER_TYPE": "Use one of the layer types listed in capabilities.json (arcgis-auto, feature, map-image, imagery, geojson, wms, wfs, kml).",
+    "UNSUPPORTED_LAYER_TYPE": "Use one of the layer types in map.layerTypes in capabilities.json.",
     "TOO_MANY_LAYERS": "A map holds at most 10 data layers. Remove one with layers.remove before adding another.",
     "LAYER_LOAD_FAILED": "Check the URL in a browser with ?f=pjson appended. The service may be down, private or not a layer URL.",
     "CORS_BLOCKED": "The publisher does not allow browser access to this service. Use another source, or download the data and add it as a file.",
@@ -259,11 +259,13 @@
     "map-image",
     "imagery",
     "geojson",
+    "geoparquet",
     "wms",
     "wfs",
     "kml",
     "pointcloud",
-    "model"
+    "model",
+    "vector-tiles"
   ],
   "rendererTypes": [
     "service",
@@ -630,5 +632,118 @@
       }
     }
   ],
-  "authoringCommandSchema": "/schemas/agent-command-v1.schema.json"
+  "authoringCommandSchema": "/schemas/agent-command-v1.schema.json",
+  "map": {
+    "specSchema": "/schemas/map-v1.schema.json",
+    "layerTypes": [
+      "arcgis-auto",
+      "feature",
+      "map-image",
+      "imagery",
+      "geojson",
+      "geoparquet",
+      "wms",
+      "wfs",
+      "kml",
+      "pointcloud",
+      "model",
+      "vector-tiles"
+    ],
+    "renderers": [
+      "service",
+      "simple",
+      "choropleth",
+      "graduated-symbols",
+      "categories",
+      "heatmap",
+      "arcgis",
+      "auto"
+    ],
+    "styles": [
+      "service",
+      "simple",
+      "choropleth",
+      "graduated",
+      "categories",
+      "heatmap",
+      "auto"
+    ],
+    "breakMethods": [
+      "natural-breaks",
+      "quantile",
+      "equal-interval",
+      "auto"
+    ],
+    "basemaps": [
+      "topo-3d",
+      "navigation-3d",
+      "navigation-dark-3d",
+      "osm-3d",
+      "gray-3d",
+      "dark-gray-3d",
+      "streets-3d",
+      "streets-dark-3d",
+      "topo-vector",
+      "streets-vector",
+      "navigation",
+      "gray-vector",
+      "dark-gray-vector",
+      "osm",
+      "satellite",
+      "hybrid",
+      "usgs-imagery",
+      "usgs-imagery-topo",
+      "open-liberty",
+      "open-bright",
+      "open-positron",
+      "open-dark",
+      "open-fiord",
+      "skin"
+    ],
+    "ramps": [
+      "greens",
+      "blues",
+      "reds",
+      "oranges",
+      "purples",
+      "viridis",
+      "magma",
+      "red-blue-diverging",
+      "brown-teal-diverging"
+    ],
+    "skins": [
+      "gismap",
+      "clean-light",
+      "dark-analytical",
+      "tidal-95",
+      "portolan",
+      "velvet-orbit",
+      "violet-circuit",
+      "highway",
+      "steeler",
+      "slice",
+      "wavelength",
+      "connect"
+    ],
+    "limits": {
+      "maxLayers": 10,
+      "readableSpecChars": 8192,
+      "qrSafeUrlLength": 2800
+    },
+    "errors": [
+      "INVALID_URL",
+      "HTTPS_REQUIRED",
+      "CREDENTIAL_IN_URL",
+      "UNSUPPORTED_LAYER_TYPE",
+      "TOO_MANY_LAYERS",
+      "LAYER_LOAD_FAILED",
+      "CORS_BLOCKED",
+      "SERVICE_ERROR",
+      "FIELD_NOT_FOUND",
+      "INVALID_SPEC",
+      "NOT_READY",
+      "NOT_FOUND",
+      "SPEC_TOO_LONG"
+    ]
+  }
 }

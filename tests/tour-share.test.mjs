@@ -31,7 +31,7 @@ assert.match(ui, /Share & export/);
 assert.match(ui, /Download \.gisatlas/);
 assert.match(ui, /#renderTourShareCard\(regularUrl, title\)/);
 assert.match(ui, /title: title \|\| "Guided places",/, "Tour cards fall back to the default tour name.");
-assert.match(ui, /const safeTitle = String\(title \|\| "GIS Map Online"\)\.slice\(0, 54\)/);
+assert.match(ui, /const safeTitle = String\(title \|\| "GISMap Online"\)\.slice\(0, 54\)/);
 assert.match(pdf, /context\.textAlign = "left"/);
 assert.match(ui, /long-click the QR code/);
 
