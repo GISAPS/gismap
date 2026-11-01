@@ -1781,6 +1781,8 @@ export class MaplibreEngine {
     if (type === "rectangle") this.map?.dragPan.disable();
   }
 
+  /** Completes a line or polygon still being drawn, as a double-click would. */
+  finishDrawing() { if (["polyline", "polygon"].includes(this.drawing?.type)) this.#completeDrawing(); }
   hasDrawings() { return this.drawings.length > 0; }
   /** Replaces the drawings with saved GeoJSON features. */
   async setDrawings(features = []) {

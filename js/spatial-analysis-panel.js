@@ -3,6 +3,8 @@ import { SPATIAL_OPERATIONS } from "./spatial-analysis.js?v=0.66.0-analysis1";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 const GEOMETRY_NOTE = { polygon: "polygons", point: "points", any: "any geometry" };
+const MULTI_CLICK_HINT = "Click to add points, then double-click to finish.";
+const DRAW_HINTS = { point: "Click the map to place the point.", polyline: MULTI_CLICK_HINT, polygon: MULTI_CLICK_HINT, rectangle: "Drag on the map to draw the rectangle." };
 const DRAW_TYPES = [["point", "Point"], ["polyline", "Line"], ["polygon", "Polygon"], ["rectangle", "Rectangle"]];
 
 export function openSpatialAnalysis(ui, analysis) {
@@ -37,6 +39,8 @@ export function openSpatialAnalysis(ui, analysis) {
     const layers = globalThis.gisMapOnline.layers.list().filter((layer) => controller.getLayer(layer.id)?.queryable);
     return [`<option value="drawings">Drawings on the map (${count})</option>`, ...layers.map((layer) => `<option value="${escapeHtml(layer.id)}">${escapeHtml(layer.title)}</option>`)].join("");
   };
+  let hint = "";
+  let drawn = controller.getDrawings().length;
   const refreshSources = () => {
     for (const select of [get("input"), get("overlay")]) {
       const chosen = select.value;
@@ -44,7 +48,9 @@ export function openSpatialAnalysis(ui, analysis) {
       if ([...select.options].some((option) => option.value === chosen)) select.value = chosen;
     }
     const count = controller.getDrawings().length;
-    get("drawings").textContent = count ? `${count} drawn ${count === 1 ? "shape" : "shapes"}. Choose Drawings on the map as the input or overlay.` : "Pick a shape, then draw it on the map.";
+    if (count !== drawn) hint = "";
+    drawn = count;
+    get("drawings").textContent = hint || (count ? `${count} drawn ${count === 1 ? "shape" : "shapes"}. Choose Drawings on the map as the input or overlay.` : "Pick a shape, then draw it on the map.");
   };
   const renderOperation = () => {
     const operation = current();
@@ -55,6 +61,8 @@ export function openSpatialAnalysis(ui, analysis) {
   get("operation").addEventListener("change", renderOperation);
   root.querySelectorAll("[data-analysis-draw]").forEach((button) => button.addEventListener("click", () => {
     controller.draw(button.dataset.analysisDraw);
+    hint = DRAW_HINTS[button.dataset.analysisDraw];
+    refreshSources();
     get("input").value = "drawings";
     if (ui.mobileMedia.matches) drawOnMobile(ui);
   }));
@@ -66,6 +74,10 @@ export function openSpatialAnalysis(ui, analysis) {
     output.textContent = "Running…";
     get("run").disabled = true;
     try {
+      // A shape still in progress counts, so Run works without the double-click.
+      controller.engine?.finishDrawing?.();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      refreshSources();
       const result = await analysis.run(operation.id, { input: get("input").value, overlay: operation.overlay ? get("overlay").value : undefined, options });
       output.textContent = result.summary;
       ui.toast(result.summary);

@@ -2031,7 +2031,7 @@ export class UIController {
           break;
         }
         case "tools-spatial-analysis": {
-          const { openSpatialAnalysis } = await import("./spatial-analysis-panel.js?v=0.66.0-analysis1");
+          const { openSpatialAnalysis } = await import("./spatial-analysis-panel.js?v=0.66.1-finish1");
           openSpatialAnalysis(this, globalThis.gisMapOnline.analysis);
           break;
         }

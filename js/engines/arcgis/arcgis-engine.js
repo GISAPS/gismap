@@ -484,6 +484,9 @@ export class ArcGISEngine {
     this.sketch?.create(type);
   }
 
+  /** Completes a line or polygon still being drawn, as a double-click would. */
+  finishDrawing() { this.sketch?.complete(); }
+
   hasDrawings() {
     return Boolean(this.drawLayer?.graphics?.length);
   }
