@@ -274,7 +274,7 @@ export function buildLlmsTxt({ capabilities, examples = null }) {
 
 ${noToolsPath()}
 
-The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
+The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. It can also carry "analysis" steps the browser runs after loading, such as [{"operation":"buffer","input":0,"options":{"distanceKm":5}}]; the operations are in /api/capabilities.json under map.analysisOperations. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
 
 ## Links a chatbot can write (no code, no account)
 

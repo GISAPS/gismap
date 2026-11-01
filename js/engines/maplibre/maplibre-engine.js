@@ -1230,6 +1230,8 @@ export class MaplibreEngine {
       return this.#addScene3d({ scene3d }, scene3dType, { file, projectPath });
     }
     const parsed = await parseLocalVectorFile(file);
+    // A basemap may still be swapping in when an address runs analysis or adds a file.
+    if (!this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 3000); });
     const parts = options.collectionKey != null ? parsed.collections.filter((part) => part.key === options.collectionKey) : parsed.collections;
     if (!parts.length) throw new Error("The requested shapefile was not found in the archive.");
     let first;

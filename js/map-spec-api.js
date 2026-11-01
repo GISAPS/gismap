@@ -2,7 +2,7 @@
 // through the `layers` and `camera` APIs, and exports the current map as one.
 // Issues (from the schema, and from loading: a misspelled field, a service that
 // will not load) are collected so describe() and the issues panel can show them.
-import { MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.60.18-trains1";
+import { MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.66.0-analysis1";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
 import { basemapEntry, basemapLabel, basemapOnEngine } from "./basemap-catalog.js?v=0.53.0-gallery1";
 
@@ -12,7 +12,7 @@ const within = (promise, seconds) => Promise.race([promise, new Promise((resolve
  * host: { setBasemap(id), applySkin(id), setTitle(text), showLegend(), showIssues(issues), loadBriefing(doc) }
  * issues: the shared list describe() reports (replaced on each load).
  */
-export function createMapSpecApi({ layers, camera, mapController, host = {}, issues = [], allowHttp = false }) {
+export function createMapSpecApi({ layers, camera, mapController, analysis = null, host = {}, issues = [], allowHttp = false }) {
   const popups = new Map();
 
   /**
@@ -85,6 +85,14 @@ export function createMapSpecApi({ layers, camera, mapController, host = {}, iss
         }
         if (entry.popup) popups.set(info.id, entry.popup);
         loaded.push(info);
+      }
+      for (const [index, step] of (spec.analysis || []).entries()) {
+        const source = (value) => Number.isInteger(value) ? spec.layers[value] && loaded.find((item) => item.url === spec.layers[value].url)?.id : value;
+        try {
+          await analysis?.run(step.operation, { ...step, input: source(step.input), overlay: source(step.overlay) });
+        } catch (error) {
+          issues.push({ level: "warning", code: "INVALID_SPEC", path: `analysis[${index}]`, message: `${step.operation}: ${error.message}` });
+        }
       }
       if (spec.camera?.center) {
         await within(camera.set(spec.camera, { animate: false }).catch(() => null), 8);

@@ -43,6 +43,23 @@
       "description": "The data, drawn in order (the last is on top). At most 10.",
       "items": { "$ref": "#/$defs/layer" }
     },
+    "analysis": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "Spatial analysis the browser runs after the layers load. Each result is added as a layer.",
+      "items": {
+        "type": "object",
+        "required": ["operation", "input"],
+        "properties": {
+          "operation": { "enum": ["measure", "buffer", "dissolve", "centroid", "convex-hull", "envelope", "simplify", "voronoi", "kmeans", "dbscan", "hexbin", "nearest", "select", "join", "count", "clip", "erase"] , "description": "See /api/capabilities.json map.analysisOperations." },
+          "input": { "description": "A position in layers (0 is the first), or GeoJSON.", "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "object" }] },
+          "overlay": { "description": "A position in layers, or GeoJSON. Required by overlay operations.", "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "object" }] },
+          "options": { "type": "object", "description": "For example { \"distanceKm\": 5 }. See gisMapOnline.analysis.operations()." },
+          "title": { "type": "string", "maxLength": 120 }
+        },
+        "additionalProperties": false
+      }
+    },
     "legend": { "type": "boolean", "default": false, "description": "Open the legend." },
     "briefing": {
       "description": "Optional slides that present the map, as a briefing-v1 document (https://gismap.online/schemas/briefing-v1.schema.json). Its layerId may be one of the layer URLs.",

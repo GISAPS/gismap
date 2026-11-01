@@ -26,7 +26,7 @@ Curated datasets (the link needs no field names):
 - `https://gismap.online/?example=usgs-earthquakes`: Continuously updated GeoJSON feed of global earthquake activity. Key fields: mag, place, time.
 - `https://gismap.online/?example=world-countries-generalized`: Generalized country boundaries from an ArcGIS feature service. Key fields: COUNTRY, ISO.
 
-The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
+The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. It can also carry "analysis" steps the browser runs after loading, such as [{"operation":"buffer","input":0,"options":{"distanceKm":5}}]; the operations are in /api/capabilities.json under map.analysisOperations. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
 
 ## Links a chatbot can write (no code, no account)
 
@@ -319,6 +319,7 @@ Top-level properties:
 - `skin`: The interface look. It never changes a layer's style; with the skin basemap the map is drawn in its colours, and with the MapLibre engine layers that have no style take its accent colour. One of: gismap, clean-light, dark-analytical, tidal-95, portolan, velvet-orbit, violet-circuit, highway, steeler, slice, wavelength, connect.
 - `camera`: Where the map looks. Default { "fit": "layers" }: fit the loaded data (its dense core when it spreads over half the world).
 - `layers`: The data, drawn in order (the last is on top). At most 10.
+- `analysis`: Spatial analysis the browser runs after the layers load. Each result is added as a layer.
 - `legend`: Open the legend.
 - `briefing`: Optional slides that present the map, as a briefing-v1 document (https://gismap.online/schemas/briefing-v1.schema.json). Its layerId may be one of the layer URLs.
 

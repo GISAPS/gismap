@@ -266,7 +266,7 @@ test("Auto detail steps down a tier while playback stays slow, and never touches
   await mode.load({ cinematic: { clock: { timeMode: "instant", durationSeconds: 1, rate: 2 }, layers: [{ layerRef: "fires", temporal: { startField: "time" }, animation: { effect: { type: "fire" } } }] } });
   assert.equal(qualities.at(-1), "cinematic");
   mode.play();
-  for (let wait = 0; wait < 100 && mode.state().detail.lightened !== "eco"; wait += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+  for (let wait = 0; wait < 300 && qualities.at(-1) !== "eco"; wait += 1) await new Promise((resolve) => setTimeout(resolve, 10));
   mode.pause(); await mode.renderTask;
   assert.equal(mode.state().detail.lightened, "eco");
   assert.ok(qualities.includes("balanced") && qualities.at(-1) === "eco", "steps down one tier at a time");

@@ -168,7 +168,7 @@ test("the schema, capabilities and app describe the same map spec", async () => 
   const schema = JSON.parse(await readFile(new URL("../schemas/map-v1.schema.json", import.meta.url), "utf8"));
   const capabilities = JSON.parse(await readFile(new URL("../api/capabilities.json", import.meta.url), "utf8"));
   assert.equal(schema.$id, "https://gismap.online/schemas/map-v1.schema.json");
-  assert.deepEqual(Object.keys(schema.properties).sort(), ["$schema", "basemap", "briefing", "camera", "description", "layers", "legend", "skin", "title", "version"]);
+  assert.deepEqual(Object.keys(schema.properties).sort(), ["$schema", "analysis", "basemap", "briefing", "camera", "description", "layers", "legend", "skin", "title", "version"]);
   assert.deepEqual(Object.keys(schema.$defs.layer.properties).sort(), ["animatedEffect", "ignoreServiceScaleRange", "opacity", "popup", "refreshInterval", "renderer", "scene3d", "spatialChart", "title", "type", "url", "visible", "where"]);
   assert.equal(capabilities.schemas.map, "/schemas/map-v1.schema.json");
   assert.ok(capabilities.namespaces.mapSpec.includes("load") && capabilities.namespaces.mapSpec.includes("fromCurrent"));

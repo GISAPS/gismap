@@ -1,7 +1,7 @@
 // The Map assistant's chat panel: the conversation, each map action the model
 // takes (shown as it happens), and the box to ask. The engine is
 // js/map-assistant.js; the model call is AIController.chat (js/ai.js).
-import { buildAssistantInstructions, runAssistantTurn } from "./map-assistant.js?v=0.57.0-skins1";
+import { buildAssistantInstructions, runAssistantTurn } from "./map-assistant.js?v=0.66.0-analysis1";
 import { renderMarkdown } from "./markdown.js?v=0.18.2";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);

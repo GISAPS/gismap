@@ -78,6 +78,10 @@ Recipes are composable: a 3D grape map with autumn colors, a linked dashboard, a
 5. Produce a link using the client library or UI, then decode and compare it and, with a browser, open it. See [sharing](references/sharing.md).
 6. Return the link and a concise description, cite data sources, and keep credentials and private data out of it. See [troubleshooting](references/troubleshooting.md).
 
+### Spatial analysis
+
+Add `"analysis": [{ "operation": "buffer", "input": 0, "options": { "distanceKm": 5 } }]` to a map-v1 spec to run up to five steps in the viewer's browser after the layers load; `input` and `overlay` are a position in `layers` or GeoJSON. In a running page use `gisMapOnline.analysis.run(operation, { input, overlay, options })`, where input can also be `"drawings"`. Operations: `gisMapOnline.analysis.operations()` or `map.analysisOperations` in `/api/capabilities.json`. At most 20,000 features per source; report `truncated` if set.
+
 ### Application manifest and privacy-safe state
 
 In a running GISMap page, `gisMapOnline.manifest()` describes the live tool and panel registries. `gisMapOnline.state.snapshot()` returns a versioned, privacy-preserving projection; `state.subscribe(listener)` observes revisioned diffs and returns a removable subscription. The projection intentionally omits data records, source URLs, filter values, and coordinates, so it is not a project export. `state.mutate('layer.activate', { layerId })` validates an existing layer ID (or null); `state.undo()` uses the existing application state history. Consult `/api/manifest.json` and `/api/explorer/` for discovery and the stated coverage limitations. Existing `describe()` and application APIs remain unchanged.

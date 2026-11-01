@@ -6,6 +6,10 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## [Unreleased]
 
+### Spatial analysis
+
+- Add Tools > Spatial Analysis on both engines: measure, buffer, dissolve, hull, Voronoi, clusters, hexagons, nearest, select, join, count, clip and erase. Layers or shapes drawn on the map can be inputs, and results are added as layers. Agents can use `gisMapOnline.analysis`, the assistant's `spatial_analysis` tool, or `analysis` steps in a map spec.
+
 ### Spreadsheets
 
 - Add CSV, TSV, XLSX, XLSM, ODS and public Google Sheets as point layers. X/Y, Long/Lat, Longitude/Latitude and other column names are recognized, and a dialog asks for the columns when they are not.

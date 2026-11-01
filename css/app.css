@@ -3179,3 +3179,7 @@ body.briefing-v2 .briefing-data-dock :is(.briefing-select__add-slides, .briefing
 /* The "Made with" credit in the map's attribution row: skin colours, so it stays legible over any basemap. */
 .gismap-made-with { display: inline-block; padding: 0 4px; border-radius: 2px; background: var(--surface); color: var(--ink) !important; font-weight: 600; text-decoration: underline; }
 .gismap-made-with:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.spatial-analysis { display: grid; gap: 10px; }
+.spatial-analysis__draw { border: 1px solid var(--line, #8884); border-radius: 6px; padding: 8px; }
+.spatial-analysis__done { position: fixed; z-index: 60; left: 50%; bottom: 24px; transform: translateX(-50%); }

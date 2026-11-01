@@ -744,6 +744,25 @@
       "NOT_READY",
       "NOT_FOUND",
       "SPEC_TOO_LONG"
+    ],
+    "analysisOperations": [
+      "measure",
+      "buffer",
+      "dissolve",
+      "centroid",
+      "convex-hull",
+      "envelope",
+      "simplify",
+      "voronoi",
+      "kmeans",
+      "dbscan",
+      "hexbin",
+      "nearest",
+      "select",
+      "join",
+      "count",
+      "clip",
+      "erase"
     ]
   }
 }

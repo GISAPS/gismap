@@ -3,6 +3,7 @@
 // and the map block of api/capabilities.json is generated. Pure (no Node APIs),
 // so scripts/build-examples.mjs writes the files and scripts/check-contracts.mjs
 // can check them. Hand-written parts of those files are left alone.
+import { SPATIAL_OPERATION_IDS } from "../js/spatial-analysis.js";
 import { generateSkillMarkdown } from "./agent-docs.mjs";
 import { ERROR_CODES } from "../js/gismap-errors.js";
 import { MAP_SPEC_JSON_LIMIT, QR_SAFE_LENGTH } from "../js/map-share.js";
@@ -32,8 +33,8 @@ function replaceEnum(text, key, values) {
 }
 
 export function generateMapSchema(text) {
-  return ["basemap", "skin", "type"].reduce((schema, key) => {
-    const values = { basemap: CONTRACT_ENUMS.basemaps, skin: CONTRACT_ENUMS.skins, type: CONTRACT_ENUMS.layerTypes }[key];
+  return ["basemap", "skin", "type", "operation"].reduce((schema, key) => {
+    const values = { basemap: CONTRACT_ENUMS.basemaps, skin: CONTRACT_ENUMS.skins, type: CONTRACT_ENUMS.layerTypes, operation: SPATIAL_OPERATION_IDS }[key];
     return replaceEnum(schema, key, values);
   }, text);
 }
@@ -49,7 +50,7 @@ export function generateCapabilities(text) {
     ...capabilities,
     errorCodes: { ...ERROR_CODES },
     layerTypes, rendererTypes: renderers, breakMethods, ramps, basemaps,
-    map: { specSchema: "/schemas/map-v1.schema.json", layerTypes, renderers, styles, breakMethods, basemaps, ramps, skins, limits, errors },
+    map: { specSchema: "/schemas/map-v1.schema.json", layerTypes, renderers, styles, breakMethods, basemaps, ramps, skins, limits, errors, analysisOperations: [...SPATIAL_OPERATION_IDS] },
   };
   return `${JSON.stringify(generated, null, 2)}\n`;
 }

@@ -17,9 +17,11 @@ import { GisMapError } from "./gismap-errors.js?v=0.28.0";
 
 export const MAP_SPEC_VERSION = 1;
 export const MAP_SPEC_SCHEMA = "https://gismap.online/schemas/map-v1.schema.json";
+import { SPATIAL_OPERATION_IDS, SPATIAL_OPERATIONS } from "./spatial-analysis.js?v=0.66.0-analysis1";
+
 export { MAP_SPEC_JSON_LIMIT };
 
-const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "layers", "legend", "briefing"]);
+const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "layers", "legend", "briefing", "analysis"]);
 const LAYER_KEYS = new Set(["url", "type", "title", "where", "renderer", "spatialChart", "animatedEffect", "scene3d", "opacity", "visible", "ignoreServiceScaleRange", "popup", "outFields", "refreshInterval"]);
 const SKINS = new Set(INTERFACE_SKINS.map(({ id }) => id));
 const READ_ONLY_WHERE = /;|--|\/\*|\b(drop|delete|insert|update|alter|exec|execute|merge|truncate|create)\b/i;
@@ -154,6 +156,19 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
       validateBriefing(briefing).filter((item) => item.level === "error").forEach((item) => issue("warning", "INVALID_SPEC", `briefing.slides[${item.slideId}]`, item.message));
       spec.briefing = briefing;
     }
+  }
+  if (input.analysis !== undefined && input.analysis !== null) {
+    const steps = Array.isArray(input.analysis) ? input.analysis.slice(0, 5) : [];
+    if (!Array.isArray(input.analysis) || input.analysis.length > 5) issue("warning", "INVALID_SPEC", "analysis", "analysis must be a list of at most 5 steps.");
+    const source = (value) => value === "drawings" || (value && typeof value === "object") || (Number.isInteger(value) && value >= 0 && value < spec.layers.length);
+    const kept = steps.filter((step, index) => {
+      const operation = SPATIAL_OPERATIONS.find((item) => item.id === step?.operation);
+      if (!operation) issue("warning", "INVALID_SPEC", `analysis[${index}].operation`, `Unknown analysis "${step?.operation}"; the step was ignored.`, `Use one of: ${SPATIAL_OPERATION_IDS.join(", ")}.`);
+      else if (!source(step.input) || (operation.overlay && !source(step.overlay))) issue("warning", "INVALID_SPEC", `analysis[${index}]`, "input and overlay must be a layer's position in layers, or GeoJSON; the step was ignored.");
+      else return true;
+      return false;
+    });
+    if (kept.length) spec.analysis = kept.map(({ operation, input: from, overlay, options, title }) => ({ operation, input: from, ...(overlay !== undefined ? { overlay } : {}), ...(options ? { options } : {}), ...(title ? { title: text(title, 120) } : {}) }));
   }
   return { valid: !issues.some((item) => item.level === "error"), issues, spec };
 }

@@ -11,7 +11,7 @@ import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
 import { POPULAR_SERVICES } from "./catalog.js?v=0.18.2";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.57.0-skins1";
-import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.61.1-dashboard-agent";
+import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.66.0-analysis1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
 import { createShareUrl } from "./share.js?v=0.54.0-unified4";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
@@ -2028,6 +2028,11 @@ export class UIController {
         case "data-duckdb": {
           const { openDuckdbPanel } = await import("./data-connections-panel.js?v=0.65.0-paths");
           openDuckdbPanel(this, this.applicationRuntime.duckdb);
+          break;
+        }
+        case "tools-spatial-analysis": {
+          const { openSpatialAnalysis } = await import("./spatial-analysis-panel.js?v=0.66.0-analysis1");
+          openSpatialAnalysis(this, globalThis.gisMapOnline.analysis);
           break;
         }
         case "tools-sql-workspace": {
