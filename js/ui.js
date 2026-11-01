@@ -72,6 +72,8 @@ import { defaultRun } from "./text-boxes.js?v=0.65.0-paths";
 
 const BUILDINGS_3D_KEY = "gismap-online:buildings-3d:v1";
 const DISPLAY_SETTINGS_KEY = "gismap-online:display:v1";
+const BRAND_SETTINGS_KEY = "gismap:application-brand:v1";
+const DEFAULT_BRAND = Object.freeze({ name: "GISMap Online", logo: "./assets/gis-map-online-mark-v2.png" });
 const WELCOME_PREFERENCE_KEY = "gismap.welcome.v1";
 const DOCKABLE_PANELS = { places: "Places", bookmarks: "Bookmarks", draw: "Draw", intelligence: "Intelligence", layers: "Layers", observations: "Notes & Tasks" };
 const RECENT_PLACES_KEY = "gismap-online:recent-places:v1";
@@ -252,6 +254,7 @@ export class UIController {
   }
 
   initialize() {
+    this.#applyBrandSettings();
     this.panelManager?.register("content:intelligence", document.querySelector("#intelligence-content"), { shell: document.querySelector("#intelligence-panel") });
     this.panelManager?.register("content:draw", document.querySelector(".draw-tools"), { shell: document.querySelector("#draw-panel") });
     this.#initDockablePanels();
@@ -1993,6 +1996,9 @@ export class UIController {
         case "project-share":
           await this.#copyShareLink();
           break;
+        case "project-application-settings":
+          this.#applicationSettingsDialog();
+          break;
         case "data-file":
           document.querySelector("#data-file-input").click();
           break;
@@ -2290,6 +2296,80 @@ export class UIController {
         this.projectManager.save(this.dialog.querySelector("#save-project-name").value);
         this.dialog.close();
       }}],
+    });
+  }
+
+  #readBrandSettings() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(BRAND_SETTINGS_KEY) || "{}");
+      return {
+        name: String(stored?.name || DEFAULT_BRAND.name).trim().slice(0, 80) || DEFAULT_BRAND.name,
+        logo: typeof stored?.logo === "string" && stored.logo.startsWith("data:image/") ? stored.logo : DEFAULT_BRAND.logo,
+      };
+    } catch {
+      return { ...DEFAULT_BRAND };
+    }
+  }
+
+  #applyBrandSettings(brand = this.#readBrandSettings()) {
+    document.querySelectorAll("[data-brand-name]").forEach((element) => { element.textContent = brand.name; });
+    document.querySelectorAll("[data-brand-logo]").forEach((image) => {
+      image.src = brand.logo;
+      image.alt = `${brand.name} logo`;
+    });
+    document.querySelectorAll("[data-brand-atlas-name]").forEach((element) => { element.textContent = `${brand.name} Guided Places`; });
+    document.querySelectorAll("[data-brand-tools-label]").forEach((element) => { element.setAttribute("aria-label", `${brand.name} tools`); });
+    document.title = `${brand.name}: Geospatial Application`;
+  }
+
+  async #readBrandLogo(file) {
+    if (!file) return null;
+    if (!file.type.startsWith("image/")) throw new Error("Choose an image file for the application logo.");
+    if (file.size > 2 * 1024 * 1024) throw new Error("Choose a logo smaller than 2 MB so it can be stored in this browser.");
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("The logo file could not be read."));
+      reader.onerror = () => reject(new Error("The logo file could not be read."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  #applicationSettingsDialog() {
+    const current = this.#readBrandSettings();
+    this.openDialog({
+      eyebrow: "White-label this installation",
+      title: "Application settings",
+      content: `<section class="application-brand-settings">
+        <label class="field"><span>Application name</span><input id="application-brand-name" maxlength="80" value="${escapeHtml(current.name)}" /></label>
+        <label class="field"><span>Logo file <small>optional; PNG, SVG, or another image under 2 MB</small></span><input id="application-brand-logo" type="file" accept="image/*" /></label>
+        <div class="application-brand-settings__preview"><img src="${escapeHtml(current.logo)}" alt="Current application logo" /><strong>${escapeHtml(current.name)}</strong></div>
+        <p class="form-note">Branding is saved only in this browser on this installation. It is not added to projects, shared links, or exported files.</p>
+      </section>`,
+      actions: [
+        { label: "Save branding", primary: true, handler: async () => {
+          const button = this.dialog.querySelector(".button--primary");
+          button.disabled = true;
+          try {
+            const name = this.dialog.querySelector("#application-brand-name").value.trim().slice(0, 80) || DEFAULT_BRAND.name;
+            const file = this.dialog.querySelector("#application-brand-logo").files?.[0];
+            const logo = await this.#readBrandLogo(file) || current.logo;
+            const brand = { name, logo };
+            localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brand));
+            this.#applyBrandSettings(brand);
+            this.dialog.close();
+            this.toast("Application branding saved for this installation.");
+          } catch (error) {
+            button.disabled = false;
+            this.error(error.message);
+          }
+        } },
+        { label: "Reset to GISMap Online", handler: () => {
+          localStorage.removeItem(BRAND_SETTINGS_KEY);
+          this.#applyBrandSettings({ ...DEFAULT_BRAND });
+          this.dialog.close();
+          this.toast("Application branding reset to GISMap Online.");
+        } },
+      ],
     });
   }
 
@@ -4505,16 +4585,18 @@ export class UIController {
             </div>
           </article>`;
         }).join("")
-      : '<div class="empty-state">No ArcGIS identity connections are configured in this browser.</div>';
+      : '<div class="empty-state">No server connections are configured in this browser.</div>';
 
     this.openDialog({
-      eyebrow: "IdentityManager + OAuthInfo",
-      title: "ArcGIS connections",
+      eyebrow: "Connection setup",
+      title: "Add a Server",
       content: `<section class="connection-manager">
           <div id="connection-list" class="connection-list">${connectionCards}</div>
 
-          <details class="connection-setup" open>
-            <summary>Add Portal or ArcGIS Online</summary>
+          <label class="field"><span>Server configuration</span><select id="connection-kind"><option value="">Choose a configuration…</option><option value="portal">ArcGIS Portal or ArcGIS Online</option><option value="standalone">Standalone server</option></select></label>
+
+          <section class="connection-setup" data-connection-config="portal" hidden>
+            <h3>ArcGIS Portal or ArcGIS Online</h3>
             <div class="connection-setup__body">
               <div class="field-grid">
                 <label class="field"><span>Connection name <small>optional</small></span><input id="portal-connection-name" placeholder="Acme GIS" /></label>
@@ -4525,39 +4607,30 @@ export class UIController {
               <label class="field"><span>URI to register for popup mode</span><div class="copy-field"><input id="portal-callback-url" readonly value="${escapeHtml(callbackUrl)}" /><button type="button" data-copy-uri="${escapeHtml(callbackUrl)}">Copy</button></div></label>
               <label class="field"><span>URI to register for redirect mode</span><div class="copy-field"><input id="portal-redirect-url" readonly value="${escapeHtml(redirectUrl)}" /><button type="button" data-copy-uri="${escapeHtml(redirectUrl)}">Copy</button></div></label>
               <button type="button" id="add-portal-connection" class="inline-primary">Save &amp; connect</button>
-              <p class="form-note">The organization administrator registers GIS Map Online once and supplies this public Client ID. Sign-in uses OAuth authorization code + PKCE when supported; no client secret belongs in this browser app.</p>
+              <p class="form-note">The organization administrator registers this application once and supplies its public Client ID. Sign-in uses OAuth authorization code + PKCE when supported; no client secret belongs in this browser app.</p>
             </div>
-          </details>
+          </section>
 
-          <details class="connection-setup">
-            <summary>Standalone ArcGIS Server — token authentication</summary>
+          <section class="connection-setup" data-connection-config="standalone" hidden>
+            <h3>Standalone server</h3>
             <div class="connection-setup__body">
-              <label class="field"><span>Connection name <small>optional</small></span><input id="token-server-name" placeholder="Parcel server" /></label>
-              <label class="field"><span>ArcGIS Server root URL</span><input id="token-server-url" type="url" placeholder="https://gis.example.com/server" /></label>
-              <label class="field"><span>Token service URL <small>discovered automatically when possible</small></span><input id="token-server-token-url" type="url" placeholder="https://gis.example.com/server/tokens/generateToken" /></label>
-              <button type="button" id="add-token-server" class="inline-primary">Save &amp; connect</button>
-              <p class="form-note">Use this only for a secured, non-federated ArcGIS Server. IdentityManager owns the credential challenge and token; GIS Map Online does not read or serialize the username, password, or token.</p>
+              <label class="field"><span>Authentication</span><select id="standalone-auth-mode"><option value="token">Token authentication</option><option value="web-tier">Web-tier authentication</option></select></label>
+              <label class="field"><span>Connection name <small>optional</small></span><input id="standalone-server-name" placeholder="Parcel server" /></label>
+              <label class="field"><span>Server root URL</span><input id="standalone-server-url" type="url" placeholder="https://gis.example.com/server" /></label>
+              <label class="field" data-token-service-field><span>Token service URL <small>discovered automatically when possible</small></span><input id="standalone-server-token-url" type="url" placeholder="https://gis.example.com/server/tokens/generateToken" /></label>
+              <button type="button" id="add-standalone-server" class="inline-primary">Save &amp; connect</button>
+              <p class="form-note" data-standalone-help>Use this only for a secured, non-federated server. IdentityManager owns the credential challenge and token; this application does not read or serialize usernames, passwords, or tokens.</p>
             </div>
-          </details>
-
-          <details class="connection-setup">
-            <summary>Standalone ArcGIS Server — web-tier authentication <small>advanced</small></summary>
-            <div class="connection-setup__body">
-              <label class="field"><span>Connection name <small>optional</small></span><input id="web-server-name" placeholder="Internal GIS" /></label>
-              <label class="field"><span>ArcGIS Server root URL</span><input id="web-server-url" type="url" placeholder="https://gis.internal.example/arcgis" /></label>
-              <button type="button" id="add-web-server" class="inline-primary">Save &amp; test browser access</button>
-              <p class="form-note">For IWA, PKI, or reverse-proxy authentication managed by the browser and web tier. This requires correct TLS, credentialed CORS, and usually the organization's network or VPN.</p>
-            </div>
-          </details>
+          </section>
 
           <section id="connection-test-report" class="connection-report" hidden></section>
 
-          <div class="warning-box connection-security"><strong>Project portability and security</strong><p>Connection names, URLs, and public Client IDs are saved locally and included in project exports. Credentials and access tokens are never added to a .gis or .gisx file. Imported projects require a fresh sign-in. The Portal/Server must use HTTPS and allow this site through CORS.</p></div>
+          <div class="warning-box connection-security"><strong>Project portability and security</strong><p>Connection names, URLs, and public Client IDs are saved locally and included in project exports. Credentials and access tokens are never added to a .gis or .gisx file. Imported projects require a fresh sign-in. The selected server must use HTTPS and allow this site through CORS.</p></div>
         </section>`,
       actions: connections.length ? [{ label: "Sign out all", handler: () => {
         this.authController.signOutAll();
         this.#connectionsDialog();
-        this.toast("Signed out of ArcGIS connections for this browser session.");
+        this.toast("Signed out of server connections for this browser session.");
       }}] : [],
     });
 
@@ -4582,6 +4655,26 @@ export class UIController {
       target.hidden = false;
       target.scrollIntoView({ block: "nearest" });
     };
+    const configurationInput = this.dialog.querySelector("#connection-kind");
+    const standaloneAuthInput = this.dialog.querySelector("#standalone-auth-mode");
+    const syncConfiguration = () => {
+      const kind = configurationInput.value;
+      this.dialog.querySelectorAll("[data-connection-config]").forEach((section) => {
+        section.hidden = section.dataset.connectionConfig !== kind;
+      });
+    };
+    const syncStandaloneAuth = () => {
+      const webTier = standaloneAuthInput.value === "web-tier";
+      this.dialog.querySelector("[data-token-service-field]").hidden = webTier;
+      this.dialog.querySelector("#add-standalone-server").textContent = webTier ? "Save & test browser access" : "Save & connect";
+      this.dialog.querySelector("[data-standalone-help]").textContent = webTier
+        ? "For IWA, PKI, or reverse-proxy authentication managed by the browser and web tier. This requires correct TLS, credentialed CORS, and usually the organization's network or VPN."
+        : "Use this only for a secured, non-federated server. IdentityManager owns the credential challenge and token; this application does not read or serialize usernames, passwords, or tokens.";
+    };
+    configurationInput.addEventListener("change", syncConfiguration);
+    standaloneAuthInput.addEventListener("change", syncStandaloneAuth);
+    syncConfiguration();
+    syncStandaloneAuth();
     this.dialog.querySelectorAll("[data-copy-uri]").forEach((button) => button.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(button.dataset.copyUri);
@@ -4608,41 +4701,24 @@ export class UIController {
         this.error(error.message);
       }
     });
-    this.dialog.querySelector("#add-token-server").addEventListener("click", async (event) => {
+    this.dialog.querySelector("#add-standalone-server").addEventListener("click", async (event) => {
       const button = event.currentTarget;
-      setBusy(button, true, "Save & connect");
+      const authMode = standaloneAuthInput.value;
+      setBusy(button, true, authMode === "web-tier" ? "Save & test browser access" : "Save & connect");
       try {
-        const serverUrl = this.dialog.querySelector("#token-server-url").value;
-        const report = await this.authController.inspectServer(serverUrl, "token");
+        const serverUrl = this.dialog.querySelector("#standalone-server-url").value;
+        const report = await this.authController.inspectServer(serverUrl, authMode);
         if (report.federated) throw new Error(`This Server is federated. Add its owning Portal (${report.owningSystemUrl}) and use Portal OAuth instead.`);
         const connection = this.authController.addServer({
-          name: this.dialog.querySelector("#token-server-name").value,
+          name: this.dialog.querySelector("#standalone-server-name").value,
           serverUrl,
-          tokenServiceUrl: this.dialog.querySelector("#token-server-token-url").value || report.tokenServiceUrl,
-          authMode: "token",
+          tokenServiceUrl: authMode === "token" ? this.dialog.querySelector("#standalone-server-token-url").value || report.tokenServiceUrl : undefined,
+          authMode,
         });
-        await this.authController.connect(connection.id);
+        if (authMode === "token") await this.authController.connect(connection.id);
         this.#connectionsDialog();
       } catch (error) {
-        setBusy(button, false, "Save & connect");
-        this.error(error.message);
-      }
-    });
-    this.dialog.querySelector("#add-web-server").addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      setBusy(button, true, "Save & test browser access");
-      try {
-        const serverUrl = this.dialog.querySelector("#web-server-url").value;
-        const report = await this.authController.inspectServer(serverUrl, "web-tier");
-        if (report.federated) throw new Error(`This Server is federated. Add its owning Portal (${report.owningSystemUrl}) and use Portal OAuth instead.`);
-        this.authController.addServer({
-          name: this.dialog.querySelector("#web-server-name").value,
-          serverUrl,
-          authMode: "web-tier",
-        });
-        this.#connectionsDialog();
-      } catch (error) {
-        setBusy(button, false, "Save & test browser access");
+        setBusy(button, false, authMode === "web-tier" ? "Save & test browser access" : "Save & connect");
         this.error(error.message);
       }
     });
@@ -4672,7 +4748,7 @@ export class UIController {
     });
     this.dialog.querySelectorAll("[data-remove-connection]").forEach((button) => {
       button.addEventListener("click", () => {
-        if (!confirm("Remove this connection definition and sign out of all ArcGIS connections?")) return;
+        if (!confirm("Remove this server connection definition and sign out of its active session?")) return;
         this.authController.remove(button.dataset.removeConnection);
         this.#connectionsDialog();
       });
@@ -4806,10 +4882,11 @@ export class UIController {
   }
 
   #aboutDialog() {
+    const brand = this.#readBrandSettings();
     this.openDialog({
-      eyebrow: "About this build",
-      title: "GISMap Online",
-      content: `<div class="about-copy"><p>A free browser-based geospatial application for mapping, analysis, briefings, tours and field tasks.</p><p><a href="${appUrl("examples/")}">Browse public GIS examples</a> or read the <a href="${appUrl("guides/")}">GISMap guides</a>.</p><dl><div><dt>Version</dt><dd>${APP_VERSION}</dd></div><div><dt>Map engine</dt><dd>${escapeHtml(this.mapController.getEngineId() === "maplibre" ? "MapLibre" : "ArcGIS")}</dd></div><div><dt>Runtime</dt><dd>Static HTML + ES modules</dd></div><div><dt>Persistence</dt><dd>localStorage + portable ZIP</dd></div><div><dt>Identity</dt><dd>Optional ArcGIS OAuth / token authentication</dd></div><div><dt>Privacy</dt><dd>No GISMap Online account or database; credentials are excluded from projects</dd></div></dl></div>`,
+      eyebrow: "About this application",
+      title: brand.name,
+      content: `<div class="about-copy"><p>${escapeHtml(brand.name)} is a browser-based geospatial application for mapping, analysis, briefings, tours, and field tasks.</p><p><strong>GISMap Online home version:</strong> This installation is built from the GISMap Online project. Visit <a href="https://gismap.online/" target="_blank" rel="noopener noreferrer">GISMap.online ↗</a> for the home version, public examples, guides, and project updates.</p><p><a href="${appUrl("examples/")}">Browse available examples</a> or read the <a href="${appUrl("guides/")}">application guides</a>.</p><dl><div><dt>Version</dt><dd>${APP_VERSION}</dd></div><div><dt>Map engine</dt><dd>${escapeHtml(this.mapController.getEngineId() === "maplibre" ? "MapLibre" : "ArcGIS")}</dd></div><div><dt>Runtime</dt><dd>Static HTML + ES modules</dd></div><div><dt>Persistence</dt><dd>localStorage + portable ZIP</dd></div><div><dt>Identity</dt><dd>Optional Portal OAuth / server authentication</dd></div><div><dt>Privacy</dt><dd>No GISMap Online account or database; credentials are excluded from projects</dd></div></dl></div>`,
     });
   }
 

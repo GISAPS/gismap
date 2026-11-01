@@ -81,7 +81,7 @@ test('menus organize existing actions and clearly mark unimplemented tools', asy
   assert.doesNotMatch(map, /tools-display|data-sidebar-panel-toggle/);
   assert.match(modes, /Panels/);
   for (const id of ['tools-display', 'places-panel', 'bookmarks-panel', 'draw-panel', 'intelligence-panel', 'layers-panel', 'data-panel-workspace', 'data-panel-top-nav']) assert.ok(modes.includes(id), id);
-  for (const label of ['AI tools', 'Database tools', 'Map tools', 'Portal tools', 'Games', 'Custom tools']) assert.ok(tools.includes(label));
+  for (const label of ['AI tools', 'Database tools', 'Map tools', 'Servers', 'Games', 'Custom tools']) assert.ok(tools.includes(label));
   for (const id of ['tools-assistant', 'tools-ai', 'data-duckdb', 'data-postgis', 'tools-connections', 'game-dragons', 'tools-custom']) assert.ok(tools.includes(id));
   assert.match(tools, /disabled[^>]*>Analysis assistant/);
   assert.match(tools, /disabled[^>]*>Other portals/);

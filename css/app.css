@@ -1628,7 +1628,12 @@ dialog::backdrop { background: rgb(12 28 23 / 48%); backdrop-filter: blur(3px); 
 .connection-setup { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .connection-setup > summary { padding: 12px; cursor: pointer; font-size: 12px; font-weight: 700; }
 .connection-setup > summary small { color: var(--muted); font-weight: 400; }
+.connection-setup > h3 { margin: 0; padding: 12px; color: var(--ink); font-size: 12px; }
 .connection-setup__body { padding: 2px 12px 14px; border-top: 1px solid var(--surface-2); }
+.application-brand-settings { display: grid; gap: 13px; }
+.application-brand-settings__preview { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.application-brand-settings__preview img { width: 44px; height: 44px; object-fit: contain; }
+.application-brand-settings__preview strong { font-size: 15px; overflow-wrap: anywhere; }
 .copy-field { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
 .copy-field input { min-width: 0; }
 .connection-security { font-size: 11px; }

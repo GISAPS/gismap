@@ -143,7 +143,7 @@ test("Chart Tools has dedicated family actions which share one persisted builder
   const css = fs.readFileSync(new URL("../css/app.css", import.meta.url), "utf8");
   const project = fs.readFileSync(new URL("../js/project.js", import.meta.url), "utf8");
   for (const action of ["tools-chart-line-area", "tools-chart-bar-column", "tools-chart-scatter-bubble", "tools-chart-distribution-composition", "tools-chart-3d", "tools-chart-map", "tools-chart-custom"]) assert.match(html, new RegExp(`data-action="${action}"`));
-  assert.ok(html.indexOf('<span class="menu__label">Chart tools</span>') > html.indexOf('<span class="menu__label">Portal tools</span>'), "Chart Tools stays in the lower part of the Tools menu");
+  assert.ok(html.indexOf('<span class="menu__label">Chart tools</span>') > html.indexOf('<span class="menu__label">Servers</span>'), "Chart Tools stays in the lower part of the Tools menu");
   assert.doesNotMatch(html, /data-action="tools-charts-analytics">Charts &amp; Analytics/);
   assert.match(ui, /case "tools-chart-line-area":[\s\S]*?#openChartsAnalytics\(\{ family: "line-area" \}\)/);
   assert.match(ui, /chart-builder__gallery/);
