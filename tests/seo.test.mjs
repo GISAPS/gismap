@@ -19,7 +19,7 @@ assert.deepEqual(structuredData["@type"], ["SoftwareApplication", "WebApplicatio
 assert.equal(structuredData.name, "GISMap Online");
 assert.equal(structuredData.isAccessibleForFree, true);
 assert.equal(structuredData.author.name, "Silas Toms");
-assert.match(html, /id="welcome-title">GIS MAP/);
+assert.match(html, /id="welcome-title" data-brand-name>GISMap Online/);
 assert.match(html, /id="welcome-close"[^>]*aria-label="Dismiss introduction"/);
 assert.doesNotMatch(ui, /welcomePanel\.hidden\s*=\s*Boolean\(layers\.length\)/);
 assert.match(ui, /button\.closest\("#welcome-panel"\)/);

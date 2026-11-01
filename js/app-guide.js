@@ -28,10 +28,10 @@ export const APP_GUIDE = Object.freeze([
   { path: "Project → Download project… · Import project, tour, or Smart Image · Export guided tour (.gisatlas)", keywords: "download import export file gmo gmop gmoatlas backup", text: "Save the project or a tour as a file, and open one again." },
   { path: "Project → Open from a photo or QR code…", keywords: "photo qr scan image", text: "Opens a map from a Smart Image or a photo of its QR code." },
   { path: "Map → Layout & display…", keywords: "settings layout display appearance dark mode light theme navigation top side panel insight table position dock selection highlight outline fill polygon colour color crosshair click marker default basemap engine", text: "Display settings: appearance (system, light, dark), navigation (side panel or top bar), Map Insight and attribute table positions, default basemap, map engine, dark basemap in dark mode, an optional Map Insight dismissal distance, and Map click feedback: crosshair on click, highlight of the selected feature, Selection style (Filled polygon with outline, or Outline only) and the feedback colour.", setting: true },
-  { path: "Tools → ArcGIS Online / Portal connections", keywords: "arcgis sign in login account portal enterprise token", text: "Connect an ArcGIS Online or Enterprise account to use secured layers." },
+  { path: "Tools → Add a Server", keywords: "arcgis sign in login account portal enterprise token standalone", text: "Choose a Portal or standalone server configuration to use secured layers." },
   { path: "Tools → Connect to AI", keywords: "ai model ollama openai anthropic key provider assistant settings", text: "Choose the AI model the Map assistant uses: Ollama on this computer, or a provider with your own key." },
   { path: "Tools → Run JavaScript tool…", keywords: "custom tool javascript plugin script", text: "Loads your own JavaScript tool into the app." },
-  { path: "Project → About this build", keywords: "about version build", text: "Shows the version." },
+  { path: "Project → About", keywords: "about version build home gismap online", text: "Shows this installation's version and the GISMap Online home version." },
   // Data menu
   { path: "Data → Add local spatial file", keywords: "file upload kml kmz shapefile shp geojson local", text: "Adds a file from this computer." },
   { path: "Data → Add Geo URL", keywords: "geojson url feed", text: "Adds supported GeoJSON or GeoParquet from a web address." },

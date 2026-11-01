@@ -84,7 +84,7 @@ test('menus organize existing actions and clearly mark unimplemented tools', asy
   for (const label of ['AI tools', 'Database tools', 'Map tools', 'Servers', 'Games', 'Custom tools']) assert.ok(tools.includes(label));
   for (const id of ['tools-assistant', 'tools-ai', 'data-duckdb', 'data-postgis', 'tools-connections', 'game-dragons', 'tools-custom']) assert.ok(tools.includes(id));
   assert.match(tools, /disabled[^>]*>Analysis assistant/);
-  assert.match(tools, /disabled[^>]*>Other portals/);
+  assert.match(tools, /data-action="tools-connections">Add a Server/);
 });
 
 test('suppressed Map Insight overlays still complete and render Intelligence', async () => {
