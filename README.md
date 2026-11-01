@@ -69,6 +69,23 @@ python3 -m http.server 8080
 
 Then open `http://localhost:8080`.
 
+## White-label an installation
+
+Branding belongs to the deployed installation, not to an individual browser or
+project. Before deploying a company copy, add its logo under `assets/` and edit
+[`installation-config.js`](installation-config.js):
+
+```js
+globalThis.GISMAP_INSTALLATION = Object.freeze({
+  applicationName: "Acme Maps",
+  logoUrl: "./assets/acme-maps-logo.png",
+});
+```
+
+Deploy that file with the application. The Project → Installation branding menu
+shows the active values and the same config snippet; it does not save identity
+data in localStorage.
+
 ## Map assistant (chat with your map)
 
 **Tools → Map assistant** is a chat with the AI model the user connects in **Project → Configure AI** (local Ollama, OpenAI, Anthropic or any OpenAI-compatible endpoint). It builds interactive maps, briefings, guided tours and field-task drafts through 17 tools (`js/map-assistant.js`): `get_map_state`, `inspect_source`, `search_datasets`, `query_features`, `add_layer`, `update_layer`, `remove_layer`, `suggest_styles`, `set_view`, `set_basemap`, `load_map`, `create_briefing`, `generate_briefing`, `present_briefing`, `create_tour`, `draft_field_task` and `get_share_link`. The app writes the model's instructions (how to work from data, the formats, the live map state) and sends them as the system message with every turn; nothing is registered with the provider. Models with tool calling use it natively (Ollama `/api/chat`, Chat Completions, Anthropic Messages); others fall back to fenced JSON tool calls. Everything runs in the browser.

@@ -72,7 +72,6 @@ import { defaultRun } from "./text-boxes.js?v=0.65.0-paths";
 
 const BUILDINGS_3D_KEY = "gismap-online:buildings-3d:v1";
 const DISPLAY_SETTINGS_KEY = "gismap-online:display:v1";
-const BRAND_SETTINGS_KEY = "gismap:application-brand:v1";
 const DEFAULT_BRAND = Object.freeze({ name: "GISMap Online", logo: "./assets/gis-map-online-mark-v2.png" });
 const WELCOME_PREFERENCE_KEY = "gismap.welcome.v1";
 const DOCKABLE_PANELS = { places: "Places", bookmarks: "Bookmarks", draw: "Draw", intelligence: "Intelligence", layers: "Layers", observations: "Notes & Tasks" };
@@ -2299,19 +2298,15 @@ export class UIController {
     });
   }
 
-  #readBrandSettings() {
-    try {
-      const stored = JSON.parse(localStorage.getItem(BRAND_SETTINGS_KEY) || "{}");
-      return {
-        name: String(stored?.name || DEFAULT_BRAND.name).trim().slice(0, 80) || DEFAULT_BRAND.name,
-        logo: typeof stored?.logo === "string" && stored.logo.startsWith("data:image/") ? stored.logo : DEFAULT_BRAND.logo,
-      };
-    } catch {
-      return { ...DEFAULT_BRAND };
-    }
+  #readInstallationBrand() {
+    const config = globalThis.GISMAP_INSTALLATION;
+    return {
+      name: String(config?.applicationName || DEFAULT_BRAND.name).trim().slice(0, 80) || DEFAULT_BRAND.name,
+      logo: typeof config?.logoUrl === "string" && config.logoUrl.trim() ? config.logoUrl.trim() : DEFAULT_BRAND.logo,
+    };
   }
 
-  #applyBrandSettings(brand = this.#readBrandSettings()) {
+  #applyBrandSettings(brand = this.#readInstallationBrand()) {
     document.querySelectorAll("[data-brand-name]").forEach((element) => { element.textContent = brand.name; });
     document.querySelectorAll("[data-brand-logo]").forEach((image) => {
       image.src = brand.logo;
@@ -2322,52 +2317,29 @@ export class UIController {
     document.title = `${brand.name}: Geospatial Application`;
   }
 
-  async #readBrandLogo(file) {
-    if (!file) return null;
-    if (!file.type.startsWith("image/")) throw new Error("Choose an image file for the application logo.");
-    if (file.size > 2 * 1024 * 1024) throw new Error("Choose a logo smaller than 2 MB so it can be stored in this browser.");
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("The logo file could not be read."));
-      reader.onerror = () => reject(new Error("The logo file could not be read."));
-      reader.readAsDataURL(file);
-    });
-  }
-
   #applicationSettingsDialog() {
-    const current = this.#readBrandSettings();
+    const brand = this.#readInstallationBrand();
+    const configSnippet = `globalThis.GISMAP_INSTALLATION = Object.freeze({\n  applicationName: ${JSON.stringify(brand.name)},\n  logoUrl: ${JSON.stringify(brand.logo)},\n});`;
     this.openDialog({
-      eyebrow: "White-label this installation",
-      title: "Application settings",
+      eyebrow: "Installed application identity",
+      title: "Installation branding",
       content: `<section class="application-brand-settings">
-        <label class="field"><span>Application name</span><input id="application-brand-name" maxlength="80" value="${escapeHtml(current.name)}" /></label>
-        <label class="field"><span>Logo file <small>optional; PNG, SVG, or another image under 2 MB</small></span><input id="application-brand-logo" type="file" accept="image/*" /></label>
-        <div class="application-brand-settings__preview"><img src="${escapeHtml(current.logo)}" alt="Current application logo" /><strong>${escapeHtml(current.name)}</strong></div>
-        <p class="form-note">Branding is saved only in this browser on this installation. It is not added to projects, shared links, or exported files.</p>
+        <div class="application-brand-settings__preview"><img src="${escapeHtml(brand.logo)}" alt="${escapeHtml(brand.name)} logo" /><strong>${escapeHtml(brand.name)}</strong></div>
+        <p>Branding is configured for the installation, not for an individual browser or project. Every user of this deployed application receives the same name and logo.</p>
+        <p class="form-note">Edit <code>installation-config.js</code> before deployment. Add the company logo under <code>assets/</code> (or use an approved HTTPS URL), then set <code>applicationName</code> and <code>logoUrl</code>.</p>
+        <label class="field"><span>Current installation config</span><textarea readonly rows="5" data-installation-brand-config>${escapeHtml(configSnippet)}</textarea></label>
       </section>`,
       actions: [
-        { label: "Save branding", primary: true, handler: async () => {
-          const button = this.dialog.querySelector(".button--primary");
-          button.disabled = true;
+        { label: "Copy config", primary: true, handler: async () => {
           try {
-            const name = this.dialog.querySelector("#application-brand-name").value.trim().slice(0, 80) || DEFAULT_BRAND.name;
-            const file = this.dialog.querySelector("#application-brand-logo").files?.[0];
-            const logo = await this.#readBrandLogo(file) || current.logo;
-            const brand = { name, logo };
-            localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brand));
-            this.#applyBrandSettings(brand);
-            this.dialog.close();
-            this.toast("Application branding saved for this installation.");
+            await navigator.clipboard.writeText(configSnippet);
+            this.toast("Installation config copied.");
           } catch (error) {
-            button.disabled = false;
-            this.error(error.message);
+            const field = this.dialog.querySelector("[data-installation-brand-config]");
+            field.focus();
+            field.select();
+            this.toast("Installation config selected. Copy it from the field.");
           }
-        } },
-        { label: "Reset to GISMap Online", handler: () => {
-          localStorage.removeItem(BRAND_SETTINGS_KEY);
-          this.#applyBrandSettings({ ...DEFAULT_BRAND });
-          this.dialog.close();
-          this.toast("Application branding reset to GISMap Online.");
         } },
       ],
     });
@@ -4882,7 +4854,7 @@ export class UIController {
   }
 
   #aboutDialog() {
-    const brand = this.#readBrandSettings();
+    const brand = this.#readInstallationBrand();
     this.openDialog({
       eyebrow: "About this application",
       title: brand.name,
