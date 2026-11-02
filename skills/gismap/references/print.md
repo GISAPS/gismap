@@ -1,6 +1,6 @@
 # Print Editor: PDFs and Smart Images
 
-Use `gisMapOnline.print` in a running GISMap page to get the same branded output as Tools → Print Editor. Exports return files and never start a browser download.
+Use `gisMapOnline.print` in a running GISMap Online page to get the same branded output as Tools → Print Editor. Exports return files and never start a browser download.
 
 ## Templates
 
@@ -32,7 +32,7 @@ Options: `template`, `title`, `subtitle`, `description`, `marginIn`, `marginColo
 
 ## Smart Image
 
-Create Smart Images only with `gisMapOnline.print.exportSmartImage()` or `smartImages.createCurrent()` in a running GISMap page. Do not draw your own map image or write `giMp` chunks yourself. If export fails, report the error code and return the live share link instead.
+Create Smart Images only with `gisMapOnline.print.exportSmartImage()` or `smartImages.createCurrent()` in a running GISMap Online page. Do not draw your own map image or write `giMp` chunks yourself. If export fails, report the error code and return the live share link instead.
 
 ```js
 const { file, manifest } = await gisMapOnline.print.exportSmartImage({ template: "branded" });

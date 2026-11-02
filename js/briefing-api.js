@@ -38,7 +38,7 @@ export function findBriefingLayer(mapController, layerId) {
 }
 const cleanName = (value) => String(value || "briefing").trim().replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "briefing";
 
-/** Bind the pure core to the active GISMap project and camera. */
+/** Bind the pure core to the active GISMap Online project and camera. */
 /**
  * `host` (optional) lets the API reach app features beyond the document:
  * openBriefing(document, { slide, present }) loads a missing layer and opens it,
@@ -52,7 +52,7 @@ export function createBriefingApi({ projectManager, mapController, host = null, 
 
   const current = () => normalizeBriefing(projectManager.current?.presentation?.briefing);
   const needHost = (name) => {
-    if (typeof host?.[name] !== "function") throw new GisMapError("NOT_READY", `briefing.${name === "openBriefing" ? "load" : name} needs the GISMap app; it is not available here.`);
+    if (typeof host?.[name] !== "function") throw new GisMapError("NOT_READY", `briefing.${name === "openBriefing" ? "load" : name} needs the GISMap Online app; it is not available here.`);
     return host[name];
   };
   const save = (document, { activate = false } = {}) => {
@@ -96,7 +96,7 @@ export function createBriefingApi({ projectManager, mapController, host = null, 
       const canLoad = wantsLoad && /^https:\/\//i.test(layerId) && typeof host?.loadLayer === "function";
       if (wantsLoad && !canLoad) {
         issues.push({ level: "warning", path: "layerId", message: /^https:\/\//i.test(layerId)
-          ? "layerId was not loaded because the GISMap app is not available here; call layers.add first, or load the briefing in the app."
+          ? "layerId was not loaded because the GISMap Online app is not available here; call layers.add first, or load the briefing in the app."
           : `layerId "${layerId}" does not match a layer on the map; use the layer's service URL so it can be loaded.` });
       }
       const saved = save(result.document, { activate });
@@ -188,7 +188,7 @@ export function createBriefingApi({ projectManager, mapController, host = null, 
     },
     /** A branded PNG card whose QR opens the live briefing. */
     async exportQrCard(document = current(), options = {}) {
-      if (!globalThis.document) throw new GisMapError("NOT_READY", "briefing.exportQrCard needs the GISMap browser app.");
+      if (!globalThis.document) throw new GisMapError("NOT_READY", "briefing.exportQrCard needs the GISMap Online browser app.");
       const presentation = projectManager.current?.presentation || {};
       const title = options.title || presentation.modeTitles?.briefing || presentation.title || projectManager.current?.name || "Briefing";
       const link = await api.createLink(document, { ...options, qrSafe: options.qrSafe !== false });

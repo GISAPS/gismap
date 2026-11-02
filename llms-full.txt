@@ -1,6 +1,6 @@
 # GISMap Online
 
-> GISMap.online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
+> GISMap Online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
 
 ## If you have no tools
 
@@ -30,7 +30,7 @@ The map in a link is one JSON object (map-v1): layers with filters and styles, b
 
 ## Links a chatbot can write (no code, no account)
 
-Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after `json:`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with `?via=<agent>`, as in `https://gismap.online/?via=<agent>#map=json:…` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
+Every GISMap Online artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after `json:`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with `?via=<agent>`, as in `https://gismap.online/?via=<agent>#map=json:…` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
 
 - Map: `https://gismap.online/#map=json:{"version":1,"layers":[{"url":"<layer URL>","where":"<filter>","renderer":{"type":"choropleth","field":"<FIELD>","ramp":"purples"}}],"basemap":"gray-vector"}`
 - Briefing (slides): add `"briefing":{"layerId":"<layer URL>","selection":{"useAll":true},"slides":[{"template":"title","title":"…"},{"template":"key-numbers","title":"At a glance","blocks":[{"type":"stat","stat":"count","label":"Features"}]},{"template":"feature","title":"…","featureId":"<OBJECTID>","fit":"feature","blocks":[{"type":"text","markdown":"…"}]}]}` to the map JSON; the link opens presenting (schema: [briefing-v1](https://gismap.online/schemas/briefing-v1.schema.json)).
@@ -40,7 +40,7 @@ Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURI
 
 Readable links hold up to 8,192 characters. Inspect real fields first (`<layer URL>?f=pjson`) when you can fetch. Use `usgs-imagery` for aerial imagery on the default MapLibre engine; it covers the United States only and is blank elsewhere. Step-by-step: [agent recipes](https://gismap.online/agent-recipes/).
 
-## What can AI agents create with GISMap?
+## What can AI agents create with GISMap Online?
 
 Print-ready PDFs and branded Smart Images come from `gisMapOnline.print` in a running page; see the [print reference](https://gismap.online/skills/gismap/references/print.md).
 
@@ -68,7 +68,7 @@ Combine recipes for one request: a 3D fire-history map with chronological strata
 
 Inspect the actual layer before choosing a chart. Use category or time values for grouping and a verified numeric measure for sum/mean/min/max; otherwise use count. Chart Builder supports bar, column, line, area, histogram, scatter, bubble, box, donut, metric, conventional 3D bar/scatter and map-chart presets. Its destinations are Chart panel, Instant Dashboard, On the map and Brief slide. A chart scope can be filtered, all, viewport or selected data; label a bounded browser query, sample or partial response honestly.
 
-For a fast, coherent dashboard in an active GISMap session, use `create_instant_dashboard` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: `skin` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states. Do not call a dashboard layout portable in a map-only share until it has been reopened and checked.
+For a fast, coherent dashboard in an active GISMap Online session, use `create_instant_dashboard` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: `skin` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states. Do not call a dashboard layout portable in a map-only share until it has been reopened and checked.
 
 Cinematic mode is for observed records or explicit numeric scenarios, not an inference engine. Confirm the source date/time or numeric field, units and time zone; disclose whether playback is instant, cumulative, rolling or scenario-based. Keep effects subordinate to the source data, test local and overview scales, respect reduced-motion behavior, and pause/remove an effect before removing its layer. Verify that no derived or ghost overlay remains. Effects are primarily a MapLibre capability; another engine may render the source without the animated effect.
 
@@ -107,7 +107,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [TypeScript types](https://gismap.online/js/gismap-core.d.ts)
 
 ## Guides
-- [GISMap Agent Skill](https://gismap.online/skills/): installable instructions, validation and implementation proposal
+- [GISMap Online Agent Skill](https://gismap.online/skills/): installable instructions, validation and implementation proposal
 - [Making maps with an AI agent](https://gismap.online/guides/ai-agents/): chat-only, code-running and browser-driving recipes
 - [AI ArcGIS map generator](https://gismap.online/ai-arcgis-map-generator/): inspect a FeatureServer, style a map, and share a working link
 - [ArcGIS FeatureServer viewer](https://gismap.online/arcgis-feature-service-viewer/)
@@ -235,7 +235,7 @@ Discover the live registry with gisMapOnline.actions.list() and actions.describe
 
 Inspect the layer metadata and query actual values before choosing fields. The 2024 County Health Rankings layer 2 is polygon geometry; statecode is a string containing state FIPS, and v001_rawvalue is age-adjusted years of potential life lost per 100,000. On 2026-10-20, statecode = '26' returned 83 Michigan counties. Counts and service availability can change.
 
-Source metadata: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/County%20Health%20Rankings%202024/FeatureServer/2?f=pjson. Test each where clause using that layer's /query endpoint with f=json and returnCountOnly=true. A successful service query does not prove the GISMap layer loaded, rendered or reopened.
+Source metadata: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/County%20Health%20Rankings%202024/FeatureServer/2?f=pjson. Test each where clause using that layer's /query endpoint with f=json and returnCountOnly=true. A successful service query does not prove the GISMap Online layer loaded, rendered or reopened.
 
 The following filters were accepted by that layer on 2026-10-20. IS NULL tests database null, not missing-value codes; inspect the publisher's metadata and sentinels before deciding which values to exclude. Do not assume other services use these names or codes.
 
@@ -251,7 +251,7 @@ statecode = '26' AND v001_rawvalue IS NOT NULL
 
 Michigan share URL (prepared; browser rendering and reopening not independently verified): https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22title%22%3A%22Michigan%20county%20health%22%2C%22basemap%22%3A%22gray-vector%22%2C%22camera%22%3A%7B%22center%22%3A%5B-85.5%2C44.6%5D%2C%22zoom%22%3A5.5%7D%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2FArcGIS%2Frest%2Fservices%2FCounty%2520Health%2520Rankings%25202024%2FFeatureServer%2F2%22%2C%22type%22%3A%22feature%22%2C%22where%22%3A%22statecode%20%3D%20'26'%22%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22v001_rawvalue%22%2C%22method%22%3A%22quantile%22%2C%22classes%22%3A5%2C%22ramp%22%3A%22greens%22%7D%7D%5D%7D
 
-Prepared: spec or URL constructed. Validated: GISMap's validator accepted it (review warnings). Loaded: required layers loaded in the application. Verified: intended features, filter, style and camera were confirmed, including reopening the share link. Do not imply a later stage was completed when it was not.
+Prepared: spec or URL constructed. Validated: GISMap Online's validator accepted it (review warnings). Loaded: required layers loaded in the application. Verified: intended features, filter, style and camera were confirmed, including reopening the share link. Do not imply a later stage was completed when it was not.
 
 ### Refine an existing map into multiple views
 
@@ -277,7 +277,7 @@ for (const spec of [year, acres]) {
 }
 ```
 
-Inspect source fields and validate both renderers against them; then open each URL in GISMap, confirm the filter, map, legend, categories and acreage classes, and reopen it. Category and class generation can use sampled data. A generated URL alone is not verified. Numeric year-slider authoring is not defined in map-v1; treat it as an enhancement rather than claiming support.
+Inspect source fields and validate both renderers against them; then open each URL in GISMap Online, confirm the filter, map, legend, categories and acreage classes, and reopen it. Category and class generation can use sampled data. A generated URL alone is not verified. Numeric year-slider authoring is not defined in map-v1; treat it as an enhancement rather than claiming support.
 
 Prepared examples and source JSON: https://gismap.online/examples/ai/california-fire-refinement/
 
@@ -457,11 +457,11 @@ Errors are `GisMapError` with a `code` and a `hint` written for agents. The cont
 const { file, warnings } = await gisMapOnline.print.exportPdf({ template: "poster", title: "Potholes" });
 ```
 
-Create Smart Images only with print.exportSmartImage() or smartImages.createCurrent() in a running GISMap page. Do not draw your own map image or write giMp chunks yourself. If export fails, report the error code and return the live share link instead. Use `.gisx` (project.exportPackage()) when local datasets must travel with the project; `.gis` (project.exportFile()) is the compact project file. Legacy .gmo and .gmop files still import. Options and templates: https://gismap.online/skills/gismap/references/print.md
+Create Smart Images only with print.exportSmartImage() or smartImages.createCurrent() in a running GISMap Online page. Do not draw your own map image or write giMp chunks yourself. If export fails, report the error code and return the live share link instead. Use `.gisx` (project.exportPackage()) when local datasets must travel with the project; `.gis` (project.exportFile()) is the compact project file. Legacy .gmo and .gmop files still import. Options and templates: https://gismap.online/skills/gismap/references/print.md
 
 ## Briefing API
 
-GISMap exposes the same versioned Briefing functions to in-page agents and to ES-module callers. No GISMap server or account is required.
+GISMap Online exposes the same versioned Briefing functions to in-page agents and to ES-module callers. No GISMap Online server or account is required.
 
 ```js
 const api = globalThis.gisMapOnline;
@@ -485,7 +485,7 @@ const qrCard = await api.briefing.exportQrCard(); // branded PNG File
 
 The experimental in-page `briefing.generateTemplate` API previews or appends Filter Series, Timeline, Grid Atlas, and 3D Spatial Chart slides from an already loaded layer. It queries at most 500 features and reports coverage as unknown; its statistics are not guaranteed complete. Set `previewOnly: true` to avoid saving. It is not a standalone core or HTTP API. See [data-driven briefing API](https://gismap.online/skills/gismap/references/briefs.md) for options, geometry limits, and verification guidance.
 
-A briefing document can say which data it is about: `layerId` is best given as the layer's service URL, which GISMap loads if it is not already on the map, and `selection.ids` lists the chosen features. Host a document as JSON (CORS-enabled) and link to it as `https://gismap.online/?briefing=<file URL>`; GISMap opens it on that layer and starts presenting. The file may be a briefing document, a project that contains one, or the briefing file the share dialog downloads.
+A briefing document can say which data it is about: `layerId` is best given as the layer's service URL, which GISMap Online loads if it is not already on the map, and `selection.ids` lists the chosen features. Host a document as JSON (CORS-enabled) and link to it as `https://gismap.online/?briefing=<file URL>`; GISMap Online opens it on that layer and starts presenting. The file may be a briefing document, a project that contains one, or the briefing file the share dialog downloads.
 
 Headless agents can import the pure core without opening the app:
 
@@ -500,7 +500,7 @@ The machine-readable contracts are [`api/capabilities.json`](api/capabilities.js
 
 ### Smart map images
 
-Project → Download project can create a **Smart map image**: a polished, standards-compliant PNG containing the complete editable project configuration in GISMap's private `giMp` ancillary chunk. The visible image opens normally anywhere; importing the original PNG through Project → Import restores its camera, basemap, public layer references, styling, bookmarks, workflows, and Briefing slides.
+Project → Download project can create a **Smart map image**: a polished, standards-compliant PNG containing the complete editable project configuration in GISMap Online's private `giMp` ancillary chunk. The visible image opens normally anywhere; importing the original PNG through Project → Import restores its camera, basemap, public layer references, styling, bookmarks, workflows, and Briefing slides.
 
 ```js
 const output = await gisMapOnline.smartImages.createCurrent();
@@ -510,7 +510,7 @@ console.log(output.file.name, output.share?.url, output.share?.qr);
 await gisMapOnline.smartImages.downloadCurrent();
 ```
 
-`createCurrent()` gives an agent the PNG without forcing a browser download and also returns `share`, the equivalent live-map link with public layers, styles, filters, camera, basemap, and skin. `createShareLink()` returns that link directly. Its `qr` flag says whether it fits safely in GISMap's separate branded QR image. Keeping the QR as a separate artifact leaves the Smart Image clean while providing a reliable route back to the live map; GISMap can also reopen QR screenshots and photos.
+`createCurrent()` gives an agent the PNG without forcing a browser download and also returns `share`, the equivalent live-map link with public layers, styles, filters, camera, basemap, and skin. `createShareLink()` returns that link directly. Its `qr` flag says whether it fits safely in GISMap Online's separate branded QR image. Keeping the QR as a separate artifact leaves the Smart Image clean while providing a reliable route back to the live map; GISMap Online can also reopen QR screenshots and photos.
 
 The embedded payload is versioned, deflate-compressed when supported, protected by PNG CRC and SHA-256 integrity checks, and bounded by explicit input limits. Remote URLs containing credentials are rejected. Smart Images reference public services and do not make those services offline; use `.gisx` when local datasets must travel with the project. Keep the original PNG—social networks and image editors may resize it or remove ancillary metadata. When another service strips the private PNG chunk, share the companion live link or QR image alongside it.
 
@@ -540,9 +540,9 @@ What it shows:
 
 Prompt for a chatbot:
 
-> Use GISMap.online to make an interactive briefing of Philadelphia's police divisions. Main layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/1 (Police_Divisions). Second layer, as context: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/2 (Police_Districts) at 75% opacity. Do not load the crime incident points (layer 0). Slides: a title slide, an "At a glance" slide counting the divisions, one feature slide per division framed on it (DIV_NAME is the division name), and a sources slide linking the layers. Use a dark 3D basemap. Write it as one map-v1 spec with the briefing inside (https://gismap.online/schemas/map-v1.schema.json, https://gismap.online/schemas/briefing-v1.schema.json; see https://gismap.online/guides/ai-agents/) and return the link and a QR code. Do not invent crime totals or imply the boundaries are current.
+> Use GISMap Online (https://gismap.online) to make an interactive briefing of Philadelphia's police divisions. Main layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/1 (Police_Divisions). Second layer, as context: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/2 (Police_Districts) at 75% opacity. Do not load the crime incident points (layer 0). Slides: a title slide, an "At a glance" slide counting the divisions, one feature slide per division framed on it (DIV_NAME is the division name), and a sources slide linking the layers. Use a dark 3D basemap. Write it as one map-v1 spec with the briefing inside (https://gismap.online/schemas/map-v1.schema.json, https://gismap.online/schemas/briefing-v1.schema.json; see https://gismap.online/guides/ai-agents/) and return the link and a QR code. Do not invent crime totals or imply the boundaries are current.
 
-For a code-running agent: An agent with Node, Deno or a browser writes the map and its slides as one map-v1 spec, validates it, and makes the link with the GISMap core. A link whose spec carries slides opens presenting them.
+For a code-running agent: An agent with Node, Deno or a browser writes the map and its slides as one map-v1 spec, validates it, and makes the link with the GISMap Online core. A link whose spec carries slides opens presenting them.
 
 ```js
 import { mapSpec } from "https://gismap.online/js/gismap-core.js";
@@ -581,7 +581,7 @@ What it shows:
 
 Prompt for a chatbot:
 
-> Make a GISMap.online briefing of Major League ballparks by state. Main layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0 (shade POP_SQMI as a choropleth with method "auto"). Second layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0 (colour by LEAGUE). Add a title slide, one feature slide for each state with two or more teams, and a closing "how this was built" slide. On each state slide show only the ballparks the state contains (slide layers with relation type "contains"); use transition "cut". Before writing the slides, query the ballparks service with each state's geometry and compare the result with each ballpark's STATE field; fix any mismatch and say how. Put it all in one map-v1 spec (https://gismap.online/schemas/map-v1.schema.json) and return the link and a QR code.
+> Make a GISMap Online (https://gismap.online) briefing of Major League ballparks by state. Main layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0 (shade POP_SQMI as a choropleth with method "auto"). Second layer: https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0 (colour by LEAGUE). Add a title slide, one feature slide for each state with two or more teams, and a closing "how this was built" slide. On each state slide show only the ballparks the state contains (slide layers with relation type "contains"); use transition "cut". Before writing the slides, query the ballparks service with each state's geometry and compare the result with each ballpark's STATE field; fix any mismatch and say how. Put it all in one map-v1 spec (https://gismap.online/schemas/map-v1.schema.json) and return the link and a QR code.
 
 For an AI agent: check the relationship, then write the spec: The agent asked the ballparks service the same question each slide will ask, before relying on it. Ohio's generalized outline leaves Cincinnati's ballpark (on the Ohio River, the state line) in Kentucky, so the Ohio slide grows Ohio by 1 mile; growing Illinois the same way would wrongly pick up St. Louis's Busch Stadium across the Mississippi, so only Ohio is grown.
 

@@ -1,5 +1,5 @@
 // Build the legend from the same ArcGIS renderer symbols used by MapLibre's
-// paint adapter. The Mapbox legend plugin works on style layers, but GIS Map
+// paint adapter. The Mapbox legend plugin works on style layers, but GISMap Online
 // creates several style layers per dataset and retains class labels here.
 import { rendererToPaint, rendererValue, symbolColor, symbolPaint } from "./arcgis-renderer.js?v=0.42.0";
 

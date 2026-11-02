@@ -1,5 +1,5 @@
 // Persist only explicit, non-secret connection metadata. Runtime sessions and
-// credentials never enter this registry or a GISMap project/share document.
+// credentials never enter this registry or a GISMap Online project/share document.
 const KEY = 'gismap-online:data-connections:v1';
 const TYPES = new Set(['duckdb-wasm', 'duckdb-remote-file', 'postgis-http', 'pmtiles']);
 

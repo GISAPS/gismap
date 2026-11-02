@@ -41,7 +41,7 @@ export async function fieldRecordPdf(records, { assets = [], qrForRecord, skin =
     report.gap(7); report.heading2("Location"); report.addLines(location(record), { link });
     if (Number.isFinite(record.location.accuracyMeters)) report.addLines(`Source: ${record.location.source} · accuracy ±${Math.round(record.location.accuracyMeters)} m`, { size: 9, leading: 14, color: PDF_COLORS.muted });
     else report.addLines(`Source: ${record.location.source}`, { size: 9, leading: 14, color: PDF_COLORS.muted });
-    if (link) report.addLines("Open location in GISMap desktop", { link, bold: true });
+    if (link) report.addLines("Open location in GISMap Online desktop", { link, bold: true });
     const qr = await qrAsset(qrForRecord?.(record), { dark: palette.band }).catch(() => null);
     if (qr) { report.gap(8); report.heading2("Transfer record"); report.addLines("Scan this QR in Field Mode. Attachments remain in the .gisfield package.", { size: 9, leading: 14, color: PDF_COLORS.muted }); report.addImage(qr, { maxHeight: 145, maxWidth: 145, gapAfter: 8 }); }
     const photos = (await imageAssets(record, assets)).filter(Boolean);

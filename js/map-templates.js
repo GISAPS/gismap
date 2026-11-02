@@ -1,3 +1,4 @@
+import { brandWordmark } from "./brand.js";
 // Prebuilt map page templates. Each one draws a whole page onto a canvas from
 // the current map capture and a few project details; the same page becomes the
 // preview, the PDF (as one full-page image plus link areas) and the Smart Image.
@@ -69,11 +70,12 @@ function brand(context, x, y, size, data, { light = true } = {}) {
   context.textBaseline = "alphabetic";
   context.fillStyle = light ? data.palette.brand : data.palette.accent;
   context.font = font(size * 0.36, 700);
-  context.fillText("GIS MAP", x + size * 1.15, y + size * 0.48);
+  const wordmark = brandWordmark();
+  context.fillText(wordmark.primary, x + size * 1.15, y + size * 0.48, size * 2);
   context.fillStyle = data.palette.edge;
   context.font = font(size * 0.2, 700);
   if ("letterSpacing" in context) context.letterSpacing = `${size * 0.05}px`;
-  context.fillText("ONLINE", x + size * 1.17, y + size * 0.82);
+  context.fillText(wordmark.secondary, x + size * 1.17, y + size * 0.82);
   context.restore();
 }
 
@@ -354,7 +356,7 @@ const templates = [
   {
     id: "branded",
     label: "Branded landscape",
-    description: "The classic GISMap page: framed map, layer key, centre and QR code.",
+    description: "The classic GISMap Online page: framed map, layer key, centre and QR code.",
     page: { width: 11, height: 8.5 },
     mapRect: (k) => ({ x: 0.5 * k, y: 1.5 * k, w: 7.1 * k, h: 6.2 * k }),
     draw(context, k, data) {

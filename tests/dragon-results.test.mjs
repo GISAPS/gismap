@@ -74,7 +74,7 @@ test('share generates a decorated downloadable QR without drawing over its quiet
   assert.equal(nodes.shareQr.height,760);
   assert.equal(nodes.downloadQr.hidden,false);
   assert.match(nodes.downloadQr.href,/^data:image\/png/);
-  assert.ok(labels.includes('GISMap.Online'));
+  assert.ok(labels.includes('GISMap Online'));
   assert.equal(getDragonDrawn(),true);
   assert.equal(draws.length,1);
   assert.deepEqual(draws[0].slice(1),[80,160,440,440]);

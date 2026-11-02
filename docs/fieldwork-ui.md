@@ -1,6 +1,6 @@
 # Fieldwork interface
 
-This branch implements the Fieldwork brand guide as an update to the existing GISMap application. The map engine, project format, service adapters and public API remain the source of truth.
+This branch implements the Fieldwork brand guide as an update to the existing GISMap Online application. The map engine, project format, service adapters and public API remain the source of truth.
 
 ## Workspace
 

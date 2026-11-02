@@ -83,7 +83,7 @@ export function openMapNotesPanel(ui, { point = null, editId = null, locationSou
           const status = ui.dialog.querySelector('[data-note-qr-status]');
           try {
             await globalThis.QRCode.toCanvas(canvas, url, { width: 720, margin: 4, errorCorrectionLevel: 'L', color: { dark: '#072f2b', light: '#ffffff' } });
-            if (status.isConnected) status.textContent = 'Scan to preview the observation in GISMap. Importing requires confirmation.';
+            if (status.isConnected) status.textContent = 'Scan to preview the observation in GISMap Online. Importing requires confirmation.';
           } catch {
             if (status.isConnected) status.textContent = 'Could not generate a QR code for this observation. Use the link or export JSON instead.';
           }

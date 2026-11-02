@@ -113,7 +113,7 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
     return { valid, issues: found, spec, ready };
   }
 
-  /** The current map as a map-v1 spec (styles set in GISMap included; service styles left to the service). */
+  /** The current map as a map-v1 spec (styles set in GISMap Online included; service styles left to the service). */
   function fromCurrent({ title = host.getTitle?.() || "" } = {}) {
     const spec = { version: MAP_SPEC_VERSION };
     if (title) spec.title = title;

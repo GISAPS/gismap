@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/cinematic-clip-v1.schema.json",
-  "title": "GISMap Cinematic Clip",
+  "title": "GISMap Online Cinematic Clip",
   "type": "object",
   "required": ["schema", "version", "id", "title", "range", "playback", "cameraTrack", "tracks", "composition", "dependencies", "renders"],
   "properties": {

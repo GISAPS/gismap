@@ -108,7 +108,7 @@
     c.fillStyle = '#125848'; c.fillRect(16, 16, 568, 118);
     c.strokeStyle = '#2e8068'; c.lineWidth = 3; c.strokeRect(25, 25, 550, 710);
     if (brand?.complete && brand.naturalWidth) c.drawImage(brand, 42, 30, 86, 86);
-    c.textAlign = 'left'; c.fillStyle = '#ffffff'; c.font = 'bold 31px Arial, sans-serif'; c.fillText('GISMap.Online', 146, 72);
+    c.textAlign = 'left'; c.fillStyle = '#ffffff'; c.font = 'bold 31px Arial, sans-serif'; c.fillText('GISMap Online', 146, 72);
     c.fillStyle = '#f6d478'; c.font = 'bold 16px monospace'; c.fillText('HERE BE DRAGONS', 146, 101);
     const opponent = current.challenge || current.beaten;
     if (opponent) {

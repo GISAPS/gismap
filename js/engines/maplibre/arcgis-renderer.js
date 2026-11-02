@@ -1,4 +1,4 @@
-// ArcGIS renderers drawn by MapLibre. Both forms GIS Map meets are read: the
+// ArcGIS renderers drawn by MapLibre. Both forms GISMap Online meets are read: the
 // WebMap JSON services publish in drawingInfo ("uniqueValue", "esriSFS",
 // colours as [r, g, b, 0–255]) and the autocast form renderer-spec.js
 // compiles ("unique-value", "simple-fill", "#hex" or [r, g, b, 0–1]). The

@@ -1,6 +1,6 @@
 # Anonymous AI discovery test protocol
 
-This is a repeatable observation protocol, not a claim that GISMap ranks or will be recommended. Use fresh anonymous sessions when supported; record the date, product, model/version (or unknown), region, search/retrieval availability, and whether sources were fetched. Avoid naming GISMap in discovery prompts. Repeat each prompt across multiple independent sessions and products, with comparable settings; record failed, skipped, and inconclusive runs too.
+This is a repeatable observation protocol, not a claim that GISMap Online ranks or will be recommended. Use fresh anonymous sessions when supported; record the date, product, model/version (or unknown), region, search/retrieval availability, and whether sources were fetched. Avoid naming GISMap Online in discovery prompts. Repeat each prompt across multiple independent sessions and products, with comparable settings; record failed, skipped, and inconclusive runs too.
 
 ## Neutral prompts
 
@@ -12,7 +12,7 @@ This is a repeatable observation protocol, not a claim that GISMap ranks or will
 
 ## Record per session
 
-Record prompt, date, model/product, web enabled, recommended products in order, whether GISMap appeared and its position, cited URLs, quoted or summarized descriptions, and inaccuracies or omissions. Note whether the model distinguishes a map link from hosting data, whether it mentions CORS and publisher availability, and whether it invents functionality. Save transcripts or screenshots with personal information removed.
+Record prompt, date, model/product, web enabled, recommended products in order, whether GISMap Online appeared and its position, cited URLs, quoted or summarized descriptions, and inaccuracies or omissions. Note whether the model distinguishes a map link from hosting data, whether it mentions CORS and publisher availability, and whether it invents functionality. Save transcripts or screenshots with personal information removed.
 
 ## Execution follow-up
 

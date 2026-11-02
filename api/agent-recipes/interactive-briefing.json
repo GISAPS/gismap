@@ -5,7 +5,7 @@
   "title": "Interactive geographic briefing",
   "status": "available",
   "question": "Can an AI agent build a slide briefing with one map slide per area and context from another layer?",
-  "answer": "Yes. A chatbot can write the whole briefing into one link: a map-v1 JSON with a briefing-v1 document in its briefing property, after #map=json:. The link opens presenting, as a desktop deck or a mobile swipe feed. In an open GISMap page, agents can also build, generate and export briefings through the in-page API, including relations to a context layer.",
+  "answer": "Yes. A chatbot can write the whole briefing into one link: a map-v1 JSON with a briefing-v1 document in its briefing property, after #map=json:. The link opens presenting, as a desktop deck or a mobile swipe feed. In an open GISMap Online page, agents can also build, generate and export briefings through the in-page API, including relations to a context layer.",
   "triggers": [
     "Create slides about these districts",
     "Build an interactive crime briefing for Philadelphia",

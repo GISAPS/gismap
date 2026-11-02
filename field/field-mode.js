@@ -44,7 +44,7 @@ function capabilities() {
   const offline = navigator.onLine === false;
   $(".field-app").classList.toggle("is-offline", offline);
   $("[data-status-summary]").textContent = `Local workspace · ${offline ? "offline" : "online"} · ${records.length} note${records.length === 1 ? "" : "s"}`;
-  $("[data-capabilities]").innerHTML = `<p><strong>Capture diagnostics</strong></p>${entries.map(([label, yes]) => `<p><b>${escape(label)}</b> ${yes ? "available" : "unavailable"}</p>`).join("")}<p>Dictation from the device keyboard is separate from browser speech recognition. GISMap records audio locally but does not claim offline transcription.</p>`;
+  $("[data-capabilities]").innerHTML = `<p><strong>Capture diagnostics</strong></p>${entries.map(([label, yes]) => `<p><b>${escape(label)}</b> ${yes ? "available" : "unavailable"}</p>`).join("")}<p>Dictation from the device keyboard is separate from browser speech recognition. GISMap Online records audio locally but does not claim offline transcription.</p>`;
 }
 
 function fieldAnalysis() {
@@ -268,7 +268,7 @@ async function importSitePack(file) {
 
 function downloadSitePack() {
   const scope = selectedRecords().length ? selectedRecords() : records;
-  const pack = createSitePack({ name: "GISMap Field Site Pack", tasks, records: scope, basemap: basemaps[0] ? { id: basemaps[0].id, name: basemaps[0].name, format: basemaps[0].format, bytes: basemaps[0].bytes, included: false, renderer: "compatible GISMap map viewer required" } : null });
+  const pack = createSitePack({ name: "GISMap Online Field Site Pack", tasks, records: scope, basemap: basemaps[0] ? { id: basemaps[0].id, name: basemaps[0].name, format: basemaps[0].format, bytes: basemaps[0].bytes, included: false, renderer: "compatible GISMap Online map viewer required" } : null });
   const estimate = sitePackEstimate(pack);
   download("gismap-field-site.gismap", JSON.stringify(pack, null, 2), "application/vnd.gismap.site-pack+json");
   toast(`Site Pack downloaded: ${estimate.taskCount} tasks, ${estimate.recordCount} notes, about ${Math.max(1, Math.ceil(estimate.estimatedBytes / 1024))} KB manifest. Basemap files are referenced, not embedded.`);
@@ -280,7 +280,7 @@ async function importPmtiles(file) {
   const id = `pmtiles:${file.name}:${file.size}:${file.lastModified}`;
   if (basemaps.some((item) => item.id === id)) { toast("This PMTiles file is already stored on this device."); return; }
   await store.saveBasemap({ id, name: file.name, format: "PMTiles", bytes: file.size, blob: file, addedAt: new Date().toISOString(), renderer: "requires-compatible-map-viewer" });
-  await refresh(); toast("PMTiles stored locally. Open a compatible GISMap map viewer to render it offline.");
+  await refresh(); toast("PMTiles stored locally. Open a compatible GISMap Online map viewer to render it offline.");
 }
 
 async function showQr(id) {
@@ -292,10 +292,10 @@ async function showQr(id) {
   });
 }
 
-async function showGeoPayloadQr(payload, { title, fileName = "gismap-field-handoff-qr.png", summary, lines = ["Portable GISMap Field handoff"] } = {}) {
+async function showGeoPayloadQr(payload, { title, fileName = "gismap-field-handoff-qr.png", summary, lines = ["Portable GISMap Online Field handoff"] } = {}) {
   const text = encodeGeoPayload(payload);
   const advice = recommendTransports(payload, { qr: true });
-  activeQrTransfer = { text, payload, title: title || "GISMap Field handoff", fileName, summary: summary || "Portable GISMap Field handoff.", lines };
+  activeQrTransfer = { text, payload, title: title || "GISMap Online Field handoff", fileName, summary: summary || "Portable GISMap Online Field handoff.", lines };
   if (!advice.qr.supported) { await showAnimatedQr(); return; }
   stopAnimatedQr();
   await renderQrText(text);
@@ -333,7 +333,7 @@ async function showAnimatedQr() {
 
 async function qrCard() {
   if (!activeQrTransfer) throw new Error("Choose a handoff to share first.");
-  const file = await brandedQrFile(activeQrTransfer.text, { fileName: activeQrTransfer.fileName, title: activeQrTransfer.title, lines: activeQrTransfer.lines, footer: "Scan in GISMap Field Mode" });
+  const file = await brandedQrFile(activeQrTransfer.text, { fileName: activeQrTransfer.fileName, title: activeQrTransfer.title, lines: activeQrTransfer.lines, footer: "Scan in GISMap Online Field Mode" });
   if (!file) throw new Error("QR card generation is unavailable.");
   return file;
 }
@@ -464,7 +464,7 @@ async function showTaskAcknowledgment(task) {
   if (!task.acknowledgmentOperationId) await store.saveTask({ ...task, acknowledgmentOperationId: payload.id, updatedAt: new Date().toISOString() });
   await store.saveHandoff({ id: payload.id, direction: "outgoing", type: "return-receipt", status: "acknowledgment-ready", taskId: task.id, payloadId: payload.data.payloadId, operationIds: payload.data.completion.operations.map((operation) => operation.operationId), createdAt: payload.createdAt, updatedAt: new Date().toISOString() });
   await refresh();
-  await showGeoPayloadQr(payload, { title: `${task.title || "Field task"} acknowledgment`, fileName: `gismap-field-ack-${task.id}.png`, summary: "Task received acknowledgment. It is local until the originating device imports this handoff.", lines: ["GISMap Field acknowledgment", "Not a server registration."] });
+  await showGeoPayloadQr(payload, { title: `${task.title || "Field task"} acknowledgment`, fileName: `gismap-field-ack-${task.id}.png`, summary: "Task received acknowledgment. It is local until the originating device imports this handoff.", lines: ["GISMap Online Field acknowledgment", "Not a server registration."] });
 }
 
 async function acceptGeoPayload() {
@@ -570,7 +570,7 @@ async function prepareTaskReturn(task) {
   await store.saveHandoff({ id: payload.id, direction: "outgoing", type: "return-receipt", status: "ready-to-return", taskId: task.id, payloadId: task.payloadId || task.handoffId || task.id, operationIds: payload.data.completion.operations.map((operation) => operation.operationId), createdAt: preparedAt, updatedAt: new Date().toISOString() });
   await updateHandoff(task.handoffId, { status: "ready-to-return", returnOperationId: payload.id, returnPreparedAt: preparedAt });
   await refresh();
-  await showGeoPayloadQr(payload, { title: `${task.title || "Field task"} return`, fileName: `gismap-field-return-${task.id}.png`, summary: `${task.title || "Field task"} · completion return · ${payload.data.recordIds.length} linked note${payload.data.recordIds.length === 1 ? "" : "s"}. This QR is not a server acknowledgement.`, lines: ["GISMap Field completion return", "Scan in a prepared GISMap Field inbox."] });
+  await showGeoPayloadQr(payload, { title: `${task.title || "Field task"} return`, fileName: `gismap-field-return-${task.id}.png`, summary: `${task.title || "Field task"} · completion return · ${payload.data.recordIds.length} linked note${payload.data.recordIds.length === 1 ? "" : "s"}. This QR is not a server acknowledgement.`, lines: ["GISMap Online Field completion return", "Scan in a prepared GISMap Online Field inbox."] });
 }
 
 async function readiness({ requestPersistence = false } = {}) {
@@ -585,7 +585,7 @@ async function readiness({ requestPersistence = false } = {}) {
   const shell = controlled && cached ? "Ready for offline launch" : registration ? "Caching is installed; reload once before leaving service" : "Not prepared; keep this screen open online until caching finishes";
   const cacheNames = "caches" in globalThis ? await caches.keys().catch(() => []) : [];
   const cacheEntries = "caches" in globalThis ? (await Promise.all(cacheNames.map(async (name) => (await caches.open(name)).keys().then((items) => items.length).catch(() => 0)))).reduce((sum, count) => sum + count, 0) : 0;
-  const mapCoverage = basemaps.length ? `${basemaps.length} PMTiles file${basemaps.length === 1 ? "" : "s"} stored locally; use a compatible GISMap map viewer to render.` : "No offline basemap file is stored. App cache entries are not a licensed or reliable map-download substitute.";
+  const mapCoverage = basemaps.length ? `${basemaps.length} PMTiles file${basemaps.length === 1 ? "" : "s"} stored locally; use a compatible GISMap Online map viewer to render.` : "No offline basemap file is stored. App cache entries are not a licensed or reliable map-download substitute.";
   const turfStatus = globalThis.turf?.distance && globalThis.turf?.buffer ? `Turf.js ${TURF_VERSION} bundled and ready for local measurements` : "Turf.js did not load; reload while online before relying on analysis";
   $("[data-readiness-status]").innerHTML = `<ul class="field-readiness"><li><b>Field app shell:</b> ${escape(shell)}</li><li><b>Local records:</b> ${globalThis.indexedDB ? "IndexedDB available" : "unavailable"}</li><li><b>Persistent storage:</b> ${persisted ? "granted" : "not guaranteed—request it below and keep exports"}</li><li><b>Device storage:</b> ${escape(usage)}</li><li><b>Cached application resources:</b> ${cacheEntries} item${cacheEntries === 1 ? "" : "s"} in ${cacheNames.length} cache${cacheNames.length === 1 ? "" : "s"}</li><li><b>Offline analysis:</b> ${escape(turfStatus)}</li><li><b>QR intake:</b> ${escape(scanner)}</li><li><b>Site Packs:</b> ${packages.length} stored locally</li><li><b>Map coverage:</b> ${escape(mapCoverage)}</li></ul>`;
 }
@@ -674,7 +674,7 @@ function wire() {
   $("[data-offline-map-list]").addEventListener("click", async (event) => { const button = event.target.closest("button[data-remove-basemap]"); if (!button) return; await store.deleteBasemap(button.dataset.removeBasemap); await refresh(); toast("Offline basemap file removed from this device."); });
   $("[data-import-geopayload]").addEventListener("change", async (event) => { const [file] = event.target.files; if (!file) return; try { previewGeoPayload(decodeGeoPayload(await file.text())); } catch (error) { toast(error.message); } event.target.value = ""; });
   $("[data-export-pdf]").addEventListener("click", async () => { try { const scope = selectedRecords(); const file = await reportFile(scope.length ? scope : records); download(file.name, file, file.type); toast("Field PDF downloaded. Open its location links on desktop to add a map later."); } catch (error) { toast(error.message); } });
-  $("[data-share-records]").addEventListener("click", async () => { try { const scope = selectedRecords(); const file = await reportFile(scope.length ? scope : records); await mobileShare({ title: "GISMap Field report", text: "Field observations from GISMap Field Mode.", file }); } catch (error) { if (error.name !== "AbortError") toast(error.message); } });
+  $("[data-share-records]").addEventListener("click", async () => { try { const scope = selectedRecords(); const file = await reportFile(scope.length ? scope : records); await mobileShare({ title: "GISMap Online Field report", text: "Field observations from GISMap Online Field Mode.", file }); } catch (error) { if (error.name !== "AbortError") toast(error.message); } });
   $("[data-import-qr]").addEventListener("click", async () => { try { await importQrText($("[data-qr-text]").value); $("[data-qr-text]").value = ""; } catch (error) { toast(error.message); } });
   ["[data-import-qr-image]", "[data-import-qr-camera-image]"].forEach((selector) => $(selector).addEventListener("change", async (event) => { const [file] = event.target.files; try { await importQrImage(file); } catch (error) { toast(error.message); } event.target.value = ""; }));
   $("[data-open-qr-import]").addEventListener("click", () => { switchView("transfer"); requestAnimationFrame(() => $("[data-start-qr-camera]").focus()); });
@@ -694,7 +694,7 @@ function wire() {
   $("[data-animate-qr]").addEventListener("click", () => showAnimatedQr().catch((error) => toast(error.message)));
   $("[data-download-qr]").addEventListener("click", async () => { try { const file = await qrCard(); download(file.name, file, file.type); } catch (error) { toast(error.message); } });
   $("[data-download-payload]").addEventListener("click", () => { try { if (!activeQrTransfer?.payload) throw new Error("Choose a handoff first."); download(activeQrTransfer.fileName.replace(/-qr\.png$/i, ".geopayload"), encodeGeoPayload(activeQrTransfer.payload, "file"), "application/vnd.gismap.geopayload+json"); toast("Portable GeoPayload downloaded."); } catch (error) { toast(error.message); } });
-  $("[data-share-qr]").addEventListener("click", async () => { try { const file = await qrCard(); await mobileShare({ title: activeQrTransfer?.title || "GISMap Field handoff", text: activeQrTransfer?.summary || "GISMap Field handoff.", file }); } catch (error) { if (error.name !== "AbortError") toast(error.message); } });
+  $("[data-share-qr]").addEventListener("click", async () => { try { const file = await qrCard(); await mobileShare({ title: activeQrTransfer?.title || "GISMap Online Field handoff", text: activeQrTransfer?.summary || "GISMap Online Field handoff.", file }); } catch (error) { if (error.name !== "AbortError") toast(error.message); } });
   $("[data-copy-qr]").addEventListener("click", async () => { try { if (!activeQrTransfer) throw new Error("Choose a handoff to copy first."); await navigator.clipboard.writeText(activeQrTransfer.text); toast("Portable GeoPayload copied."); } catch (error) { toast(error.message || "Copy is unavailable in this browser."); } });
   $("[data-capability-details]").addEventListener("click", () => { const detail = $("[data-capabilities]"); detail.hidden = !detail.hidden; });
   window.addEventListener("online", capabilities); window.addEventListener("offline", capabilities);

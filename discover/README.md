@@ -1,4 +1,4 @@
-# GISMap Discovery
+# GISMap Online Discovery
 
 `/discover/` is a deliberately separate, static entry point for GISMap Online.
 It must remain usable without loading the map workspace, an engine adapter, a

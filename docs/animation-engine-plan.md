@@ -1,6 +1,6 @@
 > **Status:** Plan, 2026-10-20; updated 2026-10-21. Built so far: the GISMap-owned clock (`js/animation-clock.js`), the MapLibre + three.js host (`js/engines/three/three-host.js`) with a per-layer `update(time)` hook, and one clock-driven effect (point-cloud reveal). The rest of this document is not implemented. Do not advertise any field, template or capability below in `skills/`, `llms*.txt` or `api/` until it ships with tests (see SPEC §9.9 in the data-driven briefs agent pack).
 
-# GISMap Animation Engine — next phase plan
+# GISMap Online Animation Engine — next phase plan
 
 Goal: FireTrace-style cinematic stories (3D terrain, a growing glowing perimeter, a synchronized chart, a moving camera, pause-and-inspect) as a **reusable data-driven Brief capability**, not a wildfire one-off. The animation runs deterministically from geographic data. AI chooses the storytelling settings; it never draws the data.
 
@@ -8,7 +8,7 @@ Goal: FireTrace-style cinematic stories (3D terrain, a growing glowing perimeter
 
 | | MapLibre + three.js | ArcGIS Maps SDK 5.0 (SceneView) |
 |---|---|---|
-| Already in GISMap | Default engine; keyless terrain (`terrain.js`, Mapterhorn DEM); `buildings-3d` exists only here; `spatial-chart-3d` as derived extrusion layers | Full engine adapter; `spatial-chart-3d` as SceneView extrude symbols (since 2026-10-21) |
+| Already in GISMap Online | Default engine; keyless terrain (`terrain.js`, Mapterhorn DEM); `buildings-3d` exists only here; `spatial-chart-3d` as derived extrusion layers | Full engine adapter; `spatial-chart-3d` as SceneView extrude symbols (since 2026-10-21) |
 | Time | No native model; we own the clock (we want that anyway) | Native `timeExtent` and `FeatureFilter.timeExtent` |
 | Custom effects | Custom layer shares MapLibre's WebGL context; three.js renders into it | `RenderNode` (replaces the external renderer); heavier and less documented |
 | Camera | `flyTo`/`easeTo`/`FreeCameraOptions`; orbit by bearing | `view.goTo(Camera)`, very good |

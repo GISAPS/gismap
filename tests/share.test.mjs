@@ -58,7 +58,7 @@ for (const key of ["token", "access_token", "apiKey", "key", "client_secret", "p
 }
 assert.throws(() => parseShareParameters("?layer=not-a-url"), /invalid URL/);
 assert.throws(() => parseShareParameters(`?layer=${encodeURIComponent(service)}&layerType=executable`), /Unsupported/);
-assert.throws(() => parseShareParameters("?example=missing", catalog), /Unknown GISMap example/);
+assert.throws(() => parseShareParameters("?example=missing", catalog), /Unknown GISMap Online example/);
 assert.throws(() => parseShareParameters("?basemap=untrusted-style"), /Unsupported shared basemap/);
 assert.throws(() => createShareUrl({ baseUrl: "https://gismap.online/", layers: [{ url: `${service}?token=secret` }] }), /credential/);
 assert.throws(() => createShareUrl({ baseUrl: "https://gismap.online/", layers: [{ local: true, url: "blob:x" }] }), /public remote layer/);

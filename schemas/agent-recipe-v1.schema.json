@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/agent-recipe-v1.schema.json",
-  "title": "GISMap agent recipe",
-  "description": "A reference workflow an AI agent follows to create a finished GISMap artifact. Recipes describe existing interfaces; they are not a separate tool system, and no step is a hosted REST endpoint.",
+  "title": "GISMap Online agent recipe",
+  "description": "A reference workflow an AI agent follows to create a finished GISMap Online artifact. Recipes describe existing interfaces; they are not a separate tool system, and no step is a hosted REST endpoint.",
   "type": "object",
   "required": ["$schema", "schemaVersion", "id", "title", "status", "question", "answer", "triggers", "inputTypes", "inputs", "capabilities", "engines", "steps", "artifact", "outputs", "verification", "limitations", "recovery", "examples", "lastTestedVersion"],
   "properties": {
@@ -64,7 +64,7 @@
   "$defs": {
     "interface": {
       "enum": ["declarative-url", "standalone-js", "in-browser-api", "external-adapter"],
-      "description": "declarative-url: a link the agent writes; standalone-js: a pure module from https://gismap.online/js/ that runs without the app; in-browser-api: globalThis.gisMapOnline in an open GISMap page; external-adapter: an optional tool outside GISMap. None is a hosted REST endpoint."
+      "description": "declarative-url: a link the agent writes; standalone-js: a pure module from https://gismap.online/js/ that runs without the app; in-browser-api: globalThis.gisMapOnline in an open GISMap Online page; external-adapter: an optional tool outside GISMap Online. None is a hosted REST endpoint."
     },
     "status": { "enum": ["prepared", "validated", "loaded", "rendered", "verified", "partial", "failed"] },
     "input": {

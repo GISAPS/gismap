@@ -1,8 +1,8 @@
 > **Implementation status:** Timeline supports integer-year and date fields, timezone-aware calendar boundaries, interval/cumulative/rolling/validity filters, single-slide and slide-series playback, sampled slide statistics, editable draft descriptions, and PDF export of selected or all frames. The preview can optionally query complete ArcGIS feature-service counts and numeric aggregates using the layer definition filter, with bounded concurrent queries, a short-lived cache, and a count chart. Preview source queries ignore feature selections and search filters; slide statistics and narration still use loaded, included features. Playback prefetch and complete-source slide statistics and charts remain planned. Grid Atlas supports rows/columns or an approximate slide target, traversal, WGS84 point/line/polygon intersections, deterministic single-cell assignment, sample-based empty-cell elimination, fitted slides, and a schematic locator. Counts use only loaded, included features; boundary touches count as intersections. Non-point features are assigned to their first intersecting cell in row-major order. A fourth 3D Spatial Chart template now creates five MapLibre polygon scenes and uses the same portable spatialChart state as the Style panel and map-v1. Its temporal and footprint modes preserve source geometry and render up to 40 derived strata; this is fast display, not exact intersection partitioning or unique-area aggregation. Fixed metric grids, spatial columns, exact overlay stacking, drawn areas, clipping, complete-source statistics, and regeneration remain planned. Live-service and browser verification are still needed. The experimental in-page generateTemplate API uses at most 500 queried features and reports completeness as unknown. It is not a hosted API. The proposed v2 structure is a future design, not a current contract.
 
-# GISMap.online Briefs: Data-Driven Slide Templates
+# GISMap Online Briefs: Data-Driven Slide Templates
 
-The next evolution of Briefs should be data-driven slide generation: instead of manually building every slide, the author selects a feature dataset, chooses a template, and GISMap generates an interactive presentation by dividing the data into meaningful subsets.
+The next evolution of Briefs should be data-driven slide generation: instead of manually building every slide, the author selects a feature dataset, chooses a template, and GISMap Online generates an interactive presentation by dividing the data into meaningful subsets.
 
 This introduces three powerful templates:
 
@@ -253,7 +253,7 @@ Discover unique values, sample matching features, and estimate slide count.
 
 Develop this template specification&#x20;
 
-In the actual GISMap interface, the user should also be able to preview all generated slides before committing them. The preview should flag empty selections, excessive query counts, unsupported operators, or missing temporal values.
+In the actual GISMap Online interface, the user should also be able to preview all generated slides before committing them. The preview should flag empty selections, excessive query counts, unsupported operators, or missing temporal values.
 
 ## 6. Codex implementation specification
 
@@ -451,7 +451,7 @@ Make every template accessible to external AI agents through a documented Brief-
 
 ## 9. The AI-agent opportunity
 
-These templates are particularly compelling for the overall GISMap.online vision because an agent could interpret requests like:
+These templates are particularly compelling for the overall GISMap Online vision because an agent could interpret requests like:
 
 > "Create an interactive briefing showing California fires between 2000 and 2025, one year per slide, with a timeline animation and the same map extent throughout."
 
@@ -469,4 +469,4 @@ One further design recommendation: Make all three templates composable. A Grid A
 
 For example, a wildfire Brief could have one chapter per decade, one slide per year, and a playable monthly timeline within selected years.
 
-That is a meaningful differentiator for GISMap.online: the data itself determines the structure of the presentation, while the author or AI controls the story, styling, and level of detail.
+That is a meaningful differentiator for GISMap Online: the data itself determines the structure of the presentation, while the author or AI controls the story, styling, and level of detail.

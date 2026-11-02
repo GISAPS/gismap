@@ -1,4 +1,4 @@
-// GISMap may be installed in a subfolder (example.com/app/), so its pages never
+// GISMap Online may be installed in a subfolder (example.com/app/), so its pages never
 // link from the server root: "/examples/" written in a page becomes a path
 // relative to that page ("../examples/"), which works at any install location.
 import { posix } from "node:path";

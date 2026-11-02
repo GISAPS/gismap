@@ -1,6 +1,6 @@
 # Field Mode
 
-Field Mode is GISMap's dedicated, mobile-first collector at `/field/`. It is a
+Field Mode is GISMap Online's dedicated, mobile-first collector at `/field/`. It is a
 separate installable PWA so a person can create and retain observations without
 opening a map, loading a service, or having a network connection. It is the
 offline workspace for Field Notes and imported Field Tasks. The existing Field

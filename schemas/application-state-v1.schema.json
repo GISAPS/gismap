@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/application-state-v1.schema.json",
-  "title": "GISMap privacy-preserving application state",
+  "title": "GISMap Online privacy-preserving application state",
   "type": "object",
   "required": [
     "revision",

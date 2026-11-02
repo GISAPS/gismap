@@ -38,12 +38,12 @@ export function initializeFieldworkWorkspace({ ui, action, showSidebar, theme, s
   const homes = [brand, menu, search].map(node => { const marker = document.createComment('fieldwork control home'); node.before(marker); return { node, marker }; });
   const header = document.createElement('header');
   header.className = 'studio-header';
-  header.setAttribute('aria-label', 'GISMap workspace');
+  header.setAttribute('aria-label', 'GISMap Online workspace');
   header.innerHTML = '<div class="studio-header__search"></div><button type="button" class="studio-header__project" title="Project details and export"></button><button type="button" class="studio-theme" title="Switch to Observatory" aria-label="Switch to Observatory">' + workspaceIcon('moon') + '</button><button type="button" class="studio-share button--primary">Share</button>';
   const rail = document.createElement('nav');
   rail.className = 'workspace-rail';
   rail.setAttribute('aria-label', 'Workspaces');
-  rail.innerHTML = [['explore','Explore'],['layers','Layers'],['notes','Notes & tasks'],['draw','Draw'],['briefs','Briefings'],['tours','Tours'],['cinematic','Cinematic mode'],['print','Print Editor'],['ai','Ask GISMap']].map(([id,label]) => `<button type="button" data-workspace="${id}" aria-label="${label}" title="${label}" aria-pressed="false">${workspaceIcon(id)}<span>${label}</span></button>`).join('') + `<button type="button" class="workspace-rail__welcome" aria-label="Open welcome panel" title="Open welcome panel" aria-controls="welcome-panel" aria-expanded="false" hidden>${workspaceIcon('welcome')}<span>Welcome · open anytime</span></button><button type="button" class="workspace-rail__settings" aria-label="Display settings" title="Display settings">${workspaceIcon('settings')}<span>Settings</span></button>`;
+  rail.innerHTML = [['explore','Explore'],['layers','Layers'],['notes','Notes & tasks'],['draw','Draw'],['briefs','Briefings'],['tours','Tours'],['cinematic','Cinematic mode'],['print','Print Editor'],['ai','Ask GISMap Online']].map(([id,label]) => `<button type="button" data-workspace="${id}" aria-label="${label}" title="${label}" aria-pressed="false">${workspaceIcon(id)}<span>${label}</span></button>`).join('') + `<button type="button" class="workspace-rail__welcome" aria-label="Open welcome panel" title="Open welcome panel" aria-controls="welcome-panel" aria-expanded="false" hidden>${workspaceIcon('welcome')}<span>Welcome · open anytime</span></button><button type="button" class="workspace-rail__settings" aria-label="Display settings" title="Display settings">${workspaceIcon('settings')}<span>Settings</span></button>`;
   const tabs = document.createElement('nav');
   tabs.className = 'workspace-tabs';
   tabs.setAttribute('aria-label', 'Workspace panels');

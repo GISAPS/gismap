@@ -1,4 +1,4 @@
-// Attribute filters for data held in the browser. GIS Map filters are SQL
+// Attribute filters for data held in the browser. GISMap Online filters are SQL
 // where clauses (the ArcGIS REST vocabulary: STATE = 'CA' AND POP > 1000);
 // services evaluate them for ArcGIS layers, and this module evaluates the same
 // clauses against GeoJSON properties for engines that draw data themselves.

@@ -60,7 +60,7 @@ export function compactBriefing(briefing) {
 /** One layer as a link carries it: source, title, filter, style and opacity. */
 export function packLayer(config = {}) {
   // A service's own style loads with the layer anyway; it travels only when set in
-  // GISMap (or when it is small), since service styles often embed symbol images.
+  // GISMap Online (or when it is small), since service styles often embed symbol images.
   const json = config.renderer ? JSON.stringify(config.renderer) : "";
   const wanted = config.styled === true || !json.includes('"imageData"');
   if (config.styled === true && json.length > MAX_RENDERER) throw new Error("A custom renderer is too large to share without losing its style. Export a project instead.");

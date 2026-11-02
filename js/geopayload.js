@@ -201,7 +201,7 @@ export function createAnimatedQrFrames(payload, { transferId = id("frames"), chu
 
 export function decodeAnimatedQrFrame(input) {
   const source = String(input || "").trim();
-  if (!source.startsWith(GEOFRAME_PREFIX)) throw new Error("This is not a GISMap animated QR frame.");
+  if (!source.startsWith(GEOFRAME_PREFIX)) throw new Error("This is not a GISMap Online animated QR frame.");
   const match = source.slice(GEOFRAME_PREFIX.length).match(/^([^:]+):(\d+)\/(\d+):(\d+):([dp]):(\d+):(\d+):([0-9a-f]{8}):([A-Za-z0-9_-]+)$/);
   if (!match) throw new Error("This animated QR frame is malformed.");
   const [, transferId, frameIndex, total, block, kind, sourceLength, chunkSize, digest, body] = match;

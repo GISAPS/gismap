@@ -41,7 +41,7 @@ test("local PostGIS tutorial is discoverable and describes safe, bounded access"
   const sitemap = await read("sitemap.xml");
   assert.match(index, /id="data-connections"/);
   assert.match(index, /href="\/examples\/data-connections\/local-postgis\/"/);
-  assert.match(tutorial, /Connect a Local PostGIS Database to GISMap\.online/);
+  assert.match(tutorial, /Connect a Local PostGIS Database to GISMap Online/);
   assert.match(tutorial, /PGFS_SERVER_HTTPHOST/);
   assert.match(tutorial, /PGFS_SERVER_CORSORIGINS/);
   assert.match(tutorial, /CORS controls which browser origins may read responses; it is not authentication/);

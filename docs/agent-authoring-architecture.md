@@ -30,4 +30,4 @@ const briefing = await gisMapOnline.application.runTool("briefing.inspect", {});
 const validation = await gisMapOnline.application.runTool("briefing.validate", { document: briefing });
 ```
 
-`validation` is document-level only; it does not verify that the data or the map is available and correctly rendered. Replace the example URL with an accessible public service. Agent-safe access outside a running GISMap browser, a REST endpoint and MCP transport are future work.
+`validation` is document-level only; it does not verify that the data or the map is available and correctly rendered. Replace the example URL with an accessible public service. Agent-safe access outside a running GISMap Online browser, a REST endpoint and MCP transport are future work.

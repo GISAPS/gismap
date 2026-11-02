@@ -2,16 +2,16 @@
 // on open OpenFreeMap basemaps. It implements the renderer contract in
 // ../engine-interface.js. GeoJSON and ArcGIS feature layers are held in the
 // browser as GeoJSON (ArcGIS features keep their service's fields and object
-// IDs), drawn with their service's style or a GIS Map style, and filtered,
+// IDs), drawn with their service's style or a GISMap Online style, and filtered,
 // queried and identified here; ArcGIS map image and imagery services and WMS
 // are drawn as images by their services. Open raster-DEM terrain turns the
 // pitched map into a 3D surface. Capabilities it lacks (WFS, KML, and widgets)
 // are left out of getCapabilities(),
 // and MapController falls back or reports them.
 //
-// Zoom: GIS Map zoom levels follow ArcGIS (256-pixel tiles); MapLibre's are
+// Zoom: GISMap Online zoom levels follow ArcGIS (256-pixel tiles); MapLibre's are
 // one lower for the same scale (512-pixel tiles). Everything that crosses the
-// boundary uses GIS Map levels, so links and projects mean the same view.
+// boundary uses GISMap Online levels, so links and projects mean the same view.
 import { createConsoleBridge } from "./console-overlay.js?v=0.67.0-si-console";
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
@@ -51,7 +51,7 @@ export const MAPLIBRE_CAPABILITIES = Object.freeze(["view-2d", "view-3d", "spati
 
 const ZOOM_OFFSET = 1;
 const SCALE_AT_ZOOM_0 = 591657527.591555;
-// GIS Map green, until a skin's theme gives the data its accent colour.
+// GISMap Online green, until a skin's theme gives the data its accent colour.
 const DEFAULT_COLOR = "#1b7f6a";
 const MAX_PITCH = 85;
 const HIGHLIGHT_SOURCE = "gismap-highlight";
@@ -733,7 +733,7 @@ export class MaplibreEngine {
     };
   }
 
-  /** The style a vector layer draws with: its GIS Map style, else its service's own, else the skin's accent. */
+  /** The style a vector layer draws with: its GISMap Online style, else its service's own, else the skin's accent. */
   #paintFor(record) {
     if (record.renderer) return rendererToPaint(record.renderer);
     if (record.serviceRenderer) return rendererToPaint(record.serviceRenderer, { transparency: record.transparency });
@@ -1358,7 +1358,7 @@ export class MaplibreEngine {
       customParameters: null,
       elevationInfo: null,
       renderer: record.renderer ?? record.serviceRenderer ?? null,
-      // True when the style was set in GIS Map (or arrived with a shared map), not the service's own.
+      // True when the style was set in GISMap Online (or arrived with a shared map), not the service's own.
       styled: Boolean(record.renderer),
       rendererSpec: record.rendererSpec,
       spatialChart: record.spatialChart ? structuredClone(record.spatialChart) : null,

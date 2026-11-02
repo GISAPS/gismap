@@ -163,7 +163,7 @@ export const ENGINE_EVENTS = Object.freeze([
  * @property {boolean} visible
  * @property {number} opacity
  * @property {string|null} where     the layer's attribute filter (SQL where clause)
- * @property {object|null} rendererSpec  the renderer-spec.js style set in GIS Map, if any
+ * @property {object|null} rendererSpec  the renderer-spec.js style set in GISMap Online, if any
  * @property {object|null} renderer  the engine's renderer as JSON (ArcGIS: WebMap renderer JSON)
  * @property {number} minScale
  * @property {number} maxScale

@@ -1,3 +1,4 @@
+import { brandName, brandWordmark } from "./brand.js";
 // A small PDF writer for the app's reports: letter pages with the GISMap Online
 // header band, wrapped Helvetica text, and JPEG images. No dependencies.
 const textEncoder = new TextEncoder();
@@ -93,7 +94,7 @@ export async function brandedQrCanvas(url, {
   canvas = null,
   title = "GISMap Online",
   lines = [],
-  footer = "Complete GISMap link encoded in this QR",
+  footer = "Complete GISMap Online link encoded in this QR",
   palette = PRINT_PALETTES.gismap,
 } = {}) {
   if (!url || !globalThis.QRCode?.toCanvas) return null;
@@ -118,11 +119,12 @@ export async function brandedQrCanvas(url, {
   if (logo) context.drawImage(logo, 48, 42, 118, 118);
   context.fillStyle = palette.brand;
   context.font = "700 34px system-ui, sans-serif";
-  context.fillText("GIS MAP", 188, 87);
+  const wordmark = brandWordmark();
+  context.fillText(wordmark.primary, 188, 87, 540);
   context.fillStyle = palette.edge;
   context.font = "700 20px system-ui, sans-serif";
   context.letterSpacing = "6px";
-  context.fillText("ONLINE", 190, 122);
+  context.fillText(wordmark.secondary, 190, 122);
   context.letterSpacing = "0px";
   context.fillStyle = "#ffffff";
   context.font = "700 38px Georgia, serif";
@@ -195,10 +197,11 @@ export async function brandedMapCanvas(mapImage, {
   context.textBaseline = "alphabetic";
   context.fillStyle = palette.brand;
   context.font = "700 26px system-ui, sans-serif";
-  context.fillText("GIS MAP", border + 112, 50);
+  const wordmark = brandWordmark();
+  context.fillText(wordmark.primary, border + 112, 50, 300);
   context.fillStyle = palette.edge;
   context.font = "700 15px system-ui, sans-serif";
-  context.fillText("O N L I N E", border + 114, 74);
+  context.fillText(wordmark.secondary.split("").join(" "), border + 114, 74);
   context.textAlign = "right";
   context.fillStyle = "#ffffff";
   context.font = "700 34px Georgia, serif";
@@ -306,7 +309,7 @@ export class PdfDocument {
 
   newPage() {
     // The header band mirrors the QR cards: the skin's dark band, an edge stripe,
-    // the mark, "GIS MAP" over a spaced "ONLINE". It links to the site.
+    // the mark, "GISMap" over a spaced "ONLINE". It links to the site.
     const { margin: left, pageWidth, pageHeight, palette } = this;
     if (!this.header) {
       // A bare page, for templates that draw their own design.
@@ -316,11 +319,12 @@ export class PdfDocument {
       return;
     }
     const band = pageHeight - 88;
+    const wordmark = brandWordmark();
     this.page = { commands: [
       `${pdfColor(palette.band)} rg ${left} ${band} ${pageWidth - left * 2} 44 re f`,
       `${pdfColor(palette.edge)} rg ${left} ${band} 4 44 re f`,
-      `${pdfColor(palette.brand)} rg BT /F2 15 Tf ${left + 52} ${band + 25} Td (GIS MAP) Tj ET`,
-      `${pdfColor(palette.edge)} rg BT /F2 7.5 Tf 2.2 Tc ${left + 53} ${band + 11} Td (ONLINE) Tj ET 0 Tc`,
+      `${pdfColor(palette.brand)} rg BT /F2 15 Tf ${left + 52} ${band + 25} Td (${pdfSafeText(wordmark.primary)}) Tj ET`,
+      `${pdfColor(palette.edge)} rg BT /F2 7.5 Tf 2.2 Tc ${left + 53} ${band + 11} Td (${pdfSafeText(wordmark.secondary)}) Tj ET 0 Tc`,
       `${this.colors.accent} rg BT /F2 11 Tf ${left} ${band - 22} Td (${pdfSafeText(this.heading)}) Tj ET`,
     ], images: [], links: [] };
     if (this.logo) {
@@ -453,6 +457,7 @@ export class PdfDocument {
     const reserve = () => { objects.push(""); return objects.length - 1; };
     const setObject = (id, value) => { objects[id] = value; };
     const catalogId = reserve();
+    const infoId = reserve();
     const pagesId = reserve();
     const regularFontId = reserve();
     const boldFontId = reserve();
@@ -488,6 +493,8 @@ export class PdfDocument {
     });
     setObject(pagesId, `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`);
     setObject(catalogId, `<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
+    const name = pdfSafeText(brandName());
+    setObject(infoId, `<< /Title (${pdfSafeText(this.heading || brandName())}) /Author (${name}) /Creator (${name}) /Producer (${name}) >>`);
     const chunks = [textEncoder.encode("%PDF-1.4\n%????\n")];
     let length = chunks[0].length;
     const offsets = [0];
@@ -500,7 +507,7 @@ export class PdfDocument {
       length += head.length + body.length + tail.length;
     });
     const xrefOffset = length;
-    chunks.push(textEncoder.encode(`xref\n0 ${objects.length}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objects.length} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`));
+    chunks.push(textEncoder.encode(`xref\n0 ${objects.length}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objects.length} /Root ${catalogId} 0 R /Info ${infoId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`));
     return new Blob(chunks, { type: "application/pdf" });
   }
 }

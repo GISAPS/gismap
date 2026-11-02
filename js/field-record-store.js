@@ -32,7 +32,7 @@ export class FieldRecordStore {
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error || new Error("Could not open Field Mode storage."));
-      request.onblocked = () => reject(new Error("Close other GISMap tabs to update Field Mode storage."));
+      request.onblocked = () => reject(new Error("Close other GISMap Online tabs to update Field Mode storage."));
     });
     this.db.onversionchange = () => { this.db.close(); this.db = null; };
     return this.db;

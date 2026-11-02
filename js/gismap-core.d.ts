@@ -396,7 +396,7 @@ export type InPageBriefingApi = typeof briefing & {
   exportGmo(document?: unknown, options?: { fileName?: string }): { fileName: string; mimeType: string; text: string; blob: Blob };
 };
 
-/** The Smart Image API bound to the currently open GISMap project and map. */
+/** The Smart Image API bound to the currently open GISMap Online project and map. */
 export type InPageSmartImagesApi = typeof smartImages & {
   /** A live-map link preserving public layers, styles, filters, camera, basemap and skin. */
   createShareLink(options?: { baseUrl?: string }): Promise<SmartImageShare>;

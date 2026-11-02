@@ -58,7 +58,7 @@ export async function createMapNotesReport(baseUrl, session, notes, { onProgress
     pdf.y = y - height - 12;
     lines(pdf, 'World-coordinate locator only; not a basemap or map screenshot.', { size: 8, leading: 11 });
     lines(pdf, 'Scan the QR or click below to preview this observation. The link contains the note and session; source layers are not restored automatically.', { size: 9, leading: 13 });
-    lines(pdf, 'Open this observation in GISMap', { link: url, bold: true, leading: 16 });
+    lines(pdf, 'Open this observation in GISMap Online', { link: url, bold: true, leading: 16 });
     if (localOrigin) lines(pdf, 'This link points to localhost and will not open this application on another device.', { size: 9, leading: 13 });
     const info = [
       `ID: ${note.id}`, `Observed: ${note.observedAt || note.createdAt}`,

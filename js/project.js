@@ -1,3 +1,4 @@
+import { BRAND } from "./brand.js";
 import { APP_VERSION } from "./version.js?v=0.54.0-print";
 import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.5.0";
 import { NoteRelationshipsRegistry, normalizeNoteRelationships } from "./note-relationships.js?v=0.2.0";
@@ -287,7 +288,7 @@ export class ProjectManager {
   async #restoreLayerPresentation(layer, config) {
     this.mapController.setVisibility(layer.uid, config.visible !== false, { silent: true });
     this.mapController.setOpacity(layer.uid, Number.isFinite(config.opacity) ? config.opacity : 1, { silent: true });
-    // A service's own style loads with the layer; only styles set in GISMap are restored.
+    // A service's own style loads with the layer; only styles set in GISMap Online are restored.
     if (config.renderer && config.styled !== false) this.mapController.restoreRenderer(layer.uid, config.renderer);
     if (config.rendererSpec) this.mapController.recordRendererSpec(layer.uid, config.rendererSpec);
     if (config.spatialChart) await this.mapController.setSpatialChart(layer.uid, config.spatialChart);
@@ -343,7 +344,7 @@ export class ProjectManager {
       height,
       skin: globalThis.document?.documentElement?.dataset.skin || project.presentation?.skin,
     });
-    const blob = await embedProjectInPng(visual, project, { generator: "gismap-online", apiVersion: APP_VERSION, renderedBy: "app", template });
+    const blob = await embedProjectInPng(visual, project, { generator: "gismap-online", generatorName: BRAND.name, apiVersion: APP_VERSION, renderedBy: "app", template });
     const name = `${this.#exportName(project)}-${suffix}.png`;
     if (download) {
       downloadBlob(blob, name);

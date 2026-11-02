@@ -118,7 +118,7 @@ export function applyBasemapTheme(style, theme) {
 
 /**
  * The style with 3D buildings (a new object): an extruded "building-3d" layer
- * from the OpenMapTiles building heights, rising from zoom 13 (GIS Map zoom 14) as in MapLibre's
+ * from the OpenMapTiles building heights, rising from zoom 13 (GISMap Online zoom 14) as in MapLibre's
  * 3D buildings example. Placed under the labels; a style that already has one
  * keeps it. Applied before a theme, so the skin recolours the buildings too.
  */

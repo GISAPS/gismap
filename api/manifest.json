@@ -1,7 +1,7 @@
 {
   "manifestVersion": "1.0.0",
   "scope": "in-page",
-  "description": "GISMap browser API. Runtime registry may contain additional tools and panels.",
+  "description": "GISMap Online browser API. Runtime registry may contain additional tools and panels.",
   "discovery": {
     "runtime": "gisMapOnline.manifest()",
     "state": "gisMapOnline.state.snapshot()",

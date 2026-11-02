@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/cinematic.schema.json",
-  "title": "GISMap Cinematic 0.1",
+  "title": "GISMap Online Cinematic 0.1",
   "type": "object",
   "required": ["schemaVersion", "mode", "cinematic"],
   "properties": {

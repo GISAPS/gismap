@@ -378,7 +378,7 @@ export function createAssistantTools(host) {
       const skinChoice = INTERFACE_SKINS.find(({ id }) => id === skin);
       if (!skinChoice) throw Object.assign(new Error(`Unknown skin "${skin}".`), { hint: `Use one of: ${INTERFACE_SKINS.map(({ id }) => id).join(", ")}.` });
       if (!BASEMAPS.includes(basemap)) throw Object.assign(new Error(`Unknown basemap "${basemap}".`), { hint: `Use one of: ${BASEMAPS.join(", ")}.` });
-      if (typeof host.createInstantDashboard !== "function") throw Object.assign(new Error("Instant Dashboard is not available in this GISMap session."), { hint: "Open the map workspace and try again after it has finished loading." });
+      if (typeof host.createInstantDashboard !== "function") throw Object.assign(new Error("Instant Dashboard is not available in this GISMap Online session."), { hint: "Open the map workspace and try again after it has finished loading." });
       return host.createInstantDashboard({ layer: found, title, skin: skinChoice.id, basemap });
     },
     async load_map({ spec, replace = true }) {
@@ -454,7 +454,7 @@ export function createAssistantTools(host) {
       return { url, fitsQrCode: qr };
     },
     async get_map_embed({ title, height } = {}) {
-      if (typeof host.createMapEmbed !== "function") throw Object.assign(new Error("Map embeds are not available in this GISMap session."), { hint: "Open Share & export to create a map link, then choose Embed." });
+      if (typeof host.createMapEmbed !== "function") throw Object.assign(new Error("Map embeds are not available in this GISMap Online session."), { hint: "Open Share & export to create a map link, then choose Embed." });
       return host.createMapEmbed({ title, height });
     },
   };
