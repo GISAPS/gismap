@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { allowedParents, createConsoleBridge, SI_PARENT_ORIGINS, validConsoleMessage } from "../js/si-console-embed.js";
+import { allowedParents, SI_PARENT_ORIGINS, validConsoleMessage } from "../js/si-console-embed.js";
+import { createConsoleBridge } from "../js/engines/maplibre/console-overlay.js";
 
 const message = (action, extra = {}) => ({ type: "gismap.si.console", version: 1, action, ...extra });
 const feature = { type: "Feature", properties: { id: 1 }, geometry: { type: "Point", coordinates: [1, 2] } };

@@ -11,7 +11,7 @@ import { IdentifyController } from "./identify.js?v=0.54.0-pan2";
 import { AttributeTableController } from "./attribute-table.js?v=0.61.2-layer-tools";
 import { AIController } from "./ai.js?v=0.57.0-skins1";
 import { ToolManager } from "./tool-manager.js?v=0.37.0";
-import { UIController } from "./ui.js?v=0.54.0-print";
+import { UIController } from "./ui.js?v=0.67.0-si-console";
 import { ExportController } from "./export/export-controller.js?v=0.37.0";
 import { SHARE_BASEMAPS, parseShareParameters } from "./share.js?v=0.54.0-unified4";
 import { readShareLocation } from "./map-share.js?v=0.65.0-paths";
@@ -23,7 +23,7 @@ import { ApplicationRuntime } from "./application-runtime.js?v=0.57.0-skins1";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { MobilePanelManager } from "./mobile-panel-manager.js?v=0.18.2";
 import { MobileWorkflowRouter } from "./mobile-workflow-router.js?v=0.57.0-skins1";
-import { createClientApi } from "./briefing-api.js?v=0.54.0-print";
+import { createClientApi } from "./briefing-api.js?v=0.67.0-si-console";
 import { createPrintApi, hasWebgl, registerPrintTools, webglIssue } from "./print-api.js?v=0.54.0-print";
 import { MAP_TEMPLATES } from "./map-templates.js?v=0.54.0-print";
 import { readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
@@ -37,7 +37,7 @@ import { mapSpecFromShareParameters } from "./map-spec.js?v=0.66.1-finish1";
 import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.54.0-print";
 
 import { loadSharedLayer } from "./shared-layer-loader.js?v=0.53.0";
-import { allowedParents, createConsoleBridge, validConsoleMessage } from "./si-console-embed.js?v=0.67.0-si-console";
+import { allowedParents, validConsoleMessage } from "./si-console-embed.js?v=0.67.0-si-console";
 
 // Readiness for agents and scripts: gisMapOnline.ready, a `gismap:ready` event,
 // and <html data-gismap-state="loading|ready|error">.
@@ -368,9 +368,8 @@ async function start() {
     const parents = allowedParents(location.hostname, document.referrer);
     const post = (message) => { if (window.parent !== window) parents.forEach((origin) => window.parent.postMessage(message, origin)); };
     const connect = () => {
-      const engine = mapController.engine;
-      if (!engine?.map) { setTimeout(connect, 100); return; }
-      const bridge = consoleBridge = createConsoleBridge({ map: engine.map, post, basemaps: (engine.getBasemapOptions?.()?.options || []).map(({ id, title, label, name }) => ({ id, label: title || label || name || id })), setBasemap: (id) => engine.setBasemap?.(id) });
+      const bridge = consoleBridge = mapController.attachConsoleOverlay({ post });
+      if (!bridge) { setTimeout(connect, 100); return; }
       window.addEventListener("message", (event) => {
         if (event.source === window.parent && parents.includes(event.origin) && validConsoleMessage(event.data)) bridge.handle(event.data);
       });
