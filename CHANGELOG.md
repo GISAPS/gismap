@@ -6,6 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
+- Attribute table stripes, hover states, the insights overlay and connection panels now derive from each skin's colours, so text stays readable in every skin and theme. A contract test blocks hard-coded surfaces and low-contrast skins.
 - Added the `si-console` embed for the GISMap SI Query Console: results, query geometry, selection and map gestures over a versioned message channel pinned to GISMap SI origins.
 
 ## 0.54.0
