@@ -37,6 +37,7 @@ import { mapSpecFromShareParameters } from "./map-spec.js?v=0.66.1-finish1";
 import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.54.0-print";
 
 import { loadSharedLayer } from "./shared-layer-loader.js?v=0.53.0";
+import { allowedParents, createConsoleBridge, validConsoleMessage } from "./si-console-embed.js?v=0.67.0-si-console";
 
 // Readiness for agents and scripts: gisMapOnline.ready, a `gismap:ready` event,
 // and <html data-gismap-state="loading|ready|error">.
@@ -69,6 +70,7 @@ async function start() {
   const launchParams = new URLSearchParams(location.search);
   const sharedEmbed = launchParams.get("embed") === "1";
   const siPreviewEmbed = sharedEmbed && launchParams.get("embedKind") === "si-preview";
+  const siConsoleEmbed = sharedEmbed && launchParams.get("embedKind") === "si-console";
   // MapLibre by default; ?engine=arcgis (or the Display settings choice) selects the ArcGIS engine.
   let sharedState = null;
   let sharedStateError = null;
@@ -149,6 +151,10 @@ async function start() {
 
   let pendingPrivatePreview = null;
   let loadPrivatePreview = null;
+  if (siConsoleEmbed) {
+    uiController.activateSharedEmbed("map");
+    document.body.classList.add("si-console-embed");
+  }
   if (siPreviewEmbed) {
     // SI's browser parent delivers an authorized, bounded snapshot after this ready
     // signal. Nothing private is included in the iframe URL or saved by GISMap Online.
@@ -356,7 +362,23 @@ async function start() {
   }
   const linkBasemap = shared?.basemap || (sharedState?.kind === "map-spec" ? sharedState.spec?.basemap : sharedState?.basemap) || null;
   mapController.setInitialBasemap(SHARE_BASEMAPS.has(linkBasemap) ? linkBasemap : null);
+  let consoleBridge = null;
+  if (siConsoleEmbed) {
+    // Tools must work while basemap tiles are still loading, so this cannot wait for initialize().
+    const parents = allowedParents(location.hostname, document.referrer);
+    const post = (message) => { if (window.parent !== window) parents.forEach((origin) => window.parent.postMessage(message, origin)); };
+    const connect = () => {
+      const engine = mapController.engine;
+      if (!engine?.map) { setTimeout(connect, 100); return; }
+      const bridge = consoleBridge = createConsoleBridge({ map: engine.map, post, basemaps: (engine.getBasemapOptions?.()?.options || []).map(({ id, title, label, name }) => ({ id, label: title || label || name || id })), setBasemap: (id) => engine.setBasemap?.(id) });
+      window.addEventListener("message", (event) => {
+        if (event.source === window.parent && parents.includes(event.origin) && validConsoleMessage(event.data)) bridge.handle(event.data);
+      });
+    };
+    connect();
+  }
   await mapController.initialize();
+  consoleBridge?.refit();
   events.publish("project:loaded", { project: projectManager.current, missingFiles: [] });
 
   // The SI parent can send its secure snapshot while the engine is still
