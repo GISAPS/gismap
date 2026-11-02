@@ -42,7 +42,7 @@ const NATIVE_EFFECT_PREFIX = "cinematic-native:";
 import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetchGeometries, queryServiceIds } from "./arcgis-service.js?v=0.47.0";
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
-import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
+import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
 import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.1.1";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
 import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.4";
@@ -248,6 +248,12 @@ export class MaplibreEngine {
       // Basemap tiles come and go; a failure in a data layer's source is worth reporting.
       if (!String(event.sourceId || "").startsWith("gismap-")) return;
       const terrainSourceIds = new Set([TERRAIN_SOURCE_ID, HILLSHADE_SOURCE_ID]);
+      // A missing elevation tile only leaves that patch flat; the map and any tour carry on.
+      if (terrainSourceIds.has(event.sourceId) && isTerrainTileFailure(event)) {
+        if (!this.terrainTileWarned) console.warn("Some 3D terrain tiles could not load.", event.error);
+        this.terrainTileWarned = true;
+        return;
+      }
       const record = this.#records.get(String(event.sourceId).slice("gismap-".length));
       const message = event.sourceId === "gismap-usgs-basemap"
         ? "USGS imagery could not be loaded. The fallback basemap remains available; check the provider or choose another basemap."

@@ -519,3 +519,10 @@ test("an animated layer effect is saved with the layer, normalized, and removabl
   assert.equal(await engine.setLayerEffect(layer.uid, { type: "sparkles" }), null);
   assert.equal(engine.getLayerConfig(layer.uid).animatedEffect, null);
 });
+
+test("a failed terrain tile is not reported as terrain failing", async () => {
+  const { TERRAIN_TILEJSON, isTerrainTileFailure } = await import("../js/engines/maplibre/terrain.js");
+  assert.equal(isTerrainTileFailure({ error: { url: "https://tiles.mapterhorn.com/14/4701/6245.webp" } }), true);
+  assert.equal(isTerrainTileFailure({ tile: {}, error: {} }), true);
+  assert.equal(isTerrainTileFailure({ error: { url: TERRAIN_TILEJSON } }), false);
+});

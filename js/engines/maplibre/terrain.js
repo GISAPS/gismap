@@ -3,6 +3,9 @@
 // 3D terrain example.
 export const TERRAIN_TILEJSON = "https://tiles.mapterhorn.com/tilejson.json";
 export const TERRAIN_SOURCE_ID = "gismap-terrain-dem";
+
+/** Whether a map error is one elevation tile failing, not the terrain source itself. */
+export const isTerrainTileFailure = (event) => Boolean(event.tile) || Boolean(event.error?.url && event.error.url !== TERRAIN_TILEJSON);
 export const HILLSHADE_SOURCE_ID = "gismap-terrain-hillshade-dem";
 export const HILLSHADE_LAYER_ID = "gismap-terrain-hillshade";
 
