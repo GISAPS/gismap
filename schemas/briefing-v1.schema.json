@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/briefing-v1.schema.json",
-  "title": "GISMap Briefing",
-  "description": "A portable, client-side GISMap briefing document.",
+  "title": "GISMap Online Briefing",
+  "description": "A portable, client-side GISMap Online briefing document.",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -18,7 +18,7 @@
         "null"
       ],
       "maxLength": 2048,
-      "description": "The layer the briefing is about. Use the layer's service URL (for example https://\u2026/FeatureServer/0) so the document works anywhere; GISMap loads it when it is not on the map. A layer ID or title also matches a layer that is already loaded."
+      "description": "The layer the briefing is about. Use the layer's service URL (for example https://\u2026/FeatureServer/0) so the document works anywhere; GISMap Online loads it when it is not on the map. A layer ID or title also matches a layer that is already loaded."
     },
     "transition": {
       "enum": [

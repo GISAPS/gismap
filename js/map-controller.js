@@ -108,7 +108,7 @@ export class MapController {
 
   /**
    * Replaces the renderer beneath the existing workspace without navigating
-   * away from the application. Remote layers, their GISMap styles, basemap,
+   * away from the application. Remote layers, their GISMap Online styles, basemap,
    * terrain choice, and camera are rebuilt in the new engine. Callers receive
    * the old-to-new layer IDs so their own selection state can follow along.
    *
@@ -152,7 +152,7 @@ export class MapController {
       const layers = [];
       for (const config of configs) {
         const layer = await this.addService(config);
-        // Renderer specs are GISMap's portable styling format. Native renderer
+        // Renderer specs are GISMap Online's portable styling format. Native renderer
         // JSON is intentionally not replayed across different SDKs.
         if (config.rendererSpec) await Promise.resolve(this.applyRendererSpec(layer.uid, config.rendererSpec)).catch(() => {});
         if (config.ignoreServiceScaleRange) await Promise.resolve(this.ignoreScaleRange(layer.uid, true)).catch(() => {});

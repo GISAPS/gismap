@@ -1,4 +1,4 @@
-// Opening GIS Map links from pictures: a QR card, a screenshot or a photo of
+// Opening GISMap Online links from pictures: a QR card, a screenshot or a photo of
 // one. The browser's own BarcodeDetector is used where it exists (Chrome,
 // Android); elsewhere (Safari, Firefox) the vendored jsQR decoder is loaded on
 // first use. Only links to GISMap Online itself are opened.
@@ -94,12 +94,12 @@ export function gisMapLinkFrom(text, { here = globalThis.location } = {}) {
   // A QR card may have been created from an http:// visit before the host
   // upgraded the page. Never follow that address: only reuse its path, query
   // and fragment on this app's current (normally HTTPS) origin. The hostname
-  // above is already restricted to GISMap hosts, so this keeps import safe
+  // above is already restricted to GISMap Online hosts, so this keeps import safe
   // while making existing share cards portable.
   return new URL(`${url.pathname}${url.search}${url.hash}`, here.origin).href;
 }
 
-/** What a GIS Map link opens, for the message shown while it loads. */
+/** What a GISMap Online link opens, for the message shown while it loads. */
 export function describeGisMapLink(href) {
   const url = new URL(href);
   const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
@@ -112,7 +112,7 @@ export function describeGisMapLink(href) {
   return url.searchParams.has("layer") || url.searchParams.has("example") ? "map" : "link";
 }
 
-/** Opens a GIS Map link here. A fragment-only change still reloads, since the app reads the address once at start. */
+/** Opens a GISMap Online link here. A fragment-only change still reloads, since the app reads the address once at start. */
 export function openGisMapLink(href, { here = globalThis.location } = {}) {
   const target = new URL(href);
   const samePage = target.pathname === here.pathname && target.search === here.search;

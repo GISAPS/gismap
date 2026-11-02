@@ -4,7 +4,7 @@
 [![Tests](https://github.com/geolibrerian/gismap/actions/workflows/test.yml/badge.svg)](https://github.com/geolibrerian/gismap/actions/workflows/test.yml)
 [![License](https://img.shields.io/github/license/geolibrerian/gismap)](LICENSE)
 
-**[GISMap.online](https://gismap.online/) makes interactive web maps and map briefings from one link.** It's free and open source and runs in the browser: no account, API key or server. People build in the app; AI assistants write the link.
+**[GISMap Online](https://gismap.online/) makes interactive web maps and map briefings from one link.** It's free and open source and runs in the browser: no account, API key or server. People build in the app; AI assistants write the link.
 
 | Make | From | Example |
 | --- | --- | --- |
@@ -28,12 +28,12 @@ Briefings go inside the map JSON (`"briefing": {...}`). Start with [llms.txt](ht
 
 ### Under the hood
 
-GISMap supports MapLibre (the default, with three.js for point clouds and models) and the ArcGIS Maps SDK. It uses native ES modules, local browser project storage and portable project packages; no application login or database is required. The interface uses a layered globe-and-analysis mark with an editable HTML wordmark and the descriptor “Spatial intelligence studio.”
+GISMap Online supports MapLibre (the default, with three.js for point clouds and models) and the ArcGIS Maps SDK. It uses native ES modules, local browser project storage and portable project packages; no application login or database is required. The interface uses a layered globe-and-analysis mark with an editable HTML wordmark and the descriptor “Spatial intelligence studio.”
 
 ## Explore and learn
 
 - [Browse public GIS data examples](https://gismap.online/examples/), including
-  curated ArcGIS REST services and GeoJSON feeds that open directly in GISMap.
+  curated ArcGIS REST services and GeoJSON feeds that open directly in GISMap Online.
 - Take the [Historical Quakes briefing tutorial](https://gismap.online/?briefingExample=historical-quakes&tutorial=1): a finished, editable story that explains source provenance, publisher symbols, a focused map filter, slides, cinematic playback, and sharing.
 - Browse the [viewer guide index](https://gismap.online/guides/) or read about [ArcGIS REST services](https://gismap.online/arcgis-rest-service-viewer/),
   [FeatureServers](https://gismap.online/arcgis-feature-service-viewer/),
@@ -123,7 +123,7 @@ Errors are `GisMapError` with a `code` and a `hint` written for agents. The cont
 
 ## Client-side Briefing API
 
-GISMap exposes the same versioned Briefing functions to in-page agents and to ES-module callers. No GISMap server or account is required.
+GISMap Online exposes the same versioned Briefing functions to in-page agents and to ES-module callers. No GISMap Online server or account is required.
 
 ```js
 const api = globalThis.gisMapOnline;
@@ -147,7 +147,7 @@ const qrCard = await api.briefing.exportQrCard(); // branded PNG File
 
 The experimental in-page `briefing.generateTemplate` API previews or appends Filter Series, Timeline, Grid Atlas, and 3D Spatial Chart slides from an already loaded layer. It queries at most 500 features and reports coverage as unknown; its statistics are not guaranteed complete. Set `previewOnly: true` to avoid saving. It is not a standalone core or HTTP API. See [data-driven briefing API](https://gismap.online/skills/gismap/references/briefs.md) for options, geometry limits, and verification guidance.
 
-A briefing document can say which data it is about: `layerId` is best given as the layer's service URL, which GISMap loads if it is not already on the map, and `selection.ids` lists the chosen features. Host a document as JSON (CORS-enabled) and link to it as `https://gismap.online/?briefing=<file URL>`; GISMap opens it on that layer and starts presenting. The file may be a briefing document, a project that contains one, or the briefing file the share dialog downloads.
+A briefing document can say which data it is about: `layerId` is best given as the layer's service URL, which GISMap Online loads if it is not already on the map, and `selection.ids` lists the chosen features. Host a document as JSON (CORS-enabled) and link to it as `https://gismap.online/?briefing=<file URL>`; GISMap Online opens it on that layer and starts presenting. The file may be a briefing document, a project that contains one, or the briefing file the share dialog downloads.
 
 Headless agents can import the pure core without opening the app:
 
@@ -162,7 +162,7 @@ The machine-readable contracts are [`api/capabilities.json`](api/capabilities.js
 
 ### Smart map images
 
-Project → Download project can create a **Smart map image**: a polished, standards-compliant PNG containing the complete editable project configuration in GISMap's private `giMp` ancillary chunk. The visible image opens normally anywhere; importing the original PNG through Project → Import restores its camera, basemap, public layer references, styling, bookmarks, workflows, and Briefing slides.
+Project → Download project can create a **Smart map image**: a polished, standards-compliant PNG containing the complete editable project configuration in GISMap Online's private `giMp` ancillary chunk. The visible image opens normally anywhere; importing the original PNG through Project → Import restores its camera, basemap, public layer references, styling, bookmarks, workflows, and Briefing slides.
 
 ```js
 const output = await gisMapOnline.smartImages.createCurrent();
@@ -172,7 +172,7 @@ console.log(output.file.name, output.share?.url, output.share?.qr);
 await gisMapOnline.smartImages.downloadCurrent();
 ```
 
-`createCurrent()` gives an agent the PNG without forcing a browser download and also returns `share`, the equivalent live-map link with public layers, styles, filters, camera, basemap, and skin. `createShareLink()` returns that link directly. Its `qr` flag says whether it fits safely in GISMap's separate branded QR image. Keeping the QR as a separate artifact leaves the Smart Image clean while providing a reliable route back to the live map; GISMap can also reopen QR screenshots and photos.
+`createCurrent()` gives an agent the PNG without forcing a browser download and also returns `share`, the equivalent live-map link with public layers, styles, filters, camera, basemap, and skin. `createShareLink()` returns that link directly. Its `qr` flag says whether it fits safely in GISMap Online's separate branded QR image. Keeping the QR as a separate artifact leaves the Smart Image clean while providing a reliable route back to the live map; GISMap Online can also reopen QR screenshots and photos.
 
 The embedded payload is versioned, deflate-compressed when supported, protected by PNG CRC and SHA-256 integrity checks, and bounded by explicit input limits. Remote URLs containing credentials are rejected. Smart Images reference public services and do not make those services offline; use `.gisx` when local datasets must travel with the project. Keep the original PNG—social networks and image editors may resize it or remove ancillary metadata. When another service strips the private PNG chunk, share the companion live link or QR image alongside it.
 
@@ -218,8 +218,8 @@ versions are independent and need not match the application version.
 - `js/application-runtime.js` — registered workspace/data/presentation panels and approved builder operations
 - `js/data-catalog.js` — portable catalog schema, read-only SQL validation, and deterministic natural-language query planning
 - `js/gismap-core.js` — pure client-side API for briefing documents, filters, statistics, source inspection, and share encoding
-- `js/briefing-api.js` — binds the pure API to the active GISMap project and camera as `globalThis.gisMapOnline.briefing`
-- `js/smart-image.js` — renders portable map PNGs and safely embeds or restores versioned GISMap project manifests
+- `js/briefing-api.js` — binds the pure API to the active GISMap Online project and camera as `globalThis.gisMapOnline.briefing`
+- `js/smart-image.js` — renders portable map PNGs and safely embeds or restores versioned GISMap Online project manifests
 - `js/duckdb-client.js` — optional, lazily loaded DuckDB-Wasm execution for browser feature records and HTTPS analytical sources
 - `js/catalog.js` — public data services plus categories, stable slugs, source
   metadata, reuse guidance, tags, and featured-example controls

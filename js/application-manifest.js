@@ -11,7 +11,7 @@ const objectSchema = { type: 'object' };
 export const PUBLIC_STATE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://gismap.online/schemas/application-state-v1.schema.json',
-  title: 'GISMap privacy-preserving application state',
+  title: 'GISMap Online privacy-preserving application state',
   type: 'object',
   required: ['revision', 'version', 'status', 'engine', 'basemap', 'skin', 'application', 'activeLayerId', 'selection', 'layers'],
   properties: {
@@ -28,7 +28,7 @@ export function buildManifest({ tools = [...LAYER_TOOL_DEFINITIONS, ...AUTHORING
   return {
     manifestVersion: MANIFEST_VERSION,
     scope: 'in-page',
-    description: 'GISMap browser API. Runtime registry may contain additional tools and panels.',
+    description: 'GISMap Online browser API. Runtime registry may contain additional tools and panels.',
     discovery: { runtime: 'gisMapOnline.manifest()', state: 'gisMapOnline.state.snapshot()', stateSchema: '/schemas/application-state-v1.schema.json', explorer: '/api/explorer/', aiArcgisMapGuide: '/ai-arcgis-map-generator/', agentRecipes: '/api/agent-recipes/index.json', agentRecipeSchema: '/schemas/agent-recipe-v1.schema.json' },
     privacy: 'The state projection excludes feature records, coordinates, source URLs, filter expressions, credentials and user-entered text.',
     actions: tools.map(describeAction),

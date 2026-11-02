@@ -156,7 +156,7 @@ export function agentRecipes(links) {
     {
       id: "interactive-briefing", title: "Interactive geographic briefing", status: "available",
       question: "Can an AI agent build a slide briefing with one map slide per area and context from another layer?",
-      answer: "Yes. A chatbot can write the whole briefing into one link: a map-v1 JSON with a briefing-v1 document in its briefing property, after #map=json:. The link opens presenting, as a desktop deck or a mobile swipe feed. In an open GISMap page, agents can also build, generate and export briefings through the in-page API, including relations to a context layer.",
+      answer: "Yes. A chatbot can write the whole briefing into one link: a map-v1 JSON with a briefing-v1 document in its briefing property, after #map=json:. The link opens presenting, as a desktop deck or a mobile swipe feed. In an open GISMap Online page, agents can also build, generate and export briefings through the in-page API, including relations to a context layer.",
       triggers: ["Create slides about these districts", "Build an interactive crime briefing for Philadelphia", "Make a presentation with one slide per county"],
       inputTypes: ["ArcGIS FeatureServer polygon layer", "Supporting point or polygon layer"],
       inputs: {
@@ -349,11 +349,11 @@ export function agentRecipes(links) {
     {
       id: "print-map", title: "Print-ready PDF and branded Smart Image", status: "experimental",
       question: "Can an AI agent make a branded PDF, poster or Smart Map Image?",
-      answer: "Yes, from a running GISMap page. gisMapOnline.print renders the Print Editor's templates and returns the file. Exports wait for the map and fail rather than return a blank or partial page. Agents never draw their own Smart Image.",
+      answer: "Yes, from a running GISMap Online page. gisMapOnline.print renders the Print Editor's templates and returns the file. Exports wait for the map and fail rather than return a blank or partial page. Agents never draw their own Smart Image.",
       triggers: ["Make a printable map of this data", "Make a poster of this map", "Make a Smart Map Image"],
-      inputTypes: ["A map open in GISMap", "A map-v1 link"],
+      inputTypes: ["A map open in GISMap Online", "A map-v1 link"],
       inputs: {
-        required: [{ name: "map", description: "A running GISMap page with the map loaded." }],
+        required: [{ name: "map", description: "A running GISMap Online page with the map loaded." }],
         optional: [{ name: "template", description: "An id from print.templates()." }, { name: "title", description: "The page title; the project title by default." }, { name: "pages", description: "current-view, or bookmarks for a PDF with one page per bookmark." }],
       },
       capabilities: ["print"],

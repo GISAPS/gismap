@@ -182,7 +182,7 @@ const { url } = await gisMapOnline.mapSpec.createLink(gisMapOnline.mapSpec.fromC
         heading: "Verify the artifact: Michigan county health",
         paragraphs: [
           "Inspect the layer metadata and query actual values before choosing fields. The 2024 County Health Rankings layer 2 is polygon geometry; statecode is a string containing state FIPS, and v001_rawvalue is age-adjusted years of potential life lost per 100,000. On 2026-10-20, statecode = '26' returned 83 Michigan counties. Counts and service availability can change.",
-          "Source metadata: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/County%20Health%20Rankings%202024/FeatureServer/2?f=pjson. Test each where clause using that layer's /query endpoint with f=json and returnCountOnly=true. A successful service query does not prove the GISMap layer loaded, rendered or reopened.",
+          "Source metadata: https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/County%20Health%20Rankings%202024/FeatureServer/2?f=pjson. Test each where clause using that layer's /query endpoint with f=json and returnCountOnly=true. A successful service query does not prove the GISMap Online layer loaded, rendered or reopened.",
           "The following filters were accepted by that layer on 2026-10-20. IS NULL tests database null, not missing-value codes; inspect the publisher's metadata and sentinels before deciding which values to exclude. Do not assume other services use these names or codes.",
           "Use mapSpec.prepareVerification(spec) in the browser or core for an offline report; not_checked means exactly that. In a browser, await mapSpec.load(spec).ready, examine issues, layer configuration and rendered features, then open the generated URL in a fresh page and verify again. Report any unavailable steps. Always provide the actual URL, not just a button label.",
         ],
@@ -191,7 +191,7 @@ v001_rawvalue > 0
 statecode = '26' AND v001_rawvalue > 0
 statecode = '26' AND v001_rawvalue IS NULL
 statecode = '26' AND v001_rawvalue IS NOT NULL`),
-        after: [`Michigan share URL (prepared; browser rendering and reopening not independently verified): ${MICHIGAN_LINK}`, "Prepared: spec or URL constructed. Validated: GISMap's validator accepted it (review warnings). Loaded: required layers loaded in the application. Verified: intended features, filter, style and camera were confirmed, including reopening the share link. Do not imply a later stage was completed when it was not."],
+        after: [`Michigan share URL (prepared; browser rendering and reopening not independently verified): ${MICHIGAN_LINK}`, "Prepared: spec or URL constructed. Validated: GISMap Online's validator accepted it (review warnings). Loaded: required layers loaded in the application. Verified: intended features, filter, style and camera were confirmed, including reopening the share link. Do not imply a later stage was completed when it was not."],
       },
       {
         heading: "Refine an existing map into multiple views",
@@ -213,7 +213,7 @@ for (const spec of [year, acres]) {
   const report = await mapSpec.prepareVerification(spec);
   console.log(report.url, report.checks, report.warnings, report.errors);
 }`),
-        after: ["Inspect source fields and validate both renderers against them; then open each URL in GISMap, confirm the filter, map, legend, categories and acreage classes, and reopen it. Category and class generation can use sampled data. A generated URL alone is not verified. Numeric year-slider authoring is not defined in map-v1; treat it as an enhancement rather than claiming support.", "Prepared examples and source JSON: https://gismap.online/examples/ai/california-fire-refinement/"],
+        after: ["Inspect source fields and validate both renderers against them; then open each URL in GISMap Online, confirm the filter, map, legend, categories and acreage classes, and reopen it. Category and class generation can use sampled data. A generated URL alone is not verified. Numeric year-slider authoring is not defined in map-v1; treat it as an enhancement rather than claiming support.", "Prepared examples and source JSON: https://gismap.online/examples/ai/california-fire-refinement/"],
       },
       {
         heading: "4. Handling errors",
@@ -268,7 +268,7 @@ export function renderGuideMarkdown(guide) {
 export function buildLlmsTxt({ capabilities, examples = null }) {
   return `# GISMap Online
 
-> GISMap.online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
+> GISMap Online is a free, open-source, browser-based GIS workspace for people and AI agents to explore, style and share geographic data in 2D and 3D. A language model can make a map for someone by producing a URL: no API key, account or server call is needed. It opens public ArcGIS REST (FeatureServer, MapServer, ImageServer), GeoJSON, WMS, WFS and KML sources over HTTPS.
 
 ## If you have no tools
 
@@ -278,7 +278,7 @@ The map in a link is one JSON object (map-v1): layers with filters and styles, b
 
 ## Links a chatbot can write (no code, no account)
 
-Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after \`json:\`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with \`?via=<agent>\`, as in \`${SITE}/?via=<agent>#map=json:…\` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
+Every GISMap Online artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after \`json:\`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with \`?via=<agent>\`, as in \`${SITE}/?via=<agent>#map=json:…\` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
 
 - Map: \`https://gismap.online/#map=json:{"version":1,"layers":[{"url":"<layer URL>","where":"<filter>","renderer":{"type":"choropleth","field":"<FIELD>","ramp":"purples"}}],"basemap":"gray-vector"}\`
 - Briefing (slides): add \`"briefing":{"layerId":"<layer URL>","selection":{"useAll":true},"slides":[{"template":"title","title":"…"},{"template":"key-numbers","title":"At a glance","blocks":[{"type":"stat","stat":"count","label":"Features"}]},{"template":"feature","title":"…","featureId":"<OBJECTID>","fit":"feature","blocks":[{"type":"text","markdown":"…"}]}]}\` to the map JSON; the link opens presenting (schema: [briefing-v1](${SITE}/schemas/briefing-v1.schema.json)).
@@ -288,7 +288,7 @@ Every GISMap artifact can be written as one link: URI-encode the JSON (encodeURI
 
 Readable links hold up to 8,192 characters. Inspect real fields first (\`<layer URL>?f=pjson\`) when you can fetch. Use \`usgs-imagery\` for aerial imagery on the default MapLibre engine; it covers the United States only and is blank elsewhere. Step-by-step: [agent recipes](${SITE}/agent-recipes/).
 
-## What can AI agents create with GISMap?
+## What can AI agents create with GISMap Online?
 
 Print-ready PDFs and branded Smart Images come from \`gisMapOnline.print\` in a running page; see the [print reference](${SITE}/skills/gismap/references/print.md).
 
@@ -316,7 +316,7 @@ Combine recipes for one request: a 3D fire-history map with chronological strata
 
 Inspect the actual layer before choosing a chart. Use category or time values for grouping and a verified numeric measure for sum/mean/min/max; otherwise use count. Chart Builder supports bar, column, line, area, histogram, scatter, bubble, box, donut, metric, conventional 3D bar/scatter and map-chart presets. Its destinations are Chart panel, Instant Dashboard, On the map and Brief slide. A chart scope can be filtered, all, viewport or selected data; label a bounded browser query, sample or partial response honestly.
 
-For a fast, coherent dashboard in an active GISMap session, use \`create_instant_dashboard\` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: \`skin\` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states. Do not call a dashboard layout portable in a map-only share until it has been reopened and checked.
+For a fast, coherent dashboard in an active GISMap Online session, use \`create_instant_dashboard\` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: \`skin\` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states. Do not call a dashboard layout portable in a map-only share until it has been reopened and checked.
 
 Cinematic mode is for observed records or explicit numeric scenarios, not an inference engine. Confirm the source date/time or numeric field, units and time zone; disclose whether playback is instant, cumulative, rolling or scenario-based. Keep effects subordinate to the source data, test local and overview scales, respect reduced-motion behavior, and pause/remove an effect before removing its layer. Verify that no derived or ghost overlay remains. Effects are primarily a MapLibre capability; another engine may render the source without the animated effect.
 
@@ -355,7 +355,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [TypeScript types](${SITE}/js/gismap-core.d.ts)
 
 ## Guides
-- [GISMap Agent Skill](${SITE}/skills/): installable instructions, validation and implementation proposal
+- [GISMap Online Agent Skill](${SITE}/skills/): installable instructions, validation and implementation proposal
 - [Making maps with an AI agent](${SITE}/guides/ai-agents/): chat-only, code-running and browser-driving recipes
 - [AI ArcGIS map generator](${SITE}/ai-arcgis-map-generator/): inspect a FeatureServer, style a map, and share a working link
 - [ArcGIS FeatureServer viewer](${SITE}/arcgis-feature-service-viewer/)
@@ -455,7 +455,7 @@ ${readmeSection(readme, "## Agent API")}
 const { file, warnings } = await gisMapOnline.print.exportPdf({ template: "poster", title: "Potholes" });
 \`\`\`
 
-Create Smart Images only with print.exportSmartImage() or smartImages.createCurrent() in a running GISMap page. Do not draw your own map image or write giMp chunks yourself. If export fails, report the error code and return the live share link instead. Use \`.gisx\` (project.exportPackage()) when local datasets must travel with the project; \`.gis\` (project.exportFile()) is the compact project file. Legacy .gmo and .gmop files still import. Options and templates: ${SITE}/skills/gismap/references/print.md
+Create Smart Images only with print.exportSmartImage() or smartImages.createCurrent() in a running GISMap Online page. Do not draw your own map image or write giMp chunks yourself. If export fails, report the error code and return the live share link instead. Use \`.gisx\` (project.exportPackage()) when local datasets must travel with the project; \`.gis\` (project.exportFile()) is the compact project file. Legacy .gmo and .gmop files still import. Options and templates: ${SITE}/skills/gismap/references/print.md
 
 ## Briefing API
 

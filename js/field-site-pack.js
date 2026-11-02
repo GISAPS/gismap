@@ -17,7 +17,7 @@ const task = (value) => decodeFieldTask(encodeFieldTask(value, "assign")).task;
 const layer = (value) => ({ id: text(value?.id, 160), title: text(value?.title, 160), type: text(value?.type || "reference", 48), source: text(value?.source, 1024), featureCount: Math.max(0, Math.floor(Number(value?.featureCount) || 0)) });
 
 export function normalizeSitePack(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value) || value.schema !== SITE_PACK_SCHEMA) throw new Error("This is not a supported GISMap Site Pack.");
+  if (!value || typeof value !== "object" || Array.isArray(value) || value.schema !== SITE_PACK_SCHEMA) throw new Error("This is not a supported GISMap Online Site Pack.");
   const createdAt = new Date(value.createdAt);
   if (!Number.isFinite(createdAt.getTime())) throw new Error("A Site Pack needs a valid creation time.");
   const id = text(value.id, 160);

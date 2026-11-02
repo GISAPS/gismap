@@ -172,7 +172,7 @@ export function encodeCompactFieldRecord(record) {
 }
 
 export function decodeCompactFieldRecord(text) {
-  if (!String(text).startsWith(FIELD_QR_PREFIX)) throw new Error("This is not a GISMap Field Mode QR record.");
+  if (!String(text).startsWith(FIELD_QR_PREFIX)) throw new Error("This is not a GISMap Online Field Mode QR record.");
   let payload;
   try { payload = JSON.parse(fromBase64Url(String(text).slice(FIELD_QR_PREFIX.length))); } catch { throw new Error("This Field Mode QR record is damaged."); }
   if (payload?.s !== 1) throw new Error("This Field Mode QR record has an unsupported version.");

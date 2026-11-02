@@ -29,8 +29,15 @@
         "@context": "https://schema.org",
         "@type": ["SoftwareApplication", "WebApplication"],
         "name": "GISMap Online",
-        "alternateName": "GIS Map Online",
+        "alternateName": ["GIS Map Online", "GISMap"],
         "url": "https://gismap.online/",
+        "publisher": {
+          "@type": "Organization",
+          "name": "GISMap Online",
+          "url": "https://gismap.online/",
+          "logo": "https://gismap.online/assets/gis-map-online-mark-v2.png",
+          "sameAs": ["https://github.com/geolibrerian/gismap"]
+        },
         "description": "A free, open-source browser application for opening ArcGIS REST services, FeatureServer and MapServer endpoints, GeoJSON, KML, shapefiles, WMS, WFS and other geospatial data in interactive 2D and 3D maps.",
         "applicationCategory": "DesignApplication",
         "applicationSubCategory": "Geographic information system",
@@ -54,6 +61,8 @@
     <!-- Installed as an app, GISMap Online opens .gis, .gisx, .gisatlas, .gisbrief and .gisclip files and shows its icon on them. -->
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+    <meta name="application-name" content="GISMap Online" />
+    <meta name="apple-mobile-web-app-title" content="GISMap Online" />
     <meta name="theme-color" content="#f5f5ef" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b231e" media="(prefers-color-scheme: dark)" />
     <!-- For language models and agents: a Markdown summary, the machine-readable API, and the agent guide. -->
@@ -127,7 +136,7 @@
               <button data-action="tools-about">About</button>
             </div>
           </div>
-          <a class="menu-bar__discover" href="./discover/" target="_blank" rel="noopener" title="Open the separate GISMap Discovery guide">Discover <span>↗</span></a>
+          <a class="menu-bar__discover" href="./discover/" target="_blank" rel="noopener" title="Open the separate GISMap Online Discovery guide">Discover <span>↗</span></a>
           <div class="menu">
             <button class="menu__trigger" aria-expanded="false">Data</button>
             <div class="menu__content" role="menu">
@@ -169,7 +178,7 @@
               <button type="button" data-action="mode-data-map-notes">Map notes</button>
               <hr />
               <button type="button" data-mobile-workflow="map">Standard map</button>
-              <button type="button" data-action="classic-mode-toggle" data-classic-mode aria-pressed="false" title="Switch between the new layout and the classic GISMap layout">Classic mode</button>
+              <button type="button" data-action="classic-mode-toggle" data-classic-mode aria-pressed="false" title="Switch between the new layout and the classic GISMap Online layout">Classic mode</button>
               <hr />
               <span class="menu__label">Panels</span>
               <button data-action="tools-display">Layout &amp; display…</button>
@@ -339,9 +348,9 @@
             <button type="button" data-welcome-start>Start mapping</button>
             <a href="./discover/examples/" target="_blank" rel="noopener">Explore examples</a>
             <button type="button" data-action="data-popular">Open starter catalog</button>
-            <a href="./discover/learn/" target="_blank" rel="noopener">Learn GISMap</a>
+            <a href="./discover/learn/" target="_blank" rel="noopener">Learn GISMap Online</a>
             <a href="./discover/ai/" target="_blank" rel="noopener">Create with AI</a>
-            <a href="./discover/about/" target="_blank" rel="noopener">About GISMap</a>
+            <a href="./discover/about/" target="_blank" rel="noopener">About GISMap Online</a>
           </div>
           <label class="welcome-panel__preference"><input id="welcome-suppress" type="checkbox" /> Don’t show this welcome automatically</label>
         </section>
@@ -528,7 +537,7 @@
 
     <section class="sr-only" aria-labelledby="agent-docs-title">
       <h2 id="agent-docs-title">For AI agents and developers</h2>
-      <p>GISMap.online is a free, open-source, browser-based GIS workspace for exploring, styling and sharing geographic data in 2D and 3D.</p>
+      <p>GISMap Online is a free, open-source, browser-based GIS workspace for exploring, styling and sharing geographic data in 2D and 3D.</p>
       <p>A map opens from a link: write one map-v1 JSON object after <code>#map=json:</code> in this page's address, or use <code>?layer=&lt;HTTPS service URL&gt;</code>. No key or account is needed.</p>
       <ul>
         <li><a href="./llms.txt">llms.txt: a summary for language models</a></li>

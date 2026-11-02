@@ -2,23 +2,23 @@
 
 > **Status: canonical workflows verified by the project owner.** These six workflows are approved reference examples for agents. The detailed recipe format, individual endpoints, outputs, and regression requirements below still need to be checked against the current implementation and tested before being advertised as available. Existing production behavior and versioned contracts take precedence over illustrative API examples. See [the agent authoring decision record](agent-authoring-architecture.md) and [capability audit](agent-authoring-audit.md).
 
-# GISMap.online — Six Canonical AI Agent Workflows
+# GISMap Online — Six Canonical AI Agent Workflows
 
 **Repository:** https://github.com/geolibrerian/gismap  
 **Priority:** High  
 **Primary goal:** AI agent discoverability and successful artifact creation  
-**Architecture:** Browser-first, CDN-compatible, no mandatory GISMap account or hosted authoring service
+**Architecture:** Browser-first, CDN-compatible, no mandatory GISMap Online account or hosted authoring service
 
 ## 1. Overview
 
-Create six canonical agent recipes demonstrating how an external AI agent can use GISMap.online to produce finished geographic artifacts.
+Create six canonical agent recipes demonstrating how an external AI agent can use GISMap Online to produce finished geographic artifacts.
 
 Every recipe must be:
 
 - Discoverable through `/llms.txt`, `/skills`, the capability manifest, and the examples gallery.
 - Readable as ordinary HTML and Markdown.
 - Available as machine-readable JSON.
-- Based on real, tested GISMap capabilities.
+- Based on real, tested GISMap Online capabilities.
 - Executable through the simplest compatible interface.
 - Validated before being described as completed.
 - Accompanied by a working artifact example.
@@ -216,7 +216,7 @@ Create a California grape production map using an appropriate USDA county data s
 
 Expected outputs:
 
-- Interactive GISMap URL.
+- Interactive GISMap Online URL.
 - PDF map.
 - QR card.
 - Smart Map PNG.
@@ -856,7 +856,7 @@ Validate the artifact and tool arguments before applying changes.
 
 ## Execute
 
-Perform the supported action through GISMap's existing public interfaces.
+Perform the supported action through GISMap Online's existing public interfaces.
 
 ## Verify
 
@@ -917,7 +917,7 @@ Update:
 
 Provide a dedicated section:
 
-**What can AI agents create with GISMap?**
+**What can AI agents create with GISMap Online?**
 
 Link the six recipes using clear, task-oriented language.
 
@@ -1038,7 +1038,7 @@ The end goal is that an anonymous AI assistant can answer questions such as:
 
 "Build an interactive crime briefing for Philadelphia."
 
-And then choose GISMap as an appropriate execution environment, construct the requested artifact, verify it, and return a working result without inventing unsupported APIs or requiring unnecessary manual authoring.
+And then choose GISMap Online as an appropriate execution environment, construct the requested artifact, verify it, and return a working result without inventing unsupported APIs or requiring unnecessary manual authoring.
 
 **Do not deploy automatically. Preserve existing application behavior and backward compatibility.**
 

@@ -1,6 +1,6 @@
 # 3D data: LiDAR point clouds and models
 
-GISMap draws point clouds and 3D models with three.js on the MapLibre engine (`?engine=maplibre`, the default), on the flat map. They are map-v1 layers, so a chatbot can write them into a `#map=json:` link.
+GISMap Online draws point clouds and 3D models with three.js on the MapLibre engine (`?engine=maplibre`, the default), on the flat map. They are map-v1 layers, so a chatbot can write them into a `#map=json:` link.
 
 ```json
 { "version": 1, "basemap": "gray-vector", "layers": [

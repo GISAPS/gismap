@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/workflow-relationship-v2.schema.json",
-  "title": "GISMap project-local workflow relationship v2",
+  "title": "GISMap Online project-local workflow relationship v2",
   "description": "A single directed link; inverse labels are derived. Records and content are not published or authority to execute actions.",
   "type": "object", "additionalProperties": false,
   "required": ["schemaVersion", "id", "source", "target", "relation", "createdAt"],

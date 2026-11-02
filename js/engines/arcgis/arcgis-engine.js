@@ -15,7 +15,7 @@ import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.1.1";
 import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.1.0";
 import { legendForLayer } from "../maplibre/legend.js?v=0.52.4";
 
-// GISMap's own symbols are stored as "/assets/…" so projects move between hosts;
+// GISMap Online's own symbols are stored as "/assets/…" so projects move between hosts;
 // they load from wherever this app is installed (it may live in a subfolder).
 const APP_ROOT = new URL("../../../", import.meta.url).href;
 const assetUrls = (value, from, to) => JSON.parse(JSON.stringify(value), (key, item) => (key === "url" && typeof item === "string" && item.startsWith(from) ? to + item.slice(from.length) : item));
@@ -1183,7 +1183,7 @@ export class ArcGISEngine {
       elevationInfo: source.spatialChart ? source.chartRestore?.elevationInfo?.toJSON?.() ?? null : layer.elevationInfo?.toJSON?.() ?? source.elevationInfo ?? null,
       renderer: portableAssets(source.spatialChart ? source.chartRestore?.renderer?.toJSON?.() ?? null : layer.renderer?.toJSON?.() ?? null),
       spatialChart: source.spatialChart ? structuredClone(source.spatialChart) : null,
-      // True when the style was set in GISMap (or arrived with a shared map), not the service's own.
+      // True when the style was set in GISMap Online (or arrived with a shared map), not the service's own.
       styled: Boolean(source.renderer),
       rendererSpec: source.rendererSpec ?? null,
       ignoreServiceScaleRange: Boolean(source.ignoreServiceScaleRange),
@@ -1561,7 +1561,7 @@ export class ArcGISEngine {
 
   /**
    * Draws the layer with a renderer (SDK autocast JSON) for now, without recording
-   * it as the layer's GIS Map style (the Explorer's "style by this chart").
+   * it as the layer's GISMap Online style (the Explorer's "style by this chart").
    */
   setRenderer(uid, renderer) {
     const layer = this.#layer(uid);
@@ -1822,7 +1822,7 @@ export class ArcGISEngine {
   }
 
   /**
-   * The ArcGIS basemap for a GIS Map basemap id. ArcGIS cannot restyle its
+   * The ArcGIS basemap for a GISMap Online basemap id. ArcGIS cannot restyle its
    * basemaps by skin, so the "skin" basemap is the light or dark gray canvas
    * that suits the skin; OpenFreeMap ids draw their ArcGIS equivalents.
    */

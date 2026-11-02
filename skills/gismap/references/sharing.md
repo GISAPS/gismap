@@ -7,9 +7,9 @@
 **Reporting.** Always return the actual URL. Then state one status (prepared, validated, loaded or verified) and one line listing what you could not check. Don't withhold a link because you couldn't verify it.
 
 - **prepared**: a constructed specification, URL or iframe.
-- **validated**: the GISMap validator accepted it; disclose any warnings.
-- **loaded**: the required layers loaded in GISMap.
-- **verified**: the intended features, filter, camera and style were checked in GISMap, and the shared URL was reopened.
+- **validated**: the GISMap Online validator accepted it; disclose any warnings.
+- **loaded**: the required layers loaded in GISMap Online.
+- **verified**: the intended features, filter, camera and style were checked in GISMap Online, and the shared URL was reopened.
 
 `mapSpec.prepareVerification(spec)` runs without a browser: it reports the offline checks and marks service metadata, fields, filter acceptance, rendering and reopening as `not_checked`. In a browser, await `mapSpec.load(spec).ready`, review its issues and inspect the map, then query the source independently and reopen the URL.
 
@@ -19,7 +19,7 @@ Links can credit the tool that wrote them: `https://gismap.online/?via=<agent>#m
 
 ## Embeds
 
-GISMap can publish a configured **public map** as an iframe. The embedded map preserves the public layers, style, layer filters, camera, basemap and interface skin in the share URL. It is a live map, not a screenshot or a copied dataset. Use the Share & export dialog's Embed option. The in-app Map assistant has a `get_map_embed` tool for this: input optional `title` and `height`, output the embed URL and paste-ready iframe. Outside the app, use the helpers below.
+GISMap Online can publish a configured **public map** as an iframe. The embedded map preserves the public layers, style, layer filters, camera, basemap and interface skin in the share URL. It is a live map, not a screenshot or a copied dataset. Use the Share & export dialog's Embed option. The in-app Map assistant has a `get_map_embed` tool for this: input optional `title` and `height`, output the embed URL and paste-ready iframe. Outside the app, use the helpers below.
 
 For a normal map share URL, use the standalone helpers at `https://gismap.online/js/embed-share.js`:
 

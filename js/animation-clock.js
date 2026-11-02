@@ -1,4 +1,4 @@
-// A playback clock owned by GISMap, not by a map engine: engines and layers read
+// A playback clock owned by GISMap Online, not by a map engine: engines and layers read
 // `time` each frame, so an animation means the same thing on every engine.
 // `now` and `requestFrame` are injectable for tests.
 

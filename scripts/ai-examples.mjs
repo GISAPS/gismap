@@ -35,11 +35,11 @@ export const AI_EXAMPLES = Object.freeze([
     qr: { file: "qr.png", caption: "Scan to present the nine slides on a phone." },
     chat: {
       intro: "Paste this into a chatbot that can run code (so it can compress the result into a link). It names both layers, the slides, what not to load and what not to claim.",
-      prompt: `Use GISMap.online to make an interactive briefing of Philadelphia's police divisions. Main layer: ${PHILLY_DIVISIONS} (Police_Divisions). Second layer, as context: ${PHILLY_DISTRICTS} (Police_Districts) at 75% opacity. Do not load the crime incident points (layer 0). Slides: a title slide, an "At a glance" slide counting the divisions, one feature slide per division framed on it (DIV_NAME is the division name), and a sources slide linking the layers. Use a dark 3D basemap. Write it as one map-v1 spec with the briefing inside (${SITE}/schemas/map-v1.schema.json, ${SITE}/schemas/briefing-v1.schema.json; see ${SITE}/guides/ai-agents/) and return the link and a QR code. Do not invent crime totals or imply the boundaries are current.`,
+      prompt: `Use GISMap Online (https://gismap.online) to make an interactive briefing of Philadelphia's police divisions. Main layer: ${PHILLY_DIVISIONS} (Police_Divisions). Second layer, as context: ${PHILLY_DISTRICTS} (Police_Districts) at 75% opacity. Do not load the crime incident points (layer 0). Slides: a title slide, an "At a glance" slide counting the divisions, one feature slide per division framed on it (DIV_NAME is the division name), and a sources slide linking the layers. Use a dark 3D basemap. Write it as one map-v1 spec with the briefing inside (${SITE}/schemas/map-v1.schema.json, ${SITE}/schemas/briefing-v1.schema.json; see ${SITE}/guides/ai-agents/) and return the link and a QR code. Do not invent crime totals or imply the boundaries are current.`,
     },
     agent: {
       heading: "For a code-running agent",
-      intro: "An agent with Node, Deno or a browser writes the map and its slides as one map-v1 spec, validates it, and makes the link with the GISMap core. A link whose spec carries slides opens presenting them.",
+      intro: "An agent with Node, Deno or a browser writes the map and its slides as one map-v1 spec, validates it, and makes the link with the GISMap Online core. A link whose spec carries slides opens presenting them.",
       lang: "js",
       code: `import { mapSpec } from "https://gismap.online/js/gismap-core.js";
 
@@ -85,7 +85,7 @@ const { url, qr } = await mapSpec.createLink(spec); // qr: true when the link fi
     qr: { file: "qr.png", caption: "Scan to present the ten slides on a phone." },
     chat: {
       intro: "The same request to a chatbot that can run code:",
-      prompt: `Make a GISMap.online briefing of Major League ballparks by state. Main layer: ${STATES} (shade POP_SQMI as a choropleth with method "auto"). Second layer: ${BALLPARKS} (colour by LEAGUE). Add a title slide, one feature slide for each state with two or more teams, and a closing "how this was built" slide. On each state slide show only the ballparks the state contains (slide layers with relation type "contains"); use transition "cut". Before writing the slides, query the ballparks service with each state's geometry and compare the result with each ballpark's STATE field; fix any mismatch and say how. Put it all in one map-v1 spec (${SITE}/schemas/map-v1.schema.json) and return the link and a QR code.`,
+      prompt: `Make a GISMap Online (https://gismap.online) briefing of Major League ballparks by state. Main layer: ${STATES} (shade POP_SQMI as a choropleth with method "auto"). Second layer: ${BALLPARKS} (colour by LEAGUE). Add a title slide, one feature slide for each state with two or more teams, and a closing "how this was built" slide. On each state slide show only the ballparks the state contains (slide layers with relation type "contains"); use transition "cut". Before writing the slides, query the ballparks service with each state's geometry and compare the result with each ballpark's STATE field; fix any mismatch and say how. Put it all in one map-v1 spec (${SITE}/schemas/map-v1.schema.json) and return the link and a QR code.`,
     },
     agent: {
       heading: "For an AI agent: check the relationship, then write the spec",

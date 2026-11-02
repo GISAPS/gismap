@@ -57,7 +57,7 @@ export function createConsoleBridge({ map, post, basemaps = [], setBasemap = () 
   ensureOverlay();
   const fit = (duration) => map.fitBounds([[state.fit[0], state.fit[1]], [state.fit[2], state.fit[3]]], { padding: 50, maxZoom: 16, duration });
   return {
-    // GISMap's initial view can land after SI's first fit, so it is applied again.
+    // GISMap Online's initial view can land after SI's first fit, so it is applied again.
     refit() { if (state.fit) fit(0); },
     handle(message) {
       if (message.action === "data") {

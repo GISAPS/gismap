@@ -65,7 +65,7 @@ export function parseShareParameters(search, catalog = [], options = {}) {
   const example = params.get("example")?.trim() || null;
   if (example) {
     const entry = catalog.find((item) => (item.slug || item.id) === example);
-    if (!entry) throw new Error(`Unknown GISMap example: ${example}.`);
+    if (!entry) throw new Error(`Unknown GISMap Online example: ${example}.`);
     const exampleLayers = Array.isArray(entry.layers) && entry.layers.length ? entry.layers : [entry];
     for (const item of exampleLayers) {
       const layer = {

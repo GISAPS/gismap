@@ -35,4 +35,4 @@ Review/respond workflows and a mobile swipeable Observations Mode, with relation
 
 ## Phase 4 — agents and synchronization
 
-Expose reconstruction through GISMap's existing validated action system, with an agent-readable schema and explicit permission for private data. Integrate Field Tasks and eventual MapSi synchronization without changing the authoritative local record model.
+Expose reconstruction through GISMap Online's existing validated action system, with an agent-readable schema and explicit permission for private data. Integrate Field Tasks and eventual MapSi synchronization without changing the authoritative local record model.

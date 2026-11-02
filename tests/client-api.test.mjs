@@ -99,7 +99,7 @@ test("a briefing document names its layer and selection, and the in-page API gen
   assert.deepEqual(calls[1], ["generate", { uid: "session-uid-7", share: false, useAi: true, confirmReplace: false }]);
   assert.equal((await api.briefing.exportPdf()).name, "b.pdf");
   const headless = createClientApi({ projectManager, mapController });
-  await assert.rejects(() => headless.briefing.exportPdf(), /needs the GISMap app/);
+  await assert.rejects(() => headless.briefing.exportPdf(), /needs the GISMap Online app/);
   const published = JSON.parse(await readFile(new URL("../api/capabilities.json", import.meta.url), "utf8"));
   assert.equal(published.apiVersion, GISMAP_CORE_VERSION);
   assert.ok(published.namespaces.briefing.includes("generate") && published.namespaces.briefing.includes("exportPdf") && published.namespaces.briefing.includes("exportQrCard"));

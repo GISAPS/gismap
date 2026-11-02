@@ -33,7 +33,7 @@ test("tour and task viewers expose links and tour exit without obscuring dialog 
   const [html, ui, router, css] = await Promise.all(["../index.html", "../js/ui.js", "../js/mobile-workflow-router.js", "../css/app.css"].map((p) => readFile(new URL(p, import.meta.url), "utf8")));
   assert.match(html, /id="atlas-chapter-google-maps"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
   assert.match(ui, /googleMapsLinkForChapter\(chapter\)/);
-  assert.match(ui, /End tour · Open GISMap\.online[^\n]*#exitAtlasTour\(\)/);
+  assert.match(ui, /End tour · Open GISMap Online[^\n]*#exitAtlasTour\(\)/);
   assert.match(router, /#mapsLink\(task\.latitude, task\.longitude\)/);
   assert.match(router, /#mapsLink\(feature\.latitude, feature\.longitude\)/);
   assert.match(css, /mobile-atlas-presenting:has\(.app-dialog[^\n]*\.mobile-presentation-controls \{ display:none/);

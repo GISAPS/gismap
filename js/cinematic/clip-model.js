@@ -194,7 +194,7 @@ export function buildClipPackage(clip, { layers = {}, attribution = "", effectLa
     ...normalized,
     package: {
       kind: "portable-recipe",
-      label: "Portable recipe: plays in GISMap when the online services below are reachable. It contains no data, credentials or video.",
+      label: "Portable recipe: plays in GISMap Online when the online services below are reachable. It contains no data, credentials or video.",
       summary,
       attribution: text(attribution, 1000) || null,
       dependencies,

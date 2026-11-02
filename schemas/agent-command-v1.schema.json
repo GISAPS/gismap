@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/agent-command-v1.schema.json",
-  "title": "GISMap initial read-only authoring command",
+  "title": "GISMap Online initial read-only authoring command",
   "description": "The input envelope for the initial in-browser shared tool registry. Execution is currently via gisMapOnline.application.runTool(id, input); this schema does not imply a REST, MCP, batch, or persistence endpoint.",
   "oneOf": [
     {

@@ -62,6 +62,6 @@ def main():
         issues = validate(spec)
     except (OSError, ValueError) as exc:
         print(json.dumps({'valid': False, 'error': str(exc)})); return 2
-    print(json.dumps({'valid': not issues, 'issues': issues, 'scope': 'preliminary structural checks only; use GISMap core validation and verify live rendering'}))
+    print(json.dumps({'valid': not issues, 'issues': issues, 'scope': 'preliminary structural checks only; use GISMap Online core validation and verify live rendering'}))
     return 1 if issues else 0
 if __name__ == '__main__': sys.exit(main())

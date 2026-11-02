@@ -1,7 +1,7 @@
 # Cinematic Mode v0.3 — adaptive animation plan
 
 This turns the v0.3 "Adaptive Animations" proposal into an order of work that
-fits GISMap as it is: static ES modules, one shared clock, MapLibre + ArcGIS
+fits GISMap Online as it is: static ES modules, one shared clock, MapLibre + ArcGIS
 engines, Clips that export frame-accurate movies, and decorative effects that
 never change data.
 

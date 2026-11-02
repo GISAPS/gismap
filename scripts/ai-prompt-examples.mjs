@@ -58,7 +58,7 @@ export const PROMPT_EXAMPLES = Object.freeze([
     link: fireLink(FIRE_YEAR), reply: "The source, filter, basemap and camera are unchanged; only the renderer is new." },
   { slug: "cors-blocked", title: "A failure: CORS_BLOCKED", prompt: "Put https://example.com/ on a map as GeoJSON.",
     link: map({ basemap: "gray-vector", layers: [{ url: "https://example.com/", type: "geojson", title: "Blocked source" }] }),
-    reply: "This publisher does not allow browsers to read its data, so the layer can't load. Download the file and add it to GISMap, or send me another source." },
+    reply: "This publisher does not allow browsers to read its data, so the layer can't load. Download the file and add it to GISMap Online, or send me another source." },
 ].map((example) => ({ status: example.slug === "cors-blocked" ? "prepared" : "loaded", checked: "2026-11-01", ...example })));
 
 export const promptExamplePath = (example) => `/examples/ai/${example.slug}/`;

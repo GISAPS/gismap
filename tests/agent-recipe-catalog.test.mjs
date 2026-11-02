@@ -68,7 +68,7 @@ test("recipes are discoverable from every agent surface", async () => {
   assert.equal(capabilities.documentation.agentRecipes, "/api/agent-recipes/index.json");
   assert.equal(capabilities.schemas.agentRecipe, "/schemas/agent-recipe-v1.schema.json");
   assert.equal((await json("api/manifest.json")).discovery.agentRecipes, "/api/agent-recipes/index.json");
-  assert.match(await text("llms.txt"), /## What can AI agents create with GISMap\?/);
+  assert.match(await text("llms.txt"), /## What can AI agents create with GISMap Online\?/);
   const sitemap = await text("sitemap.xml");
   for (const recipe of recipes) assert.ok(sitemap.includes(`https://gismap.online/agent-recipes/${recipe.id}/`), recipe.id);
 });

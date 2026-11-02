@@ -1,6 +1,6 @@
 {
   "$schema": "https://gismap.online/schemas/agent-recipe-v1.schema.json",
-  "description": "GISMap agent recipes. Each step names its interface: declarative URL, standalone JavaScript, in-browser API (globalThis.gisMapOnline) or an outside tool. None is a hosted REST endpoint.",
+  "description": "GISMap Online agent recipes. Each step names its interface: declarative URL, standalone JavaScript, in-browser API (globalThis.gisMapOnline) or an outside tool. None is a hosted REST endpoint.",
   "promptExamples": [
     {
       "title": "A trip as a guided tour",

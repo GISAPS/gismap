@@ -62,7 +62,7 @@ export function toGisMapError(error, fallbackCode = "SERVICE_ERROR", details = u
 }
 
 /**
- * A failure while loading a URL that already passed GIS Map's own checks: the
+ * A failure while loading a URL that already passed GISMap Online's own checks: the
  * server's wording ("Invalid URL" for a missing service) does not make it an
  * input error, so it is LAYER_LOAD_FAILED unless the browser blocked the request.
  */

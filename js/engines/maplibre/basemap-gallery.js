@@ -9,7 +9,7 @@ const DETAILS = Object.freeze({
   "open-positron": { category: "Light", provider: "OpenFreeMap", note: "Light neutral map for overlays." },
   "open-dark": { category: "Dark", provider: "OpenFreeMap", note: "Dark neutral map for overlays." },
   "open-fiord": { category: "Artistic", provider: "OpenFreeMap", note: "Cool-toned global map." },
-  skin: { category: "Artistic", provider: "OpenFreeMap", note: "Colors follow the selected GISMap skin." },
+  skin: { category: "Artistic", provider: "OpenFreeMap", note: "Colors follow the selected GISMap Online skin." },
 });
 export const GALLERY_CATEGORIES = Object.freeze(["All", "Favorites", "Imagery", "Light", "Dark", "Streets", "Terrain", "Artistic"]);
 export function galleryEntries(options, { search = "", category = "All", favorites = [] } = {}) {

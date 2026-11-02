@@ -1,4 +1,4 @@
-// Every basemap id GIS Map knows, the engine that draws it natively, and its
+// Every basemap id GISMap Online knows, the engine that draws it natively, and its
 // closest match on the other engine, so a link made with one engine opens on
 // a sensible basemap with the other. Engine-neutral and pure.
 

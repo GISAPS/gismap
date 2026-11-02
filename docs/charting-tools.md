@@ -6,7 +6,7 @@ Custom Chart Builder. They all open the same layer-aware Chart Builder. The
 builder starts with a visual, data-aware gallery, keeps the live preview in
 view, and moves field and presentation controls into progressive sections.
 
-The builder stores a portable GISMap chart definition, then translates that
+The builder stores a portable GISMap Online chart definition, then translates that
 definition to Apache ECharts only at render time. ECharts is lazy-loaded from
 the pinned 5.5.1 CDN build; the builder retains a keyboard-accessible HTML bar
 fallback if it cannot be loaded.

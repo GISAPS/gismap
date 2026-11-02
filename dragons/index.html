@@ -28,13 +28,13 @@
       <p id="recordScore"></p>
       <label for="recordName">Name</label>
       <input id="recordName" name="recordName" type="text" maxlength="32" placeholder="e.g. Sir Flapsalot" required autocomplete="off">
-      <div class="dialog-actions"><button class="button" type="submit">Share your legend</button><button class="dialog-secondary" id="recordFlyAgain" type="button">Fly again</button><a class="dialog-secondary" href="../">Open GISMap</a></div>
+      <div class="dialog-actions"><button class="button" type="submit">Share your legend</button><button class="dialog-secondary" id="recordFlyAgain" type="button">Fly again</button><a class="dialog-secondary" href="../">Open GISMap Online</a></div>
     </form>
   </dialog>
   <dialog id="shareDialog" class="share-dialog" aria-labelledby="shareTitle">
     <h2 id="shareTitle">Share your legend</h2>
     <p>Share your dragon’s story and challenge someone to beat your score.</p>
-    <div id="shareOutput"><div class="share-qr-card"><canvas id="shareQr" width="600" height="760" role="img" aria-label="GISMap QR Card for the dragon challenge" hidden></canvas></div>
+    <div id="shareOutput"><div class="share-qr-card"><canvas id="shareQr" width="600" height="760" role="img" aria-label="GISMap Online QR Card for the dragon challenge" hidden></canvas></div>
       <p>Scan the QR Card or share your challenge.</p>
       <div class="dialog-actions share-actions"><button class="button" id="mobileShare" type="button">Mobile share</button><button class="dialog-secondary" id="copyLink" type="button">Copy link</button><a class="dialog-secondary" id="downloadQr" download="here-be-dragons.png" hidden>Download QR Card</a><button class="dialog-secondary" id="shareClose" type="button">Close</button></div>
       <label id="copyFallbackLabel" for="copyFallback" hidden>Copy this link manually</label><input id="copyFallback" type="text" readonly hidden>

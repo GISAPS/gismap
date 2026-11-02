@@ -1,5 +1,5 @@
 // Loads the ArcGIS browser runtime only when the ArcGIS engine is selected.
-// Another engine can therefore use the GISMap shell without downloading it.
+// Another engine can therefore use the GISMap Online shell without downloading it.
 const SDK_URL = "https://js.arcgis.com/5.0/";
 const CSS_URL = "https://js.arcgis.com/5.0/esri/themes/light/main.css";
 let loading = null;

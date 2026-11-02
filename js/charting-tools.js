@@ -1,5 +1,5 @@
 // Provider-neutral Charting Tools model. Chart configurations belong to
-// GISMap; ECharts is only the lazy-loaded renderer for a configuration.
+// GISMap Online; ECharts is only the lazy-loaded renderer for a configuration.
 
 import { fieldKind, featureFilterFor } from "./presentation-query.js";
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/map-note-v1.schema.json",
-  "title": "GISMap Map Note v1",
+  "title": "GISMap Online Map Note v1",
   "description": "Project-owned note. Anchors use longitude/latitude. Attachments and future schema versions must not be silently discarded.",
   "type": "object",
   "required": [

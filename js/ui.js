@@ -28,6 +28,7 @@ import { applyMapColors, MAP_COLOR_COMPONENTS, SKIN_BASEMAP, themeFromComputedSt
 import { compactMedia } from "./viewport.js?v=0.18.2";
 import { APP_VERSION } from "./version.js?v=0.54.0-print";
 import { bindMobileSheetResize } from "./mobile-sheet-resize.js?v=0.52.7";
+import { BRAND } from "./brand.js";
 import { BRAND_LOGO, PdfDocument, brandedMapImage, brandedQrCanvas, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.65.0-paths";
 import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.54.0-print";
 import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.54.0-unified4";
@@ -74,7 +75,7 @@ import { defaultRun } from "./text-boxes.js?v=0.65.0-paths";
 
 const BUILDINGS_3D_KEY = "gismap-online:buildings-3d:v1";
 const DISPLAY_SETTINGS_KEY = "gismap-online:display:v1";
-const DEFAULT_BRAND = Object.freeze({ name: "GISMap Online", logo: "./assets/gis-map-online-mark-v2.png" });
+const DEFAULT_BRAND = Object.freeze({ name: BRAND.name, logo: `./${BRAND.logo}` });
 const WELCOME_PREFERENCE_KEY = "gismap.welcome.v1";
 const DOCKABLE_PANELS = { places: "Places", bookmarks: "Bookmarks", draw: "Draw", intelligence: "Intelligence", layers: "Layers", observations: "Notes & Tasks" };
 const RECENT_PLACES_KEY = "gismap-online:recent-places:v1";
@@ -780,7 +781,7 @@ export class UIController {
       projectDropTarget.classList.remove("is-project-drop-target");
       const file = [...event.dataTransfer?.files || []].find((item) => /\.(?:png|jpe?g|webp|gif|heic|heif|gis|gisx|gisbrief|gisclip|gmo|gmop|gisatlas|gmoatlas|gismap|json|zip)$/i.test(item.name) || item.type.startsWith("image/"));
       if (file) void this.importProjectFile(file);
-      else this.error("Drop a GISMap project, package, tour, Smart Image, or a picture of a GIS Map QR code.");
+      else this.error("Drop a GISMap Online project, package, tour, Smart Image, or a picture of a GISMap Online QR code.");
     });
     document.querySelector("#data-file-input").addEventListener("change", (event) => this.#addFiles(event));
     document.querySelector("#tool-file-input").addEventListener("change", (event) => this.#loadTool(event));
@@ -1171,7 +1172,7 @@ export class UIController {
       if (this.presentationState.template === "briefing" && this.presentationState.mapSelect) return this.#toggleBriefingInclude(result);
       this.#selectPresentationResult(result);
     });
-    this.events.subscribe("project:smart-image-unverified", () => this.toast("This image wasn't rendered by GISMap; the map may look different when opened."));
+    this.events.subscribe("project:smart-image-unverified", () => this.toast("This image wasn't rendered by GISMap Online; the map may look different when opened."));
     this.events.subscribe("project:exported", ({ kind }) => this.toast(`${kind === "smart-image" ? "Smart map image (.png)" : kind === "package" ? "Project package (.gisx)" : kind === "atlas" ? "Guided tour (.gisatlas)" : "Project file (.gis)"} downloaded.`));
     this.events.subscribe("export:progress", ({ stage, completed, total }) => {
       const progress = this.dialog.querySelector("[data-export-progress]");
@@ -3179,7 +3180,7 @@ export class UIController {
       openShareMenu: () => this.#shareExportDialog(),
       createMapEmbed: async ({ title, height } = {}) => {
         const shared = await this.#mapShareLink();
-        const embedTitle = String(title || this.projectManager.current.name || "GISMap map").slice(0, 160);
+        const embedTitle = String(title || this.projectManager.current.name || "GISMap Online map").slice(0, 160);
         return {
           url: createEmbedUrl(shared.url, { kind: "map" }),
           iframe: createEmbedIframe(shared.url, { kind: "map", title: embedTitle, height }),
@@ -3664,7 +3665,7 @@ export class UIController {
     this.openDialog({
       eyebrow: "Portable project",
       title: "Download project",
-      content: `<div class="smart-image-intro"><strong>A map that opens like a project</strong><p>Smart Image creates a polished PNG that works in ordinary image viewers while carrying this GISMap project invisibly. Import the original PNG into GISMap Online to restore its layers, styling, camera, bookmarks, workflows, and Briefing slides.</p></div>
+      content: `<div class="smart-image-intro"><strong>A map that opens like a project</strong><p>Smart Image creates a polished PNG that works in ordinary image viewers while carrying this GISMap Online project invisibly. Import the original PNG into GISMap Online to restore its layers, styling, camera, bookmarks, workflows, and Briefing slides.</p></div>
         <dl class="project-download-formats">
           <div><dt>Smart map image (.png)</dt><dd>Best for email, AirDrop, chat attachments, and shared drives. Services must remain publicly reachable. Some social networks remove image metadata.</dd></div>
           <div><dt>Project file (.gis)</dt><dd>The compact editable project configuration without local source files.</dd></div>
@@ -4373,7 +4374,7 @@ export class UIController {
             <input id="server-directory-url" type="url" spellcheck="false" placeholder="https://server.example/arcgis/rest/services" />
             <button id="server-directory-browse" type="button">Browse services</button>
           </div>
-          <p class="form-note">Use a top-level address ending in <code>/rest/services</code>. GIS Map reads its folders and services live; the directory itself is not copied or indexed.</p>
+          <p class="form-note">Use a top-level address ending in <code>/rest/services</code>. GISMap Online reads its folders and services live; the directory itself is not copied or indexed.</p>
         </div>
       </section>
       <div class="catalog-list">${POPULAR_SERVICES.map((service) => `
@@ -4665,7 +4666,7 @@ export class UIController {
                 <label class="field"><span>Connection name <small>optional</small></span><input id="portal-connection-name" placeholder="Acme GIS" /></label>
                 <label class="field"><span>Portal URL</span><input id="portal-connection-url" type="url" value="https://www.arcgis.com" placeholder="https://gis.example.com/portal" /></label>
               </div>
-              <label class="field"><span>GIS Map application / Client ID</span><input id="portal-client-id" autocomplete="off" placeholder="Public OAuth application ID" /></label>
+              <label class="field"><span>GISMap Online application / Client ID</span><input id="portal-client-id" autocomplete="off" placeholder="Public OAuth application ID" /></label>
               <label class="field"><span>Sign-in presentation</span><select id="portal-login-mode"><option value="popup">Popup window</option><option value="redirect">Full-page redirect</option></select></label>
               <label class="field"><span>URI to register for popup mode</span><div class="copy-field"><input id="portal-callback-url" readonly value="${escapeHtml(callbackUrl)}" /><button type="button" data-copy-uri="${escapeHtml(callbackUrl)}">Copy</button></div></label>
               <label class="field"><span>URI to register for redirect mode</span><div class="copy-field"><input id="portal-redirect-url" readonly value="${escapeHtml(redirectUrl)}" /><button type="button" data-copy-uri="${escapeHtml(redirectUrl)}">Copy</button></div></label>
@@ -4949,7 +4950,7 @@ export class UIController {
     this.openDialog({
       eyebrow: "About this application",
       title: brand.name,
-      content: `<div class="about-copy"><p>${escapeHtml(brand.name)} is a browser-based geospatial application for mapping, analysis, briefings, tours, and field tasks.</p><p><strong>GISMap Online home version:</strong> This installation is built from the GISMap Online project. Visit <a href="https://gismap.online/" target="_blank" rel="noopener noreferrer">GISMap.online ↗</a> for the home version, public examples, guides, and project updates.</p><p><a href="${appUrl("examples/")}">Browse available examples</a> or read the <a href="${appUrl("guides/")}">application guides</a>.</p><dl><div><dt>Version</dt><dd>${APP_VERSION}</dd></div><div><dt>Map engine</dt><dd>${escapeHtml(this.mapController.getEngineId() === "maplibre" ? "MapLibre" : "ArcGIS")}</dd></div><div><dt>Runtime</dt><dd>Static HTML + ES modules</dd></div><div><dt>Persistence</dt><dd>localStorage + portable ZIP</dd></div><div><dt>Identity</dt><dd>Optional Portal OAuth / server authentication</dd></div><div><dt>Privacy</dt><dd>No GISMap Online account or database; credentials are excluded from projects</dd></div></dl></div>`,
+      content: `<div class="about-copy"><p>${escapeHtml(brand.name)} is a browser-based geospatial application for mapping, analysis, briefings, tours, and field tasks.</p><p><strong>GISMap Online home version:</strong> This installation is built from the GISMap Online project. Visit <a href="https://gismap.online/" target="_blank" rel="noopener noreferrer">GISMap Online ↗</a> for the home version, public examples, guides, and project updates.</p><p><a href="${appUrl("examples/")}">Browse available examples</a> or read the <a href="${appUrl("guides/")}">application guides</a>.</p><dl><div><dt>Version</dt><dd>${APP_VERSION}</dd></div><div><dt>Map engine</dt><dd>${escapeHtml(this.mapController.getEngineId() === "maplibre" ? "MapLibre" : "ArcGIS")}</dd></div><div><dt>Runtime</dt><dd>Static HTML + ES modules</dd></div><div><dt>Persistence</dt><dd>localStorage + portable ZIP</dd></div><div><dt>Identity</dt><dd>Optional Portal OAuth / server authentication</dd></div><div><dt>Privacy</dt><dd>No GISMap Online account or database; credentials are excluded from projects</dd></div></dl></div>`,
     });
   }
 
@@ -6006,7 +6007,7 @@ export class UIController {
           this.dialog.close();
           this.toast(`Tour saved locally as “${name}”.`);
         } },
-        { label: "End tour · Open GISMap.online", primary: true, handler: () => { this.dialog.close(); this.#exitAtlasTour(); } },
+        { label: "End tour · Open GISMap Online", primary: true, handler: () => { this.dialog.close(); this.#exitAtlasTour(); } },
       ],
     });
   }
@@ -8262,7 +8263,7 @@ export class UIController {
       let title;
       if (payload.url) {
         url = payload.url;
-        title = payload.title || "GISMap field task";
+        title = payload.title || "GISMap Online field task";
       } else if (route === "tasks" && payload.task) {
         const bytes = new TextEncoder().encode(JSON.stringify(payload.task));
         const encoded = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -8270,7 +8271,7 @@ export class UIController {
         target.searchParams.set("workflow", "tasks");
         target.hash = new URLSearchParams({ fieldTask: encoded }).toString();
         url = target.href;
-        title = payload.task.title || "GISMap field task";
+        title = payload.task.title || "GISMap Online field task";
       } else {
         const target = new URL(createShareUrl({ baseUrl: location.href, layers: this.mapController.getAllLayerConfigs(), basemap: this.mapController.getBasemapId() }));
         target.searchParams.set("workflow", route);
@@ -8281,13 +8282,13 @@ export class UIController {
         }
         url = target.href;
         const presentation = this.projectManager.current.presentation || {};
-        title = presentation.modeTitles?.[route === "tours" ? "atlas" : "briefing"] || presentation.title || "GISMap briefing";
+        title = presentation.modeTitles?.[route === "tours" ? "atlas" : "briefing"] || presentation.title || "GISMap Online briefing";
       }
       const kind = payload.kind || ({ tasks: "field task", tours: "tour", briefing: "briefing" })[route] || "map";
       const embed = payload.embed ? {
         kind: payload.embed.kind === "briefing" ? "briefing" : "map",
         title: payload.embed.title || title,
-        message: payload.embed.message || "Paste this iframe into your site. It opens the same public GISMap link without authoring controls.",
+        message: payload.embed.message || "Paste this iframe into your site. It opens the same public GISMap Online link without authoring controls.",
       } : null;
       const embedUrl = embed ? createEmbedUrl(url, { kind: embed.kind }) : null;
       const embedIframe = embed ? createEmbedIframe(url, { kind: embed.kind, title: embed.title }) : null;
@@ -8557,7 +8558,7 @@ export class UIController {
   }
 
   /**
-   * A picture: a Smart image opens its whole project; otherwise a GIS Map QR code
+   * A picture: a Smart image opens its whole project; otherwise a GISMap Online QR code
    * in it (a share card, a screenshot, a photo of a screen) opens its link here.
    */
   async #openImage(file) {
@@ -8568,12 +8569,12 @@ export class UIController {
         return;
       } catch (error) {
         // An ordinary PNG (or one whose project data a photo app removed) may still hold a QR code.
-        if (!/ordinary image|not contain a GISMap project/i.test(error.message)) throw error;
+        if (!/ordinary image|not contain a GISMap Online project/i.test(error.message)) throw error;
       }
     }
-    this.toast("Looking for a GIS Map QR code in the picture…");
+    this.toast("Looking for a GISMap Online QR code in the picture…");
     const text = await decodeQrFromImage(file);
-    if (!text) throw new Error("No GIS Map project or QR code was found in this picture. Try a sharper or closer picture of the QR code.");
+    if (!text) throw new Error("No GISMap Online project or QR code was found in this picture. Try a sharper or closer picture of the QR code.");
     const target = gisMapLinkFrom(text);
     if (!target) throw new Error(`This QR code is not a GISMap Online link${/^https?:/i.test(text) ? ` (it opens ${new URL(text).hostname})` : ""}, so it was not opened.`);
     this.toast(`Opening the ${describeGisMapLink(target)} from the QR code…`);

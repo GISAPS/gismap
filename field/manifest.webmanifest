@@ -1,7 +1,7 @@
 {
-  "name": "GISMap Field Mode",
-  "short_name": "GISMap Field",
-  "description": "Offline-first local field observations for GISMap.",
+  "name": "GISMap Online Field Mode",
+  "short_name": "GISMap Online Field",
+  "description": "Offline-first local field observations for GISMap Online.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

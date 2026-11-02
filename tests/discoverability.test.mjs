@@ -20,7 +20,7 @@ test('discovery pages expose unique titles, canonical URLs, questions and valid 
     for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) assert.equal(JSON.parse(match[1])['@context'], 'https://schema.org');
   }
   const home = await read('index.html');
-  assert.match(home, /GISMap\.online is a free, open-source, browser-based GIS workspace/);
+  assert.match(home, /GISMap Online is a free, open-source, browser-based GIS workspace/);
   assert.ok(JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]).isAccessibleForFree);
 });
 

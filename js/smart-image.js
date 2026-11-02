@@ -100,7 +100,7 @@ async function transform(bytes, mode, maxBytes) {
       total += value.byteLength;
       if (total > maxBytes) {
         await reader.cancel();
-        throw new Error("The embedded GISMap project exceeds the safe size limit.");
+        throw new Error("The embedded GISMap Online project exceeds the safe size limit.");
       }
       parts.push(value);
     }
@@ -118,7 +118,7 @@ async function sha256(bytes) {
 
 function assertSafeProject(project) {
   if (!project || project.version !== 1 || !Array.isArray(project.layers)) {
-    throw new Error("The Smart Image does not contain a supported GISMap project.");
+    throw new Error("The Smart Image does not contain a supported GISMap Online project.");
   }
   for (const layer of project.layers) {
     if (!layer?.url || layer.local) continue;
@@ -160,24 +160,24 @@ async function encodeManifest(project, provenance) {
 
 async function decodeManifest(data) {
   if (data.byteLength < 45 || !equalBytes(data.subarray(0, 8), PAYLOAD_MAGIC)) {
-    throw new Error("The embedded GISMap project has an unknown format.");
+    throw new Error("The embedded GISMap Online project has an unknown format.");
   }
   const compression = data[8];
   const expectedLength = new DataView(data.buffer, data.byteOffset, data.byteLength).getUint32(9);
   if (expectedLength > SMART_IMAGE_LIMITS.maxProjectBytes || data.byteLength - 45 > SMART_IMAGE_LIMITS.maxEncodedBytes) {
-    throw new Error("The embedded GISMap project exceeds the safe size limit.");
+    throw new Error("The embedded GISMap Online project exceeds the safe size limit.");
   }
   let json = data.subarray(45);
   if (compression === 1) {
     json = await transform(json, "decompress", Math.min(expectedLength + 1, SMART_IMAGE_LIMITS.maxProjectBytes));
-    if (!json) throw new Error("This browser cannot decompress the embedded GISMap project.");
+    if (!json) throw new Error("This browser cannot decompress the embedded GISMap Online project.");
   } else if (compression !== 0) {
-    throw new Error("The embedded GISMap project uses an unsupported compression method.");
+    throw new Error("The embedded GISMap Online project uses an unsupported compression method.");
   }
-  if (json.byteLength !== expectedLength) throw new Error("The embedded GISMap project is incomplete.");
-  if (!equalBytes(await sha256(json), data.subarray(13, 45))) throw new Error("The embedded GISMap project failed its integrity check.");
+  if (json.byteLength !== expectedLength) throw new Error("The embedded GISMap Online project is incomplete.");
+  if (!equalBytes(await sha256(json), data.subarray(13, 45))) throw new Error("The embedded GISMap Online project failed its integrity check.");
   let manifest;
-  try { manifest = JSON.parse(decoder.decode(json)); } catch (error) { throw new Error("The embedded GISMap project is not valid JSON.", { cause: error }); }
+  try { manifest = JSON.parse(decoder.decode(json)); } catch (error) { throw new Error("The embedded GISMap Online project is not valid JSON.", { cause: error }); }
   if (manifest?.format !== SMART_IMAGE_FORMAT || manifest?.version !== SMART_IMAGE_VERSION) {
     throw new Error("This Smart Image version is not supported.");
   }
@@ -185,7 +185,7 @@ async function decodeManifest(data) {
   return manifest;
 }
 
-/** Insert or replace GISMap's private ancillary PNG chunk immediately before IEND. */
+/** Insert or replace GISMap Online's private ancillary PNG chunk immediately before IEND. */
 export async function embedProjectInPng(png, project, provenance = null) {
   const bytes = new Uint8Array(png instanceof Blob ? await png.arrayBuffer() : png);
   if (bytes.byteLength > SMART_IMAGE_LIMITS.maxImageBytes) throw new Error("The source map image is too large.");
@@ -195,13 +195,13 @@ export async function embedProjectInPng(png, project, provenance = null) {
   return new Blob([concatBytes([PNG_SIGNATURE, ...chunks.map((chunk) => chunk.bytes)])], { type: "image/png" });
 }
 
-/** Read and authenticate a GISMap project from an original Smart Image PNG. */
+/** Read and authenticate a GISMap Online project from an original Smart Image PNG. */
 export async function readProjectFromPng(png) {
   if (png instanceof Blob && png.size > SMART_IMAGE_LIMITS.maxImageBytes) throw new Error("This PNG is too large to inspect safely.");
   const bytes = new Uint8Array(png instanceof Blob ? await png.arrayBuffer() : png);
   const chunk = pngChunks(bytes).findLast((item) => item.type === SMART_IMAGE_CHUNK);
-  if (!chunk) throw new Error("This PNG is an ordinary image; it does not contain a GISMap project.");
-  if (crc32(concatBytes([chunk.typeBytes, chunk.data])) !== chunk.storedCrc) throw new Error("The embedded GISMap project is damaged.");
+  if (!chunk) throw new Error("This PNG is an ordinary image; it does not contain a GISMap Online project.");
+  if (crc32(concatBytes([chunk.typeBytes, chunk.data])) !== chunk.storedCrc) throw new Error("The embedded GISMap Online project is damaged.");
   return withProvenance(await decodeManifest(chunk.data));
 }
 

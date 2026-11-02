@@ -46,7 +46,7 @@ function normalizeChart(chart) {
 /** A valid layer style, or an Error naming the first problem. */
 export function normalizeLayerStyle(input, { now = new Date() } = {}) {
   if (!input || typeof input !== "object") throw new Error("A layer style must be a JSON object.");
-  if (input.type !== LAYER_STYLE_TYPE) throw new Error(`This is not a GISMap layer style (type must be "${LAYER_STYLE_TYPE}").`);
+  if (input.type !== LAYER_STYLE_TYPE) throw new Error(`This is not a GISMap Online layer style (type must be "${LAYER_STYLE_TYPE}").`);
   if (Number(input.version) !== LAYER_STYLE_VERSION) throw new Error(`Unsupported layer style version ${input.version}.`);
   const name = text(input.name, 120);
   if (!name) throw new Error("A layer style needs a name.");

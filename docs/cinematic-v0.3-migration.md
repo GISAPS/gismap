@@ -1,16 +1,16 @@
 # Cinematic v0.3 — migration note and performance report
 
-How the v0.3 adaptive-animation spec maps onto GISMap's Cinematic Mode, what
+How the v0.3 adaptive-animation spec maps onto GISMap Online's Cinematic Mode, what
 changed for saved scenes, what was measured, and what is deliberately left
 for later. Read with `docs/cinematic-v0.3-plan.md` (the order of work).
 
 ## Scene JSON: additive, backward compatible
 
 Existing v0.1/v0.2 scenes load unchanged; every new field has a default.
-GISMap keeps its own schema (`cinematic.layers[]` is the track list) rather
+GISMap Online keeps its own schema (`cinematic.layers[]` is the track list) rather
 than introducing a parallel `cinematic.v0.3` document.
 
-| Spec contract (§2.5) | GISMap field | Default for old scenes |
+| Spec contract (§2.5) | GISMap Online field | Default for old scenes |
 |---|---|---|
 | `experience`: ambient / timeline / scenario | derived: the first track whose `temporal.kind` isn't `none` leads (`time` → Timeline, `number` → Scenario); all-`none` → Ambient | `time` |
 | `tracks[]` | `cinematic.layers[]` (one track per layer) | — |
@@ -44,7 +44,7 @@ layer opacity (`null`) into 5%. Saved scenes now keep it unset.
 
 ## Primitives and backends
 
-| Primitive | GISMap effect | Backend |
+| Primitive | GISMap Online effect | Backend |
 |---|---|---|
 | pulse | `pulse` | three.js shader |
 | flow | `flow` | three.js shader |

@@ -22,7 +22,7 @@ export const OPEN_BASEMAPS = Object.freeze({
 });
 
 /**
- * The open style for a GIS Map basemap id: { key, label, style, approximate, themed }.
+ * The open style for a GISMap Online basemap id: { key, label, style, approximate, themed }.
  * `approximate` is true when the id names something there is no open match
  * for (satellite imagery), so the closest open style stands in.
  */

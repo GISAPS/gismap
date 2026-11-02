@@ -35,7 +35,7 @@ test("a service-styled 2D layer saves no renderer; group values are not stored",
 });
 
 test("invalid styles are refused with a reason", () => {
-  assert.throws(() => normalizeLayerStyle({ type: "other", version: 1, name: "x" }), /not a GISMap layer style/);
+  assert.throws(() => normalizeLayerStyle({ type: "other", version: 1, name: "x" }), /not a GISMap Online layer style/);
   assert.throws(() => normalizeLayerStyle({ type: "gismap-layer-style", version: 1, name: "" }), /needs a name/);
   assert.throws(() => normalizeLayerStyle({ type: "gismap-layer-style", version: 1, name: "x", renderer: { type: "choropleth" } }), /needs a field/);
   assert.throws(() => normalizeLayerStyle({ type: "gismap-layer-style", version: 1, name: "x", where: "1=1; DROP TABLE x" }), /read-only/);

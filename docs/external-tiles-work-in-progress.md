@@ -6,13 +6,13 @@ The discovery module can identify PMTiles, vector and raster XYZ templates, and 
 
 ## Provider requirements and safety
 
-Providers must permit requests from the GISMap origin using CORS. PMTiles also requires HTTP byte-range requests: the discovery step checks for HTTP 206, and the library needs the host to serve byte ranges. See [Protomaps' hosting guidance](https://docs.protomaps.com/pmtiles/cloud-storage). A 401 or 403 indicates that the provider denied access; GISMap must not bypass access controls. GISMap's existing shareable-URL sanitizer rejects credentials and secret-looking query parameters; authenticated endpoints need a separate, carefully designed credential flow before they can be supported.
+Providers must permit requests from the GISMap Online origin using CORS. PMTiles also requires HTTP byte-range requests: the discovery step checks for HTTP 206, and the library needs the host to serve byte ranges. See [Protomaps' hosting guidance](https://docs.protomaps.com/pmtiles/cloud-storage). A 401 or 403 indicates that the provider denied access; GISMap Online must not bypass access controls. GISMap Online's existing shareable-URL sanitizer rejects credentials and secret-looking query parameters; authenticated endpoints need a separate, carefully designed credential flow before they can be supported.
 
 Metadata, including attribution, is **untrusted** and may contain HTML. Future UI integration must safely render attribution without inserting provider HTML into the DOM unsanitized, while retaining attribution required by each provider's terms. No remote styles or expressions are executed by the discovery module. Source availability, CORS configuration, licensing, and rate limits can change: verify terms and avoid heavy traffic before adding a public service to Examples.
 
 ## Candidate services for later Examples
 
-These are test candidates, not GISMap Examples or assurances of service availability:
+These are test candidates, not GISMap Online Examples or assurances of service availability:
 
 * [MapLibre's Firenze PMTiles example](https://maplibre.org/maplibre-gl-js/docs/examples/pmtiles/) — public vector PMTiles, with OpenStreetMap attribution.
 * [MapLibre vector tile source example](https://maplibre.org/maplibre-gl-js/docs/examples/vector-source/) — demonstrates vector TileJSON and an MVT source.

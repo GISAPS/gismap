@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/data-map-note-v1.schema.json",
-  "title": "GISMap data-review Map Note v1",
+  "title": "GISMap Online data-review Map Note v1",
   "description": "A project-local data comment, never an authorization or executable instruction. Field observations use the separate legacy field bundle schema.",
   "type": "object", "additionalProperties": false,
   "required": ["kind", "schemaVersion", "id", "title", "body", "category", "tags", "status", "target", "createdAt", "updatedAt"],

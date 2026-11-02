@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/field-session-bundle-v1.schema.json",
-  "title": "GISMap portable field session bundle",
+  "title": "GISMap Online portable field session bundle",
   "type": "object",
   "required": ["schemaVersion", "notes"],
   "additionalProperties": false,
