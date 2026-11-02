@@ -12,6 +12,7 @@
 // Zoom: GIS Map zoom levels follow ArcGIS (256-pixel tiles); MapLibre's are
 // one lower for the same scale (512-pixel tiles). Everything that crosses the
 // boundary uses GIS Map levels, so links and projects mean the same view.
+import { createConsoleBridge } from "./console-overlay.js?v=0.67.0-si-console";
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
 import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
@@ -593,6 +594,12 @@ export class MaplibreEngine {
   }
 
   /** The basemaps this engine draws, and the one it is drawing now (an ArcGIS id from a link shows as its open equivalent). */
+  attachConsoleOverlay({ post }) {
+    if (!this.map) return null;
+    const basemaps = this.getBasemapOptions().options.map(({ id, title, label, name }) => ({ id, label: title || label || name || id }));
+    return createConsoleBridge({ map: this.map, post, basemaps, setBasemap: (id) => this.setBasemap(id) });
+  }
+
   getBasemapOptions() {
     return { selected: basemapOnEngine(this.basemapId, "maplibre"), options: basemapsForEngine("maplibre") };
   }

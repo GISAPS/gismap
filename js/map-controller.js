@@ -87,6 +87,8 @@ export class MapController {
   }
 
   availableEngines() { return listEngines(); }
+  /** Null until the engine's map exists, or on an engine without this overlay. */
+  attachConsoleOverlay(options) { return this.engine?.attachConsoleOverlay?.(options) ?? null; }
   getEngineId() { return this.engine?.id || this.engineId; }
 
   async prepare() {

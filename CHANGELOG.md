@@ -4,6 +4,10 @@ All notable changes to GIS Map Online are documented here. This project follows
 [Semantic Versioning](https://semver.org/), and this file follows the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## Unreleased
+
+- Added the `si-console` embed for the GISMap SI Query Console: results, query geometry, selection and map gestures over a versioned message channel pinned to GISMap SI origins.
+
 ## 0.54.0
 
 - `gisMapOnline.print` gives agents the Print Editor: templates, options, previews, PDFs and branded Smart Images. Exports return files and fail rather than render a blank or partial map.
