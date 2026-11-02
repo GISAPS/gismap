@@ -42,6 +42,8 @@ Readable links hold up to 8,192 characters. Inspect real fields first (`<layer U
 
 ## What can AI agents create with GISMap?
 
+Print-ready PDFs and branded Smart Images come from `gisMapOnline.print` in a running page; see the [print reference](https://gismap.online/skills/gismap/references/print.md).
+
 Finished maps, linked charts and Instant Dashboards, briefings, guided tours, field task packages, 3D maps, cinematic presentations and themed maps. Start with [Discover](https://gismap.online/discover/) and its [current examples](https://gismap.online/discover/examples/) when choosing a public workflow. Each recipe gives the interface to use (a URL you write, a standalone JavaScript module, or the in-page API; never a hosted REST endpoint), how to verify the result, and its limits: [recipe pages](https://gismap.online/agent-recipes/) · [recipe catalog (JSON)](https://gismap.online/api/agent-recipes/index.json). For engine-specific work, read the [Map engines guide](https://gismap.online/discover/engines/) before selecting styling or 3D behavior.
 
 
@@ -54,6 +56,7 @@ Finished maps, linked charts and Instant Dashboards, briefings, guided tours, fi
 | Make the county heights represent acreage | [3d-extrusion](https://gismap.online/skills/#recipe-3d-extrusion) | 3D extruded map |
 | Separate overlapping events by year and height | [spatial-3d-chart](https://gismap.online/skills/#recipe-spatial-3d-chart) | 3D spatial chart and five-scene Brief |
 | Show this LiDAR or CAD model in 3D | [lidar-and-3d-models](https://gismap.online/skills/#recipe-lidar-and-3d-models) | Point cloud or 3D model map |
+| Make a printable map, poster or Smart Map Image | [print-map](https://gismap.online/agent-recipes/print-map/) | Branded PDF or Smart Image |
 | Make the map feel like Halloween in California | [vibe-map](https://gismap.online/skills/#recipe-vibe-map) | Coordinated theme and styled map |
 | Turn this layer into an interactive dashboard | [dashboard workflow](https://gismap.online/skills/gismap/references/dashboard-chart-animation.md) | Linked chart panel, skin, basemap and map filtering |
 | Animate observed changes in this layer | [cinematic animation](https://gismap.online/skills/gismap/references/dashboard-chart-animation.md#cinematic-animation) | Evidence-preserving playback, clip or poster |

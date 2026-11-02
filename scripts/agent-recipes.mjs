@@ -171,7 +171,7 @@ export function agentRecipes(links) {
         { stage: "validate", action: "Validate the document statically before loading it.", interfaces: ["standalone-js", "in-browser-api"], references: ["briefing.validate", "briefing.migrate"] },
         { stage: "execute", action: "Without code: put the briefing in map-v1 (\"briefing\": { layerId, selection, slides }) and write a #map=json: link; feature slides use the layer's OBJECTID as featureId. In an open page: load or generate the briefing. Slide layers with a relation query the context layer's service per slide, so counts come from the service, not from the drawing.", interfaces: ["declarative-url", "in-browser-api"], references: ["briefing.load", "briefing.generate", "briefing.generateTemplate", "briefing.addSlide", "briefing.updateSlide"] },
         { stage: "verify", action: "Step through every slide on desktop and in a narrow (mobile) viewport: selected feature, highlight, camera, context layer, narrative numbers. State whether counts are complete, filtered or sampled.", interfaces: ["in-browser-api"], references: ["briefing.get", "describe"] },
-        { stage: "share", action: "Create the link, then reopen it. Optional PDF handout and QR card.", interfaces: ["in-browser-api"], references: ["briefing.createLink", "briefing.exportPdf", "briefing.exportQrCard", "briefing.exportGmo"] },
+        { stage: "share", action: "Create the link, then reopen it. Optional PDF handout and QR card.", interfaces: ["in-browser-api"], references: ["briefing.createLink", "briefing.exportPdf", "briefing.exportQrCard", "briefing.exportProject"] },
       ],
       artifact: { type: "briefing", schema: `${SITE}/schemas/briefing-v1.schema.json`, structure: "A briefing-v1 document: layerId, selection, ordered slides (template, camera, blocks, layers with relations, optional dataView/timeline/spatialChart), shared with the map's layers, styles and skin." },
       outputs: [
@@ -179,7 +179,7 @@ export function agentRecipes(links) {
         { format: "Desktop deck and mobile swipe feed", interface: "declarative-url", interactive: true, notes: "The same document; the layout follows the screen." },
         { format: "PDF handout", interface: "in-browser-api", interactive: false, reference: "briefing.exportPdf" },
         { format: "QR card (PNG)", interface: "in-browser-api", interactive: false, reference: "briefing.exportQrCard" },
-        { format: "Project file (.gis)", interface: "in-browser-api", interactive: true, reference: "briefing.exportGmo" },
+        { format: "Project file (.gis)", interface: "in-browser-api", interactive: true, reference: "briefing.exportProject" },
       ],
       verification: ["Slide count matches the request", "Each slide frames and highlights the intended feature", "Context layer loaded and related by a real spatial query", "Narrative numbers match queried values", "Desktop and mobile navigation work", "The shared link reopens to the same slides"],
       limitations: ["Readable #map=json: links hold 8,192 characters, enough for roughly ten short slides; longer briefings need the in-page API (briefing.createLink) or a hosted ?briefing= file.", "Links hold at most 60 slides and must fit the URL budget; large documents use ?briefing=<hosted JSON>.", "Data-driven templates sample at most 500 features (generateTemplate coverage is 'unknown')."],
@@ -344,6 +344,36 @@ export function agentRecipes(links) {
       examples: [
         example({ title: "Autzen Stadium LiDAR (true colour)", prompt: "Show this LAS file on a 3D map: https://raw.githubusercontent.com/PDAL/PDAL/master/test/data/las/autzen_trim.las", dataset: [SOURCES.autzen], url: links.lidar, spec: LIDAR_MAP, status: "rendered", checks: ["Opened headless from this branch (local server): 110,000 points reprojected from the file's WKT (Oregon Lambert, international feet) to Eugene, Oregon; true-colour trees and ground visible when tilted (screenshot inspected).", "Placed on the terrain at the cloud's ground level."] }),
         example({ title: "Ground returns only, revealed by height", prompt: "Show only the ground points, coloured by elevation, and animate them.", dataset: [SOURCES.autzen], url: links.lidarGround, spec: LIDAR_GROUND, status: "loaded", checks: ["Loaded through layers.add with classes [2] and the reveal animation running on the shared clock (mid-reveal screenshot).", "This sample has only unclassified and ground classes; vegetation and wire classes need a classified utility survey."] }),
+      ],
+    },
+    {
+      id: "print-map", title: "Print-ready PDF and branded Smart Image", status: "experimental",
+      question: "Can an AI agent make a branded PDF, poster or Smart Map Image?",
+      answer: "Yes, from a running GISMap page. gisMapOnline.print renders the Print Editor's templates and returns the file. Exports wait for the map and fail rather than return a blank or partial page. Agents never draw their own Smart Image.",
+      triggers: ["Make a printable map of this data", "Make a poster of this map", "Make a Smart Map Image"],
+      inputTypes: ["A map open in GISMap", "A map-v1 link"],
+      inputs: {
+        required: [{ name: "map", description: "A running GISMap page with the map loaded." }],
+        optional: [{ name: "template", description: "An id from print.templates()." }, { name: "title", description: "The page title; the project title by default." }, { name: "pages", description: "current-view, or bookmarks for a PDF with one page per bookmark." }],
+      },
+      capabilities: ["print"],
+      engines: ["maplibre", "arcgis"],
+      steps: [
+        common.discover,
+        { stage: "execute", action: "Open the map in a browser with WebGL, await gisMapOnline.ready, then call print.exportPdf or print.exportSmartImage with a template from print.templates().", interfaces: ["in-browser-api"], references: ["print.templates", "print.exportPdf", "print.exportSmartImage"] },
+        { stage: "verify", action: "Open the file and check the title, legend and QR target. Pass on any warnings.", interfaces: ["in-browser-api"], references: [`${SITE}/skills/gismap/references/print.md`] },
+        { stage: "share", action: "Return the file with the live share link. If export fails, report the error code and return the link alone.", interfaces: ["in-browser-api"], references: ["smartImages.createShareLink"] },
+      ],
+      artifact: { type: "map", schema: MAP_SCHEMA, structure: "A static page of the current map; a Smart Image also embeds the project." },
+      outputs: [
+        { format: "Map PDF", interface: "in-browser-api", interactive: false, reference: "print.exportPdf" },
+        { format: "Smart Image (PNG)", interface: "in-browser-api", interactive: false, reference: "print.exportSmartImage", notes: "Importing the PNG restores the project." },
+      ],
+      verification: ["The page shows the requested map, title and legend", "The QR opens the live map", "smartImages.read restores the project and reports renderedBy: app"],
+      limitations: ["Needs a browser with WebGL; there is no hosted rendering.", "Wall maps are capped at about 6000 pixels on the long side.", "Static outputs keep no live GIS interaction."],
+      recovery: ["In headless Chromium without WebGL, launch with --use-gl=angle --use-angle=swiftshader.", "If a layer does not load, report it; use allowPartial only if the user agrees.", "If export fails, return the live share link and the error code."],
+      examples: [
+        example({ title: "California grape acreage poster", prompt: "Make a poster of California grape acreage.", dataset: [SOURCES.grape], url: links.grape, status: "prepared", checks: ["The link opens the map to print; the export itself runs in the page."] }),
       ],
     },
     {

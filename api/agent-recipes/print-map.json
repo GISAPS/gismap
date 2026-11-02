@@ -1,0 +1,157 @@
+{
+  "$schema": "https://gismap.online/schemas/agent-recipe-v1.schema.json",
+  "schemaVersion": 1,
+  "id": "print-map",
+  "title": "Print-ready PDF and branded Smart Image",
+  "status": "experimental",
+  "question": "Can an AI agent make a branded PDF, poster or Smart Map Image?",
+  "answer": "Yes, from a running GISMap page. gisMapOnline.print renders the Print Editor's templates and returns the file. Exports wait for the map and fail rather than return a blank or partial page. Agents never draw their own Smart Image.",
+  "triggers": [
+    "Make a printable map of this data",
+    "Make a poster of this map",
+    "Make a Smart Map Image"
+  ],
+  "inputTypes": [
+    "A map open in GISMap",
+    "A map-v1 link"
+  ],
+  "inputs": {
+    "required": [
+      {
+        "name": "map",
+        "description": "A running GISMap page with the map loaded."
+      }
+    ],
+    "optional": [
+      {
+        "name": "template",
+        "description": "An id from print.templates()."
+      },
+      {
+        "name": "title",
+        "description": "The page title; the project title by default."
+      },
+      {
+        "name": "pages",
+        "description": "current-view, or bookmarks for a PDF with one page per bookmark."
+      }
+    ]
+  },
+  "capabilities": [
+    "print"
+  ],
+  "engines": [
+    "maplibre",
+    "arcgis"
+  ],
+  "steps": [
+    {
+      "stage": "discover",
+      "action": "Read llms.txt, this recipe and api/capabilities.json; note the engine and execution environment you actually have.",
+      "interfaces": [
+        "declarative-url"
+      ],
+      "references": [
+        "https://gismap.online/llms.txt",
+        "https://gismap.online/api/capabilities.json",
+        "https://gismap.online/api/manifest.json"
+      ]
+    },
+    {
+      "stage": "execute",
+      "action": "Open the map in a browser with WebGL, await gisMapOnline.ready, then call print.exportPdf or print.exportSmartImage with a template from print.templates().",
+      "interfaces": [
+        "in-browser-api"
+      ],
+      "references": [
+        "print.templates",
+        "print.exportPdf",
+        "print.exportSmartImage"
+      ]
+    },
+    {
+      "stage": "verify",
+      "action": "Open the file and check the title, legend and QR target. Pass on any warnings.",
+      "interfaces": [
+        "in-browser-api"
+      ],
+      "references": [
+        "https://gismap.online/skills/gismap/references/print.md"
+      ]
+    },
+    {
+      "stage": "share",
+      "action": "Return the file with the live share link. If export fails, report the error code and return the link alone.",
+      "interfaces": [
+        "in-browser-api"
+      ],
+      "references": [
+        "smartImages.createShareLink"
+      ]
+    }
+  ],
+  "artifact": {
+    "type": "map",
+    "schema": "https://gismap.online/schemas/map-v1.schema.json",
+    "structure": "A static page of the current map; a Smart Image also embeds the project."
+  },
+  "outputs": [
+    {
+      "format": "Map PDF",
+      "interface": "in-browser-api",
+      "interactive": false,
+      "reference": "print.exportPdf"
+    },
+    {
+      "format": "Smart Image (PNG)",
+      "interface": "in-browser-api",
+      "interactive": false,
+      "reference": "print.exportSmartImage",
+      "notes": "Importing the PNG restores the project."
+    }
+  ],
+  "verification": [
+    "The page shows the requested map, title and legend",
+    "The QR opens the live map",
+    "smartImages.read restores the project and reports renderedBy: app"
+  ],
+  "limitations": [
+    "Needs a browser with WebGL; there is no hosted rendering.",
+    "Wall maps are capped at about 6000 pixels on the long side.",
+    "Static outputs keep no live GIS interaction."
+  ],
+  "recovery": [
+    "In headless Chromium without WebGL, launch with --use-gl=angle --use-angle=swiftshader.",
+    "If a layer does not load, report it; use allowPartial only if the user agrees.",
+    "If export fails, return the live share link and the error code."
+  ],
+  "examples": [
+    {
+      "checkedOn": "2026-10-21",
+      "checkedVersion": "0.53.0",
+      "title": "California grape acreage poster",
+      "prompt": "Make a poster of California grape acreage.",
+      "dataset": [
+        {
+          "label": "USDA Census of Agriculture 2022 grape production (Esri)",
+          "url": "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USDA_Census_of_Agriculture_2022_Grape_Production/FeatureServer/0"
+        }
+      ],
+      "url": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22title%22%3A%22California%20grape%20production%2C%20counties%20over%201%2C000%20acres%22%2C%22basemap%22%3A%22gray-vector%22%2C%22camera%22%3A%7B%22center%22%3A%5B-120.2%2C37.4%5D%2C%22zoom%22%3A5.4%7D%2C%22legend%22%3Atrue%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices.arcgis.com%2FP3ePLMYs2RVChkJx%2Farcgis%2Frest%2Fservices%2FUSDA_Census_of_Agriculture_2022_Grape_Production%2FFeatureServer%2F0%22%2C%22type%22%3A%22feature%22%2C%22title%22%3A%22California%20grape%20acreage%20(USDA%202022)%22%2C%22where%22%3A%22STATE_ABBR%20%3D%20'CA'%20AND%20GRAPES_ACRES_BEAR_NON_BEAR_TOT%20%3E%201000%22%2C%22opacity%22%3A0.85%2C%22renderer%22%3A%7B%22type%22%3A%22choropleth%22%2C%22field%22%3A%22GRAPES_ACRES_BEAR_NON_BEAR_TOT%22%2C%22classes%22%3A5%2C%22method%22%3A%22quantile%22%2C%22ramp%22%3A%22purples%22%7D%7D%5D%7D",
+      "status": "prepared",
+      "checks": [
+        "The link opens the map to print; the export itself runs in the page."
+      ]
+    }
+  ],
+  "lastTestedVersion": "0.53.0",
+  "resultStatuses": [
+    "prepared",
+    "validated",
+    "loaded",
+    "rendered",
+    "verified",
+    "partial",
+    "failed"
+  ]
+}

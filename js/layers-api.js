@@ -4,7 +4,7 @@
 // project, share links and Smart images all see the result.
 import { SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.54.0-unified4";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
-import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { featureLayerUrl } from "./field-task-share.js?v=0.54.0-unified4";
 
 const trimUrl = (value) => String(value || "").trim().replace(/\/+$/, "").replace(/\/query$/i, "").toLowerCase();

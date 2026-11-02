@@ -27,7 +27,7 @@ import {
 } from "./briefing-share.js?v=0.60.0-media1";
 import { SENTINEL_LABEL, detectSentinels, inspectSource } from "./source-inspector.js?v=0.53.0";
 import { BREAK_METHODS, RAMPS, RENDERER_TYPES, chooseBreakMethod, chooseStyleField, closestField, compileRenderer, computeBreaks, describeValues, rampColors, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "./renderer-spec.js?v=0.29.0";
-import { ERROR_CODES, GisMapError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
+import { ERROR_CODES, GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { LAYER_TOOL_DEFINITIONS, checkToolInput } from "./layer-tools.js?v=0.29.0";
 import { MAP_SPEC_JSON_LIMIT, MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, mapSpecFromShareParameters, rendererSpecFromParameters, validateMapSpec } from "./map-spec.js?v=0.66.0-analysis1";
 import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS } from "./share.js?v=0.41.0";
@@ -38,10 +38,10 @@ import {
   SMART_IMAGE_VERSION,
   embedProjectInPng,
   readProjectFromPng,
-} from "./smart-image.js?v=0.44.2";
+} from "./smart-image.js?v=0.54.0-print";
 
 import { AUTHORING_TOOL_DEFINITIONS } from "./agent-authoring-tools.js?v=0.53.0";
-import { APP_VERSION } from "./version.js?v=0.53.0";
+import { APP_VERSION } from "./version.js?v=0.54.0-print";
 export const GISMAP_CORE_VERSION = APP_VERSION;
 
 export const capabilities = Object.freeze({
@@ -143,7 +143,8 @@ export const smartImages = Object.freeze({
   version: SMART_IMAGE_VERSION,
   chunk: SMART_IMAGE_CHUNK,
   limits: SMART_IMAGE_LIMITS,
-  embed: embedProjectInPng,
+  // The public embed never stamps provenance: only the app's own export does.
+  embed: (png, project) => embedProjectInPng(png, project),
   read: readProjectFromPng,
 });
 

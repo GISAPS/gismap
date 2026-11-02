@@ -16,6 +16,11 @@ export const ERROR_CODES = Object.freeze({
   INVALID_SPEC: "Fix the listed issues; the schema in capabilities.json describes every property.",
   NOT_READY: "Await gisMapOnline.ready before calling this.",
   NOT_FOUND: "Call layers.list() to see the layers on the map and their ids.",
+  PRINT_LAYERS_NOT_LOADED: "One or more layers did not load before the timeout. Check describe().state.issues, report which layers failed, and export a partial map (allowPartial: true) only if the user agrees.",
+  PRINT_RENDER_TIMEOUT: "The map did not reach an idle render in time. Increase timeoutMs or reduce the extent.",
+  PRINT_CANVAS_TAINTED: "A layer or basemap blocked pixel export (CORS). Switch basemaps or report the source.",
+  WEBGL_UNAVAILABLE: "The browser has no WebGL, so the map cannot render. In headless Chromium, launch with --use-gl=angle --use-angle=swiftshader (or --enable-unsafe-swiftshader).",
+  UNKNOWN_TEMPLATE: "Use an id from print.templates().",
   SPEC_TOO_LONG: "Shorten the spec (fewer layers, no raw ArcGIS renderers) or use the compressed #map= form from mapSpec.createLink, or host the JSON and link to it with ?spec=.",
 });
 

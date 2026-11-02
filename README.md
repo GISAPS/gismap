@@ -137,7 +137,7 @@ api.briefing.load(document); // opens the document in Briefing
 // styles, filters, skin and view. { documentOnly: true } gives a slides-only
 // link (#briefing=b1.…) that applies to whatever layers the URL loads (?layer=…).
 const link = await api.briefing.createLink(document, { qrSafe: true });
-const project = api.briefing.exportGmo(document); // { fileName, mimeType, text, blob }
+const project = api.briefing.exportProject(document); // { fileName, mimeType, text, blob }
 
 // Build slides from the map as it looks (style, filter, chosen features), and render the PDF handout.
 await api.briefing.generate({ layerId: "https://…/FeatureServer/0", ai: true });

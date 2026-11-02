@@ -390,6 +390,9 @@ export type InPageBriefingApi = typeof briefing & {
   exportQrCard(document?: unknown, options?: { title?: string; fileName?: string; qrSafe?: boolean; documentOnly?: boolean; slide?: string; baseUrl?: string; compress?: boolean }): Promise<File>;
   /** The full share link (layers, styles, filters, skin, view), or a slides-only link with documentOnly. */
   createLink(document?: unknown, options?: { qrSafe?: boolean; documentOnly?: boolean; slide?: string; baseUrl?: string; compress?: boolean }): Promise<string>;
+  /** The .gis project with this briefing, returned without downloading. */
+  exportProject(document?: unknown, options?: { fileName?: string }): { fileName: string; mimeType: string; text: string; blob: Blob };
+  /** @deprecated Use exportProject. */
   exportGmo(document?: unknown, options?: { fileName?: string }): { fileName: string; mimeType: string; text: string; blob: Blob };
 };
 
@@ -416,7 +419,46 @@ export default core;
 
 
 /** globalThis.gisMapOnline: the whole in-page API. Stability levels are listed in api/capabilities.json. */
+export interface PrintTemplate {
+  id: string; name: string; description: string; widthIn: number; heightIn: number;
+  supports: { qr: boolean; northArrow: boolean; scaleBar: boolean; legend: boolean; notes: boolean };
+}
+
+export interface PrintOptions {
+  template?: string; title?: string; subtitle?: string; description?: string;
+  marginIn?: number; marginColor?: string; borderPt?: number; borderColor?: string;
+  showQr?: boolean; showNorthArrow?: boolean; showScaleBar?: boolean; clickableLinks?: boolean;
+  /** "bookmarks" draws one PDF page per bookmark. */
+  pages?: "current-view" | "bookmarks";
+  /** 48 to 300; wall maps stay under about 6000 px. Defaults: 150 for PDF, 120 for Smart Images. */
+  dpi?: number | null;
+  waitFor?: "layers" | "idle";
+  timeoutMs?: number;
+  /** Export even if a layer failed, with a warning in the result. */
+  allowPartial?: boolean;
+}
+
+export interface PrintResult {
+  file: File; blob: Blob; template: PrintTemplate; options: Required<PrintOptions>;
+  share?: { url: string; qr: boolean }; warnings: string[];
+}
+
+export interface PrintApi {
+  templates(): PrintTemplate[];
+  getOptions(): Required<PrintOptions>;
+  setOptions(options: PrintOptions): Required<PrintOptions>;
+  preview(options?: PrintOptions): Promise<Blob>;
+  exportPdf(options?: PrintOptions): Promise<PrintResult>;
+  exportSmartImage(options?: PrintOptions): Promise<PrintResult & { manifest: unknown }>;
+  open(options?: PrintOptions): void;
+}
+
 export type InPageApi = {
+  print: PrintApi;
+  project: {
+    exportFile(): { fileName: string; mimeType: string; blob: Blob };
+    exportPackage(): Promise<{ fileName: string; mimeType: string; blob: Blob }>;
+  };
   version: string;
   /** Resolves once the view, basemap and URL-requested layers have loaded (also: the gismap:ready event, <html data-gismap-state>). */
   ready: Promise<void>;

@@ -14,7 +14,7 @@
 // boundary uses GIS Map levels, so links and projects mean the same view.
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
-import { GisMapError } from "../../gismap-errors.js?v=0.28.0";
+import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
 import { unsupported } from "../engine-interface.js?v=0.52.4";
 import { openBasemapFor, withUsgsImagery } from "./basemaps.js?v=0.53.0-gallery1";
 import { mountBasemapGallery } from "./basemap-gallery.js?v=0.53.0-gallery1";

@@ -1,7 +1,7 @@
 // Browser-side spatial analysis on the version-pinned Turf bundle. Everything runs
 // on the viewer's device: results are local GeoJSON layers, and nothing is uploaded.
 import { graphicToGeoJSONFeature } from "./export/export-core.js?v=0.18.2";
-import { GisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 
 export const MAX_ANALYSIS_FEATURES = 20000;
 const MAX_GRID_CELLS = 50000;

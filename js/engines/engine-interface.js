@@ -9,7 +9,7 @@
 // or "NOT_READY", …) with `details.capability` naming the missing capability, so
 // callers (and agents) can tell "not here" from "went wrong". `unsupported()`
 // builds that error.
-import { GisMapError } from "../gismap-errors.js?v=0.28.0";
+import { GisMapError } from "../gismap-errors.js?v=0.54.0-print";
 
 /**
  * What an engine may support. getCapabilities() returns the subset an engine has.

@@ -3,9 +3,9 @@ import { isDateField } from "./briefing-timeline-dates.js?v=0.60.0-media1";
 import { generateTimeline } from "./briefing-timeline.js?v=0.60.0-media1";
 import { extentToBounds, generateGridAtlas } from "./briefing-grid-atlas.js?v=0.60.0-media1";
 import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.60.0-media1";
-import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.61.0-briefing-player";
+import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.54.0-print";
 import { createShareLink } from "./map-share.js?v=0.65.0-paths";
-import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { featureLayerUrl } from "./field-task-share.js?v=0.41.0";
 import { brandedQrFile, printPalette } from "./pdf-document.js?v=0.44.2";
 
@@ -45,6 +45,8 @@ const cleanName = (value) => String(value || "briefing").trim().replace(/[^a-z0-
  * generate(options) builds slides from the styled map, and createPdf(options)
  * renders the PDF handout. Without a host (tests, headless) those calls throw.
  */
+let warnedExportGmo = false;
+
 export function createBriefingApi({ projectManager, mapController, host = null, baseUrl = () => globalThis.location?.href || "https://gismap.online/" }) {
   if (!projectManager) throw new Error("The Briefing API requires a project manager.");
 
@@ -244,7 +246,7 @@ export function createBriefingApi({ projectManager, mapController, host = null, 
       if (options.documentOnly !== true) throw new GisMapError("INVALID_SPEC", "A complete briefing link needs public web layers. Export a project, or explicitly request a slides-only link with documentOnly: true.");
       return core.briefing.createLink({ baseUrl: options.baseUrl || baseUrl(), briefing: document, qrSafe: options.qrSafe === true, compress: options.compress !== false });
     },
-    exportGmo(document = current(), options = {}) {
+    exportProject(document = current(), options = {}) {
       const project = projectManager.snapshot();
       project.presentation = { ...project.presentation, briefing: normalizeBriefing(document) };
       const text = JSON.stringify(project, null, 2);
@@ -254,6 +256,12 @@ export function createBriefingApi({ projectManager, mapController, host = null, 
         text,
         blob: new Blob([text], { type: "application/vnd.gismap.online.project+json" }),
       };
+    },
+    /** @deprecated Use exportProject. */
+    exportGmo(document, options) {
+      if (!warnedExportGmo) console.warn("briefing.exportGmo is deprecated; use briefing.exportProject.");
+      warnedExportGmo = true;
+      return api.exportProject(document, options);
     },
   };
   return Object.freeze(api);
@@ -275,11 +283,13 @@ export function createClientApi(options) {
       textBoxes: options.mapController.getTextBoxes?.() || [],
     });
   };
-  const createCurrent = async (settings = {}, download = false) => {
+  const createCurrent = async ({ baseUrl, width, height, download: ignored, ...print } = {}, download = false) => {
     const [image, share] = await Promise.all([
-      options.projectManager.exportSmartImage({ ...settings, download }),
-      currentMapLink(settings).catch(() => null),
+      // Through the Print Editor when the app is running: one path, the same wait and failure rules.
+      options.print ? options.print.exportSmartImage(print) : options.projectManager.exportSmartImage({ width, height, download }),
+      currentMapLink({ baseUrl }).catch(() => null),
     ]);
+    if (download && options.print) options.print.download(image.file);
     return { ...image, share };
   };
   const smartImages = Object.freeze({

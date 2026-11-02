@@ -13,7 +13,7 @@ import { normalizeBriefing, validateBriefing } from "./briefing-document.js?v=0.
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
 import { CINEMATIC_EFFECT_TYPES, normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.2.8";
 import { INTERFACE_SKINS } from "./skin-catalog.js?v=0.57.0-skins2";
-import { GisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 
 export const MAP_SPEC_VERSION = 1;
 export const MAP_SPEC_SCHEMA = "https://gismap.online/schemas/map-v1.schema.json";

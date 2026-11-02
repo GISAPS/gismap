@@ -3,7 +3,7 @@ name: gismap
 description: Make an interactive, shareable map or add one to a website — no API key. Use when a user asks to map, plot or pin places, a trip or a spreadsheet; colour countries, states or counties by a value; show public data (ArcGIS, GeoJSON, WMS, WFS, KML) on a map; embed a map in a site; or build a map briefing, guided tour, 3D or LiDAR view. Returns a link, QR code and iframe.
 metadata:
   author: GISMap Online
-version: "0.2.0"
+version: "0.3.0"
 ---
 
 # GISMap Online
@@ -64,6 +64,8 @@ Before proposing a public example, open [GISMap Discover](https://gismap.online/
 | Make the county heights represent acreage | [`3d-extrusion`](references/agent-recipes.md#3d-extrusion) | 3D extruded map |
 | Separate overlapping events by year and height | [`spatial-3d-chart`](references/agent-recipes.md#spatial-3d-chart) | 3D spatial chart and optional five-scene Brief |
 | Show this LiDAR or CAD model in 3D | [`lidar-and-3d-models`](references/agent-recipes.md#lidar-and-3d-models) | Point cloud or 3D model map |
+| Make a printable map / poster / PDF | [`print`](references/print.md) | Branded print-ready PDF |
+| Make a Smart Map Image | [`print`](references/print.md#smart-image) | Branded PNG holding the project |
 | Make the map feel like Halloween in California | [`vibe-map`](references/agent-recipes.md#vibe-map) | Coordinated theme and styled map |
 | Turn this layer into an interactive dashboard | [Dashboard, charts & animation](references/dashboard-chart-animation.md) | Linked chart panel, skin, basemap and map filtering |
 | Animate the observed changes in this layer | [Dashboard, charts & animation](references/dashboard-chart-animation.md#cinematic-animation) | Evidence-preserving cinematic playback, clip or poster |
@@ -83,6 +85,8 @@ Recipes are composable: a 3D grape map with autumn colors, a linked dashboard, a
 Add `"analysis": [{ "operation": "buffer", "input": 0, "options": { "distanceKm": 5 } }]` to a map-v1 spec to run up to five steps in the viewer's browser after the layers load; `input` and `overlay` are a position in `layers` or GeoJSON. In a running page use `gisMapOnline.analysis.run(operation, { input, overlay, options })`, where input can also be `"drawings"`. Operations: `gisMapOnline.analysis.operations()` or `map.analysisOperations` in `/api/capabilities.json`. At most 20,000 features per source; report `truncated` if set.
 
 ### Application manifest and privacy-safe state
+
+Create Smart Images only with `gisMapOnline.print.exportSmartImage()` or `smartImages.createCurrent()` in a running GISMap page. Do not draw your own map image or write `giMp` chunks yourself. If export fails, report the error code and return the live share link instead.
 
 In a running GISMap page, `gisMapOnline.manifest()` describes the live tool and panel registries. `gisMapOnline.state.snapshot()` returns a versioned, privacy-preserving projection; `state.subscribe(listener)` observes revisioned diffs and returns a removable subscription. The projection intentionally omits data records, source URLs, filter values, and coordinates, so it is not a project export. `state.mutate('layer.activate', { layerId })` validates an existing layer ID (or null); `state.undo()` uses the existing application state history. Consult `/api/manifest.json` and `/api/explorer/` for discovery and the stated coverage limitations. Existing `describe()` and application APIs remain unchanged.
 

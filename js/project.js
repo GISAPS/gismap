@@ -1,3 +1,4 @@
+import { APP_VERSION } from "./version.js?v=0.54.0-print";
 import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.5.0";
 import { NoteRelationshipsRegistry, normalizeNoteRelationships } from "./note-relationships.js?v=0.2.0";
 import { previewMapNoteTasks, prepareMapNoteTasks } from "./map-note-task-planner.js?v=0.1.0";
@@ -10,7 +11,7 @@ import { normalizeMobileWorkflow } from "./mobile-feed-store.js?v=0.18.7";
 import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { importCinematicSpec } from "./cinematic/state.js?v=0.2.8";
 import { normalizeCinematicClips } from "./cinematic/clip-model.js?v=0.3.9";
-import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.44.2";
+import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
 import { normalizeCharts } from "./charting-tools.js";
 import { stripProjectCredentials } from "./project-privacy.js?v=0.62.7-save-all";
 
@@ -314,18 +315,22 @@ export class ProjectManager {
     return lookup[type] || "arcgis-auto";
   }
 
-  exportJson() {
+  /** The .gis project file, returned without downloading. */
+  createFile() {
     const project = this.#shareableSnapshot();
-    const blob = new Blob([JSON.stringify(project, null, 2)], {
-      type: "application/vnd.gismap.online.project+json",
-    });
-    downloadBlob(blob, `${this.#exportName(project)}.gis`);
+    const mimeType = "application/vnd.gismap.online.project+json";
+    return { fileName: `${this.#exportName(project)}.gis`, mimeType, blob: new Blob([JSON.stringify(project, null, 2)], { type: mimeType }) };
+  }
+
+  exportJson() {
+    const { blob, fileName } = this.createFile();
+    downloadBlob(blob, fileName);
     this.events.publish("project:exported", { kind: "json" });
   }
 
   /** With `download: false` the PNG is only returned (as `file`), for share dialogs. */
   /** With `visual` (a finished PNG Blob, such as a map template page) the map is not captured again. */
-  async exportSmartImage({ width = 1600, height = 1000, download = true, visual: page = null, suffix = "smart-map" } = {}) {
+  async exportSmartImage({ width = 1600, height = 1000, download = true, visual: page = null, suffix = "smart-map", template = null } = {}) {
     const project = this.#shareableSnapshot();
     const capture = page ? null : await this.mapController.captureImage({ format: "png", width, height });
     if (!page && !capture?.dataUrl) throw new Error("The map is not ready to create a Smart Image.");
@@ -338,7 +343,7 @@ export class ProjectManager {
       height,
       skin: globalThis.document?.documentElement?.dataset.skin || project.presentation?.skin,
     });
-    const blob = await embedProjectInPng(visual, project);
+    const blob = await embedProjectInPng(visual, project, { generator: "gismap-online", apiVersion: APP_VERSION, renderedBy: "app", template });
     const name = `${this.#exportName(project)}-${suffix}.png`;
     if (download) {
       downloadBlob(blob, name);
@@ -363,7 +368,8 @@ export class ProjectManager {
     this.events.publish("project:exported", { kind: "atlas" });
   }
 
-  async exportPackage() {
+  /** The .gisx project package, returned without downloading. */
+  async createPackage() {
     if (!globalThis.JSZip) throw new Error("The ZIP library did not load.");
     const project = this.#shareableSnapshot();
     const zip = new JSZip();
@@ -378,13 +384,19 @@ export class ProjectManager {
       "GISMap Online project package\nOpen https://gismap.online and choose Project > Import project file.\n",
     );
     const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-    downloadBlob(blob, `${this.#exportName(project)}.gisx`);
+    return { fileName: `${this.#exportName(project)}.gisx`, mimeType: "application/zip", blob };
+  }
+
+  async exportPackage() {
+    const { blob, fileName } = await this.createPackage();
+    downloadBlob(blob, fileName);
     this.events.publish("project:exported", { kind: "package" });
   }
 
   async importFile(file) {
     if (file.type === "image/png" || /\.png$/i.test(file.name)) {
       const manifest = await readProjectFromPng(file);
+      if (manifest.provenance.renderedBy !== "app") this.events.publish("project:smart-image-unverified", { fileName: file.name });
       return this.load(manifest.project);
     }
     if (/\.(?:zip|gisx|gmop|gismap)$/i.test(file.name)) {

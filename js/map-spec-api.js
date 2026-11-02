@@ -3,7 +3,7 @@
 // Issues (from the schema, and from loading: a misspelled field, a service that
 // will not load) are collected so describe() and the issues panel can show them.
 import { MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.66.0-analysis1";
-import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { basemapEntry, basemapLabel, basemapOnEngine } from "./basemap-catalog.js?v=0.53.0-gallery1";
 
 const within = (promise, seconds) => Promise.race([promise, new Promise((resolve) => setTimeout(resolve, seconds * 1000))]);

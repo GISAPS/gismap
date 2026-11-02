@@ -1,3 +1,4 @@
+import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { initializeFieldworkWorkspace } from "./fieldwork-workspace.js?v=0.65.0-paths";
 import { timelinePdfFrames, expandTimelinePdfSlides, parseTimelineFrameSelection } from "./briefing-timeline-pdf.js?v=0.1.0";
 import { renderNotesHub } from "./notes-hub.js?v=0.55.0-fieldwork1";
@@ -16,7 +17,7 @@ import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } f
 import { createShareUrl } from "./share.js?v=0.54.0-unified4";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.61.0-briefing-player";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.54.0-print";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -25,10 +26,10 @@ import { featureFilterFor, featureId, fieldKind, filterRecords, histogram, reque
 import { DEFAULT_SKIN, INTERFACE_SKINS, applyInterfaceSkin, normalizeSkin, resolveSkinTheme, setSkinThemeResolver, skinIsDark, skinOptionsMarkup, skinTone } from "./skin-catalog.js?v=0.57.0-skins2";
 import { applyMapColors, MAP_COLOR_COMPONENTS, SKIN_BASEMAP, themeFromComputedStyle } from "./basemap-themes.js?v=0.53.0-mapcolors1";
 import { compactMedia } from "./viewport.js?v=0.18.2";
-import { APP_VERSION } from "./version.js?v=0.53.0";
+import { APP_VERSION } from "./version.js?v=0.54.0-print";
 import { bindMobileSheetResize } from "./mobile-sheet-resize.js?v=0.52.7";
 import { BRAND_LOGO, PdfDocument, brandedMapImage, brandedQrCanvas, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.65.0-paths";
-import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.65.0-paths";
+import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.54.0-print";
 import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.54.0-unified4";
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
@@ -1170,6 +1171,7 @@ export class UIController {
       if (this.presentationState.template === "briefing" && this.presentationState.mapSelect) return this.#toggleBriefingInclude(result);
       this.#selectPresentationResult(result);
     });
+    this.events.subscribe("project:smart-image-unverified", () => this.toast("This image wasn't rendered by GISMap; the map may look different when opened."));
     this.events.subscribe("project:exported", ({ kind }) => this.toast(`${kind === "smart-image" ? "Smart map image (.png)" : kind === "package" ? "Project package (.gisx)" : kind === "atlas" ? "Guided tour (.gisatlas)" : "Project file (.gis)"} downloaded.`));
     this.events.subscribe("export:progress", ({ stage, completed, total }) => {
       const progress = this.dialog.querySelector("[data-export-progress]");
@@ -2473,16 +2475,10 @@ export class UIController {
     const remembered = startTemplate || this.printState?.templateId || (() => { try { return localStorage.getItem("gismap.mapTemplate"); } catch { return null; } })();
     let templateId = getTemplate(remembered).id;
     this.templateImages ||= [];
-    const frame = { ...DEFAULT_PAGE_FRAME, showQr: true, showNorth: true, showScale: true, links: true, ...(() => { try { return JSON.parse(localStorage.getItem("gismap.mapTemplateFrame")) || {}; } catch { return {}; } })() };
+    const frame = this.printFrame || this.#templateFrame();
+    this.printFrame = null;
     const project = this.projectManager.current;
-    const now = new Date();
-    const fields = {
-      title: project.name || "Map",
-      subtitle: `${now.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} · ${this.#basemapLabel(this.mapController.getBasemapId())}`,
-      description: "",
-      // Fields typed earlier in this session come back, e.g. after editing a text box.
-      ...(this.printState?.projectId === project.id ? this.printState.fields : {}),
-    };
+    const fields = this.#templateFields();
     const options = MAP_TEMPLATES.map((template) => `<label class="map-template"><input type="radio" name="map-template" value="${template.id}"${template.id === templateId ? " checked" : ""}><strong>${escapeHtml(template.label)}</strong><small>${escapeHtml(template.description)}</small><small class="map-template__size">${template.page.width} × ${template.page.height} in</small></label>`).join("");
     const anchors = (selected) => IMAGE_ANCHORS.map((anchor) => `<option value="${anchor}"${anchor === selected ? " selected" : ""}>${anchor.replace("-", " ")}</option>`).join("");
     this.openDialog({
@@ -2529,23 +2525,14 @@ export class UIController {
     const data = async () => {
       const base = await details;
       if (!base) throw new Error("The map is not ready yet.");
-      const link = await this.#templateLink(base.palette);
-      const description = root.querySelector("[data-template-description]").value.trim();
-      const compact = templateCompact({ ...base, qr: frame.showQr === false ? null : link.qr, description });
-      const shot = await capture(templateId, { compact });
-      root.querySelector("[data-frame-qr]").disabled = !link.qr;
-      root.querySelector("[data-frame-qr-note]").hidden = Boolean(link.qr);
-      return {
-        ...base,
-        ...shot,
-        ...link,
+      const page = await this.#templatePage(templateId, base, frame, capture, {
         title: root.querySelector("[data-template-title]").value.trim(),
         subtitle: root.querySelector("[data-template-subtitle]").value.trim(),
-        description,
-        compact,
-        images: getTemplate(templateId).images ? this.templateImages : [],
-        ...(frame.showQr === false ? { qr: null } : {}),
-      };
+        description: root.querySelector("[data-template-description]").value.trim(),
+      });
+      root.querySelector("[data-frame-qr]").disabled = !page.liveQr;
+      root.querySelector("[data-frame-qr-note]").hidden = Boolean(page.liveQr);
+      return page;
     };
     let pending = 0;
     const preview = () => draw().catch((error) => { status.textContent = error.message; });
@@ -2693,7 +2680,7 @@ export class UIController {
         if (kind === "pdf") this.#download(await this.#templatePdf(page, `${this.#fileStem()}${stem}-map.pdf`));
         else {
           const blob = await new Promise((resolve) => page.canvas.toBlob(resolve, "image/png"));
-          await this.projectManager.exportSmartImage({ visual: blob, suffix: `smart-map${stem}` });
+          await this.projectManager.exportSmartImage({ visual: blob, suffix: `smart-map${stem}`, template: page.template.id });
         }
       } catch (error) {
         this.error(error.message);
@@ -2703,6 +2690,101 @@ export class UIController {
       }
     }));
     await preview();
+  }
+
+  /** The saved page frame, or the editor's defaults. */
+  #templateFrame() {
+    return { ...DEFAULT_PAGE_FRAME, showQr: true, showNorth: true, showScale: true, links: true, ...(() => { try { return JSON.parse(localStorage.getItem("gismap.mapTemplateFrame")) || {}; } catch { return {}; } })() };
+  }
+
+  /** The editor's title, subtitle and description for the current project. */
+  #templateFields() {
+    const project = this.projectManager.current;
+    return {
+      title: project.name || "Map",
+      subtitle: `${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} · ${this.#basemapLabel(this.mapController.getBasemapId())}`,
+      description: "",
+      // Fields typed earlier in this session come back, e.g. after editing a text box.
+      ...(this.printState?.projectId === project.id ? this.printState.fields : {}),
+    };
+  }
+
+  /** Everything one template page draws. The Print Editor and gisMapOnline.print both come through here. */
+  async #templatePage(templateId, base, frame, capture, fields) {
+    const link = await this.#templateLink(base.palette);
+    const compact = templateCompact({ ...base, qr: frame.showQr === false ? null : link.qr, description: fields.description });
+    const shot = await capture(templateId, { compact });
+    return {
+      ...base,
+      ...shot,
+      ...link,
+      ...fields,
+      liveQr: link.qr,
+      compact,
+      images: getTemplate(templateId).images ? this.templateImages || [] : [],
+      ...(frame.showQr === false ? { qr: null } : {}),
+    };
+  }
+
+  /** Print Editor defaults, in the option names of gisMapOnline.print. */
+  printDefaults() {
+    const frame = this.#templateFrame();
+    const { title, subtitle, description } = this.#templateFields();
+    return {
+      title, subtitle, description,
+      marginIn: frame.margin, marginColor: frame.marginColor, borderPt: frame.borderWidth, borderColor: frame.borderColor,
+      showQr: frame.showQr !== false, showNorthArrow: frame.showNorth !== false, showScaleBar: frame.showScale !== false, clickableLinks: frame.links !== false,
+    };
+  }
+
+  /** One export for gisMapOnline.print, with the same drawing as the editor's buttons. Nothing downloads. */
+  async printRender(kind, { template: templateId, title, subtitle, description, frame, pages, dpi }) {
+    const base = await this.#templateData();
+    const fields = { title, subtitle, description };
+    const capture = (id, options) => this.#templateCapture(templateMapAspect(id, options));
+    const data = async () => {
+      const page = await this.#templatePage(templateId, base, frame, capture, fields);
+      if (!page.map) throw new GisMapError("PRINT_RENDER_TIMEOUT", "The map could not be captured.");
+      return page;
+    };
+    const stem = templateId === "branded" ? "" : `-${templateId}`;
+    if (kind === "pdf" && pages === "bookmarks") {
+      const list = await this.#bookmarkPages(templateId, data, frame, {});
+      const file = await this.#templatePdf(list, `${this.#fileStem()}${stem}-bookmarks.pdf`);
+      return { file, blob: file, share: this.#printShare() };
+    }
+    const fallback = { preview: 48, pdf: 150, "smart-image": 120 }[kind];
+    const page = renderTemplate(templateId, await data(), { ppi: this.#templatePpi(templateId, dpi || fallback), frame });
+    const share = this.#printShare();
+    if (kind === "pdf") {
+      const file = await this.#templatePdf(page, `${this.#fileStem()}${stem}-map.pdf`);
+      return { file, blob: file, share };
+    }
+    const png = await new Promise((resolve, reject) => page.canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("The browser could not encode the page.")), "image/png"));
+    if (kind === "preview") return { blob: png, file: null, share };
+    const { blob, file } = await this.projectManager.exportSmartImage({ visual: png, suffix: `smart-map${stem}`, download: false, template: page.template.id });
+    return { blob, file, share };
+  }
+
+  #printShare() {
+    return this.templateQr ? { url: this.templateQr.url, qr: Boolean(this.templateQr.qr) } : undefined;
+  }
+
+  /** Opens the Print Editor on these options. */
+  printOpen({ template, title, subtitle, description, frame }) {
+    const project = this.projectManager.current;
+    this.printState = { projectId: project.id, templateId: template, output: this.printState?.output || "pdf", fields: { title, subtitle, description } };
+    this.printFrame = frame;
+    if (this.printIsOpen()) this.dialog.close();
+    this.#openMapTemplates(this.printState.output, template).catch((error) => this.error(error.message));
+  }
+
+  printIsOpen() {
+    return Boolean(this.dialog?.open && this.dialog.querySelector(".map-templates"));
+  }
+
+  printDownload(file) {
+    this.#download(file);
   }
 
   /** Project details every template can use. */

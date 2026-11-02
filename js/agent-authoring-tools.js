@@ -2,7 +2,7 @@
 // to the same public implementations as the browser API; they do not maintain
 // another project model. Mutating/participant operations are not registered here
 // until their permissions and reversible state transitions are defined.
-import { GisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 
 export const AUTHORING_TOOL_DEFINITIONS = Object.freeze([
   {

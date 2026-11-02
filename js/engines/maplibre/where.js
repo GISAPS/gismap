@@ -3,7 +3,7 @@
 // services evaluate them for ArcGIS layers, and this module evaluates the same
 // clauses against GeoJSON properties for engines that draw data themselves.
 // Pure: no DOM, no map SDK.
-import { GisMapError } from "../../gismap-errors.js?v=0.28.0";
+import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
 
 const KEYWORDS = new Set(["AND", "OR", "NOT", "IS", "NULL", "LIKE", "IN", "BETWEEN", "TRUE", "FALSE", "DATE", "TIMESTAMP"]);
 const FUNCTIONS = { UPPER: (value) => (value == null ? value : String(value).toUpperCase()), LOWER: (value) => (value == null ? value : String(value).toLowerCase()) };

@@ -1,7 +1,7 @@
 // The in-page `layerStyles` namespace: saved layer styles (js/layer-style.js)
 // kept with the project and in a library in this browser, applied through the
 // layers API so a style looks the same however it is applied.
-import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { LAYER_STYLE_TYPE, LAYER_STYLE_VERSION, layerStyleBriefing, layerStyleFromLayer, layerStyleMapSpec, mergeLayerStyles, normalizeLayerStyle, stylesForSource } from "./layer-style.js?v=0.60.0-media1";
 
 const LIBRARY_KEY = "gismap-online:layer-styles:v1";

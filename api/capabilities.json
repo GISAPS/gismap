@@ -1,5 +1,5 @@
 {
-  "apiVersion": "0.53.0",
+  "apiVersion": "0.54.0",
   "execution": "client",
   "global": "globalThis.gisMapOnline",
   "module": "/js/gismap-core.js",
@@ -39,6 +39,7 @@
       "encode",
       "decode",
       "createLink",
+      "exportProject",
       "exportGmo"
     ],
     "queries": [
@@ -123,6 +124,19 @@
       "toBriefing",
       "export",
       "import"
+    ],
+    "print": [
+      "templates",
+      "getOptions",
+      "setOptions",
+      "preview",
+      "exportPdf",
+      "exportSmartImage",
+      "open"
+    ],
+    "project": [
+      "exportFile",
+      "exportPackage"
     ]
   },
   "outputs": [
@@ -131,7 +145,10 @@
     "briefing-pdf",
     "briefing-qr-png",
     "gis-project",
-    "smart-image-png"
+    "smart-image-png",
+    "map-pdf",
+    "print-smart-image-png",
+    "gis-package"
   ],
   "unavailableWithoutHost": [
     "hosted-links",
@@ -157,7 +174,9 @@
     "layers.*",
     "camera.*",
     "describe",
-    "ready"
+    "ready",
+    "print.*",
+    "project.*"
   ],
   "schemas": {
     "briefing": "/schemas/briefing-v1.schema.json",
@@ -236,6 +255,14 @@
     "briefing.generateTemplate": {
       "stability": "experimental",
       "description": "Generate or preview filter-series, timeline, grid-atlas, or spatial-3d-chart briefing slides from up to 500 queried features on an already loaded layer. Browser session only; coverage is not guaranteed. Spatial charts draw on MapLibre (derived extrusion layers) and ArcGIS (SceneView extrude symbols) as fast display, not analytical overlap aggregation. See /skills/gismap/references/briefs.md."
+    },
+    "print": {
+      "stability": "experimental",
+      "description": "The Print Editor: branded PDFs and Smart Images. Exports wait for the map, return files and fail rather than render a blank or partial page."
+    },
+    "project": {
+      "stability": "experimental",
+      "description": "exportFile() returns the .gis project and exportPackage() the .gisx package, without downloading."
     }
   },
   "errorCodes": {
@@ -251,6 +278,11 @@
     "INVALID_SPEC": "Fix the listed issues; the schema in capabilities.json describes every property.",
     "NOT_READY": "Await gisMapOnline.ready before calling this.",
     "NOT_FOUND": "Call layers.list() to see the layers on the map and their ids.",
+    "PRINT_LAYERS_NOT_LOADED": "One or more layers did not load before the timeout. Check describe().state.issues, report which layers failed, and export a partial map (allowPartial: true) only if the user agrees.",
+    "PRINT_RENDER_TIMEOUT": "The map did not reach an idle render in time. Increase timeoutMs or reduce the extent.",
+    "PRINT_CANVAS_TAINTED": "A layer or basemap blocked pixel export (CORS). Switch basemaps or report the source.",
+    "WEBGL_UNAVAILABLE": "The browser has no WebGL, so the map cannot render. In headless Chromium, launch with --use-gl=angle --use-angle=swiftshader (or --enable-unsafe-swiftshader).",
+    "UNKNOWN_TEMPLATE": "Use an id from print.templates().",
     "SPEC_TOO_LONG": "Shorten the spec (fewer layers, no raw ArcGIS renderers) or use the compressed #map= form from mapSpec.createLink, or host the JSON and link to it with ?spec=."
   },
   "layerTypes": [
@@ -743,6 +775,11 @@
       "INVALID_SPEC",
       "NOT_READY",
       "NOT_FOUND",
+      "PRINT_LAYERS_NOT_LOADED",
+      "PRINT_RENDER_TIMEOUT",
+      "PRINT_CANVAS_TAINTED",
+      "WEBGL_UNAVAILABLE",
+      "UNKNOWN_TEMPLATE",
       "SPEC_TOO_LONG"
     ],
     "analysisOperations": [
@@ -763,6 +800,72 @@
       "count",
       "clip",
       "erase"
+    ]
+  },
+  "deprecated": {
+    "briefing.exportGmo": "briefing.exportProject"
+  },
+  "print": {
+    "defaultTemplate": "branded",
+    "pages": [
+      "current-view",
+      "bookmarks"
+    ],
+    "templates": [
+      {
+        "id": "branded",
+        "name": "Branded landscape",
+        "widthIn": 11,
+        "heightIn": 8.5
+      },
+      {
+        "id": "full-bleed",
+        "name": "Full-bleed map",
+        "widthIn": 11,
+        "heightIn": 8.5
+      },
+      {
+        "id": "portrait-report",
+        "name": "Portrait report",
+        "widthIn": 8.5,
+        "heightIn": 11
+      },
+      {
+        "id": "poster",
+        "name": "Poster (tabloid)",
+        "widthIn": 11,
+        "heightIn": 17
+      },
+      {
+        "id": "wall-24x36",
+        "name": "Wall map (24 × 36)",
+        "widthIn": 24,
+        "heightIn": 36
+      },
+      {
+        "id": "wall-36x36",
+        "name": "Square wall map (36 × 36)",
+        "widthIn": 36,
+        "heightIn": 36
+      },
+      {
+        "id": "field-sheet",
+        "name": "Field sheet",
+        "widthIn": 8.5,
+        "heightIn": 11
+      },
+      {
+        "id": "slide",
+        "name": "Briefing slide (16:9)",
+        "widthIn": 13.333,
+        "heightIn": 7.5
+      },
+      {
+        "id": "image-overlay",
+        "name": "Map with images",
+        "widthIn": 11,
+        "heightIn": 8.5
+      }
     ]
   }
 }

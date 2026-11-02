@@ -6,12 +6,12 @@ import { MapController } from "./map-controller.js?v=0.66.1-finish1";
 import { listEngines } from "./engines/engine-registry.js?v=0.66.1-finish1";
 import { chooseEngine } from "./engine-preference.js?v=0.52.5";
 import { BASEMAP_IDS } from "./basemap-catalog.js?v=0.53.0-gallery1";
-import { ProjectManager } from "./project.js?v=0.65.0-paths";
+import { ProjectManager } from "./project.js?v=0.54.0-print";
 import { IdentifyController } from "./identify.js?v=0.54.0-pan2";
 import { AttributeTableController } from "./attribute-table.js?v=0.61.2-layer-tools";
 import { AIController } from "./ai.js?v=0.57.0-skins1";
 import { ToolManager } from "./tool-manager.js?v=0.37.0";
-import { UIController } from "./ui.js?v=0.66.1-finish1";
+import { UIController } from "./ui.js?v=0.54.0-print";
 import { ExportController } from "./export/export-controller.js?v=0.37.0";
 import { SHARE_BASEMAPS, parseShareParameters } from "./share.js?v=0.54.0-unified4";
 import { readShareLocation } from "./map-share.js?v=0.65.0-paths";
@@ -23,7 +23,10 @@ import { ApplicationRuntime } from "./application-runtime.js?v=0.57.0-skins1";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { MobilePanelManager } from "./mobile-panel-manager.js?v=0.18.2";
 import { MobileWorkflowRouter } from "./mobile-workflow-router.js?v=0.57.0-skins1";
-import { createClientApi } from "./briefing-api.js?v=0.66.1-finish1";
+import { createClientApi } from "./briefing-api.js?v=0.54.0-print";
+import { createPrintApi, hasWebgl, registerPrintTools, webglIssue } from "./print-api.js?v=0.54.0-print";
+import { MAP_TEMPLATES } from "./map-templates.js?v=0.54.0-print";
+import { readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
 import { registerAuthoringTools } from "./agent-authoring-tools.js?v=0.53.0";
 import { createCameraApi, createLayersApi } from "./layers-api.js?v=0.54.0-unified4";
 import { registerLayerTools } from "./layer-tools.js?v=0.29.0";
@@ -31,7 +34,7 @@ import { createSpatialAnalysisApi } from "./spatial-analysis.js?v=0.66.1-finish1
 import { createMapSpecApi } from "./map-spec-api.js?v=0.66.1-finish1";
 import { createLayerStylesApi } from "./layer-styles-api.js?v=0.60.0-media1";
 import { mapSpecFromShareParameters } from "./map-spec.js?v=0.66.1-finish1";
-import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.54.0-print";
 
 import { loadSharedLayer } from "./shared-layer-loader.js?v=0.53.0";
 
@@ -202,9 +205,18 @@ async function start() {
       loadLayer: loadUnifiedLayer,
       layerInfo: (layer) => layersApi.get(layer.uid),
     },
+    print: {
+      exportSmartImage: (options) => printApi.exportSmartImage(options),
+      download: (file) => uiController.printDownload(file),
+    },
   });
   registerAuthoringTools(applicationRuntime.tools, { sources: clientApi.sources, briefing: clientApi.briefing, layers: layersApi, camera: cameraApi });
   const issues = [];
+  if (!hasWebgl()) {
+    // Say why at once, rather than leaving agents a silently empty map.
+    issues.push(webglIssue());
+    document.documentElement.dataset.gismapState = "error";
+  }
   const analysisApi = createSpatialAnalysisApi({ mapController, layers: layersApi });
   const mapSpecApi = createMapSpecApi({
     analysis: analysisApi,
@@ -238,6 +250,24 @@ async function start() {
     },
   });
   uiController.layerStyles = layerStylesApi;
+  const printApi = createPrintApi({
+    templates: MAP_TEMPLATES,
+    host: {
+      webgl: hasWebgl,
+      ready: () => ready,
+      layers: () => mapController.isReady() ? layersApi.list() : [],
+      idle: () => {
+        const { map, view } = mapController.native();
+        return view ? view.updating === false : Boolean(map?.loaded?.() && map.areTilesLoaded?.());
+      },
+      defaults: () => uiController.printDefaults(),
+      render: (kind, options) => uiController.printRender(kind, options),
+      open: (options) => uiController.printOpen(options),
+      isOpen: () => uiController.printIsOpen(),
+      read: readProjectFromPng,
+    },
+  });
+  registerPrintTools(applicationRuntime.tools, printApi);
   const describeTool = (tool) => ({ id: tool.id, displayName: tool.displayName, description: tool.description, inputSchema: tool.inputSchema });
   const describe = () => {
     let camera = null;
@@ -292,6 +322,13 @@ async function start() {
     queries: clientApi.queries,
     sources: clientApi.sources,
     smartImages: clientApi.smartImages,
+    /** The Print Editor: templates, getOptions, setOptions, preview, exportPdf, exportSmartImage, open. Exports return files. */
+    print: printApi,
+    /** Project files, returned without downloading: exportFile (.gis), exportPackage (.gisx). */
+    project: Object.freeze({
+      exportFile: () => projectManager.createFile(),
+      exportPackage: () => projectManager.createPackage(),
+    }),
     cinematic: Object.freeze({
       importCinematicSpec: (spec) => uiController.importCinematicSpec(spec),
       exportCinematicSpec: () => uiController.exportCinematicSpec(),
@@ -452,7 +489,7 @@ async function start() {
 
   // The basemap's layers loading is part of "ready": a screenshot taken now shows the whole map.
   await mapController.whenBasemapLoaded(15000);
-  document.documentElement.dataset.gismapState = "ready";
+  if (hasWebgl()) document.documentElement.dataset.gismapState = "ready";
   resolveReady();
   dispatchEvent(new CustomEvent("gismap:ready", { detail: describe() }));
 }

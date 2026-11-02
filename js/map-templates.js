@@ -555,7 +555,17 @@ const templates = [
   },
 ];
 
-export const MAP_TEMPLATES = Object.freeze(templates.map(({ id, label, description, page, images = false }) => Object.freeze({ id, label, description, page, images })));
+// What each page can show, for gisMapOnline.print.templates().
+const ALL_FURNITURE = Object.freeze({ qr: true, northArrow: true, scaleBar: true, legend: true, notes: true });
+const TEMPLATE_SUPPORTS = Object.freeze({
+  branded: { ...ALL_FURNITURE, notes: false },
+  "full-bleed": { ...ALL_FURNITURE, legend: false, notes: false },
+  "field-sheet": { ...ALL_FURNITURE, legend: false, notes: false },
+  slide: { ...ALL_FURNITURE, notes: false },
+  "image-overlay": { qr: true, northArrow: false, scaleBar: false, legend: false, notes: true },
+});
+
+export const MAP_TEMPLATES = Object.freeze(templates.map(({ id, label, description, page, images = false }) => Object.freeze({ id, label, description, page, images, supports: TEMPLATE_SUPPORTS[id] || ALL_FURNITURE })));
 
 export function getTemplate(id) {
   return templates.find((template) => template.id === id) || templates[0];

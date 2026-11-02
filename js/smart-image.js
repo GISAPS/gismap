@@ -131,13 +131,14 @@ function assertSafeProject(project) {
   }
 }
 
-async function encodeManifest(project) {
+async function encodeManifest(project, provenance) {
   const safeProject = JSON.parse(JSON.stringify(project));
   assertSafeProject(safeProject);
   const json = encoder.encode(JSON.stringify({
     format: SMART_IMAGE_FORMAT,
     version: SMART_IMAGE_VERSION,
     createdAt: new Date().toISOString(),
+    ...provenance,
     project: safeProject,
   }));
   if (json.byteLength > SMART_IMAGE_LIMITS.maxProjectBytes) {
@@ -185,12 +186,12 @@ async function decodeManifest(data) {
 }
 
 /** Insert or replace GISMap's private ancillary PNG chunk immediately before IEND. */
-export async function embedProjectInPng(png, project) {
+export async function embedProjectInPng(png, project, provenance = null) {
   const bytes = new Uint8Array(png instanceof Blob ? await png.arrayBuffer() : png);
   if (bytes.byteLength > SMART_IMAGE_LIMITS.maxImageBytes) throw new Error("The source map image is too large.");
   const chunks = pngChunks(bytes).filter((chunk) => chunk.type !== SMART_IMAGE_CHUNK);
   const iend = chunks.findIndex((chunk) => chunk.type === "IEND");
-  chunks.splice(iend, 0, { bytes: makeChunk(SMART_IMAGE_CHUNK, await encodeManifest(project)) });
+  chunks.splice(iend, 0, { bytes: makeChunk(SMART_IMAGE_CHUNK, await encodeManifest(project, provenance)) });
   return new Blob([concatBytes([PNG_SIGNATURE, ...chunks.map((chunk) => chunk.bytes)])], { type: "image/png" });
 }
 
@@ -201,7 +202,13 @@ export async function readProjectFromPng(png) {
   const chunk = pngChunks(bytes).findLast((item) => item.type === SMART_IMAGE_CHUNK);
   if (!chunk) throw new Error("This PNG is an ordinary image; it does not contain a GISMap project.");
   if (crc32(concatBytes([chunk.typeBytes, chunk.data])) !== chunk.storedCrc) throw new Error("The embedded GISMap project is damaged.");
-  return decodeManifest(chunk.data);
+  return withProvenance(await decodeManifest(chunk.data));
+}
+
+/** Who rendered the image, as its manifest claims. Informational, not a signature. */
+function withProvenance(manifest) {
+  const { generator = null, apiVersion = null, renderedBy, template = null, createdAt = null } = manifest;
+  return { ...manifest, provenance: { generator, apiVersion, renderedBy: renderedBy === "app" ? "app" : "unknown", template, createdAt } };
 }
 
 function canvasBlob(canvas) {

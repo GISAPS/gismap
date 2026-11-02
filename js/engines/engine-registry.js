@@ -2,7 +2,7 @@
 // does not import a renderer implementation directly. Keeping loaders here
 // lets a future MapLibre engine ship without downloading the ArcGIS runtime.
 import { ENGINE_CAPABILITIES, ENGINE_METHODS } from "./engine-interface.js?v=0.54.2-anim1";
-import { GisMapError } from "../gismap-errors.js?v=0.28.0";
+import { GisMapError } from "../gismap-errors.js?v=0.54.0-print";
 
 const definitions = new Map();
 

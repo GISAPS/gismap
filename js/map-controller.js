@@ -3,7 +3,7 @@
 // primitives. Renderer adapters stay focused on drawing and interaction.
 import { createEngine, getEngineDefinition, listEngines } from "./engines/engine-registry.js?v=0.65.8-made-with";
 import { MAP_CONTROLLER_METHODS, METHOD_CAPABILITIES, unsupported } from "./engines/engine-interface.js?v=0.62.4-silent-engine-handoff";
-import { GisMapError } from "./gismap-errors.js?v=0.28.0";
+import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { TextBoxLayer } from "./text-boxes.js?v=0.65.0-paths";
 import { LayerLabeler, normalizeLabeling } from "./layer-labels.js?v=0.65.0-paths";
 

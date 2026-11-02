@@ -291,6 +291,25 @@
       "page": "https://gismap.online/agent-recipes/lidar-and-3d-models/"
     },
     {
+      "id": "print-map",
+      "title": "Print-ready PDF and branded Smart Image",
+      "status": "experimental",
+      "question": "Can an AI agent make a branded PDF, poster or Smart Map Image?",
+      "triggers": [
+        "Make a printable map of this data",
+        "Make a poster of this map",
+        "Make a Smart Map Image"
+      ],
+      "artifact": "map",
+      "engines": [
+        "maplibre",
+        "arcgis"
+      ],
+      "lastTestedVersion": "0.53.0",
+      "url": "https://gismap.online/api/agent-recipes/print-map.json",
+      "page": "https://gismap.online/agent-recipes/print-map/"
+    },
+    {
       "id": "vibe-map",
       "title": "Vibe-matched map and presentation skin",
       "status": "available",

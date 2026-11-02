@@ -4,6 +4,13 @@ All notable changes to GIS Map Online are documented here. This project follows
 [Semantic Versioning](https://semver.org/), and this file follows the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## 0.54.0
+
+- `gisMapOnline.print` gives agents the Print Editor: templates, options, previews, PDFs and branded Smart Images. Exports return files and fail rather than render a blank or partial map.
+- `smartImages.createCurrent` now renders through the Print Editor. Smart Images record who rendered them, and importing one without that record shows a notice.
+- `gisMapOnline.project.exportFile` and `exportPackage` return `.gis` and `.gisx` files. `briefing.exportProject` replaces `briefing.exportGmo`, which stays as a deprecated alias. Legacy `.gmo` and `.gmop` files still import.
+- A browser without WebGL now reports `WEBGL_UNAVAILABLE` at startup.
+
 ## [Unreleased]
 
 ### Spatial analysis

@@ -290,6 +290,8 @@ Readable links hold up to 8,192 characters. Inspect real fields first (\`<layer 
 
 ## What can AI agents create with GISMap?
 
+Print-ready PDFs and branded Smart Images come from \`gisMapOnline.print\` in a running page; see the [print reference](${SITE}/skills/gismap/references/print.md).
+
 Finished maps, linked charts and Instant Dashboards, briefings, guided tours, field task packages, 3D maps, cinematic presentations and themed maps. Start with [Discover](${SITE}/discover/) and its [current examples](${SITE}/discover/examples/) when choosing a public workflow. Each recipe gives the interface to use (a URL you write, a standalone JavaScript module, or the in-page API; never a hosted REST endpoint), how to verify the result, and its limits: [recipe pages](${SITE}/agent-recipes/) · [recipe catalog (JSON)](${SITE}/api/agent-recipes/index.json). For engine-specific work, read the [Map engines guide](${SITE}/discover/engines/) before selecting styling or 3D behavior.
 
 
@@ -302,6 +304,7 @@ Finished maps, linked charts and Instant Dashboards, briefings, guided tours, fi
 | Make the county heights represent acreage | [3d-extrusion](${SITE}/skills/#recipe-3d-extrusion) | 3D extruded map |
 | Separate overlapping events by year and height | [spatial-3d-chart](${SITE}/skills/#recipe-spatial-3d-chart) | 3D spatial chart and five-scene Brief |
 | Show this LiDAR or CAD model in 3D | [lidar-and-3d-models](${SITE}/skills/#recipe-lidar-and-3d-models) | Point cloud or 3D model map |
+| Make a printable map, poster or Smart Map Image | [print-map](${SITE}/agent-recipes/print-map/) | Branded PDF or Smart Image |
 | Make the map feel like Halloween in California | [vibe-map](${SITE}/skills/#recipe-vibe-map) | Coordinated theme and styled map |
 | Turn this layer into an interactive dashboard | [dashboard workflow](${SITE}/skills/gismap/references/dashboard-chart-animation.md) | Linked chart panel, skin, basemap and map filtering |
 | Animate observed changes in this layer | [cinematic animation](${SITE}/skills/gismap/references/dashboard-chart-animation.md#cinematic-animation) | Evidence-preserving playback, clip or poster |
@@ -443,6 +446,16 @@ ${Object.entries(capabilities.errorCodes || {}).map(([codeName, hint]) => `- \`$
 ## In-page API (globalThis.gisMapOnline)
 
 ${readmeSection(readme, "## Agent API")}
+
+## Print Editor
+
+\`gisMapOnline.print\` renders the Print Editor's pages and returns files without downloading: templates(), getOptions(), setOptions(options), preview(options), exportPdf(options), exportSmartImage(options), open(options). Exports wait for the map and throw PRINT_LAYERS_NOT_LOADED, PRINT_RENDER_TIMEOUT, PRINT_CANVAS_TAINTED, WEBGL_UNAVAILABLE or UNKNOWN_TEMPLATE rather than render a blank or partial page.
+
+\`\`\`js
+const { file, warnings } = await gisMapOnline.print.exportPdf({ template: "poster", title: "Potholes" });
+\`\`\`
+
+Create Smart Images only with print.exportSmartImage() or smartImages.createCurrent() in a running GISMap page. Do not draw your own map image or write giMp chunks yourself. If export fails, report the error code and return the live share link instead. Use \`.gisx\` (project.exportPackage()) when local datasets must travel with the project; \`.gis\` (project.exportFile()) is the compact project file. Legacy .gmo and .gmop files still import. Options and templates: ${SITE}/skills/gismap/references/print.md
 
 ## Briefing API
 

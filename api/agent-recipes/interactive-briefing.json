@@ -143,7 +143,7 @@
         "briefing.createLink",
         "briefing.exportPdf",
         "briefing.exportQrCard",
-        "briefing.exportGmo"
+        "briefing.exportProject"
       ]
     }
   ],
@@ -181,7 +181,7 @@
       "format": "Project file (.gis)",
       "interface": "in-browser-api",
       "interactive": true,
-      "reference": "briefing.exportGmo"
+      "reference": "briefing.exportProject"
     }
   ],
   "verification": [
