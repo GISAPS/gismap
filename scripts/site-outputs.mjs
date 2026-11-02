@@ -1,3 +1,5 @@
+import { rootLinksHtml } from "./relative-links.mjs";
+import { createHash } from "node:crypto";
 import { buildManifest, PUBLIC_STATE_SCHEMA } from "../js/application-manifest.js";
 // Every generated page and machine-readable file of the site, as { path: contents }.
 // Pure (no Node APIs), so scripts/build-examples.mjs writes or checks it in CI and
@@ -17,6 +19,65 @@ const esc = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ "&": 
 const appLink = (item) => `/?example=${encodeURIComponent(item.slug || item.id)}`;
 const briefingTutorialLink = (item) => item.briefingTutorial ? `/?briefingExample=${encodeURIComponent(item.briefingTutorial)}&tutorial=1` : null;
 const typeLabel = (type) => ({ feature: "ArcGIS FeatureServer", "map-image": "ArcGIS MapServer", imagery: "ArcGIS ImageServer", geojson: "GeoJSON" }[type] || type);
+
+// Search titles and descriptions; recipe JSON keeps the long question and answer.
+const RECIPE_META = Object.freeze({
+  "interactive-map": {
+    "title": "Filtered, styled interactive map with AI",
+    "description": "Have an AI agent turn a public dataset into a filtered, styled, shareable GISMap Online map, with no API key, using one map-v1 JSON link."
+  },
+  "interactive-briefing": {
+    "description": "Have an AI agent build an interactive map briefing: ordered slides, framed features and a shareable link, verified on desktop and mobile."
+  },
+  "geographic-tour": {
+    "description": "Have an AI agent build a guided map tour of places in a set order, with captions and camera moves, written as one link and no code."
+  },
+  "field-tasks": {
+    "description": "Have an AI agent create a location-based field task package that people open by link or QR code, complete on site and send back."
+  },
+  "3d-extrusion": {
+    "description": "Have an AI agent make a 3D map with numeric or fixed-height extrusions, such as county heights by acreage, shared as one link."
+  },
+  "spatial-3d-chart": {
+    "description": "Have an AI agent build a 3D spatial chart with strata or footprint stacks that separates overlapping events by year and height."
+  },
+  "lidar-and-3d-models": {
+    "title": "LiDAR and 3D model maps with AI",
+    "description": "Have an AI agent show LiDAR point clouds and 3D models on a browser map, coloured by class or elevation, for utility and vegetation data."
+  },
+  "print-map": {
+    "description": "Have an AI agent make a branded print-ready PDF, poster or Smart Map Image from a running GISMap Online page, with templates and a QR code."
+  },
+  "vibe-map": {
+    "description": "Have an AI agent make a themed map with a matching interface skin, basemap and renderer colours, shared as one link and no code."
+  }
+});
+
+/**
+ * Each sitemap URL's last real change. Dates live in a committed map because
+ * shallow clones have no usable git dates: a page keeps its date until its
+ * content hash changes, and --check fails while the map is out of date.
+ */
+async function sitemapDates(urls, outputs, readText) {
+  const stored = await readText("scripts/sitemap-lastmod.json").then(JSON.parse).catch(() => ({}));
+  const today = new Date().toISOString().slice(0, 10);
+  const dates = {};
+  for (const path of urls) {
+    const file = path.endsWith("/") ? `${path.slice(1)}index.html` : path.slice(1);
+    const source = outputs.get(file) ?? await readText(file);
+    // Root-relative links, so the hash ignores how a reader spells them.
+    const text = file.endsWith(".html") ? rootLinksHtml(file, source) : source;
+    // Cache-busting tags change with releases, not with the page.
+    const hash = createHash("sha256").update(text.replace(/\?v=[^"'\s]+/g, "")).digest("hex").slice(0, 16);
+    dates[path] = stored[path]?.hash === hash ? stored[path] : { hash, lastmod: today };
+  }
+  return dates;
+}
+
+function serviceDescription(item) {
+  const full = `${item.description} Open this ${typeLabel(item.serviceType)} dataset directly in GISMap Online.`;
+  return full.length <= 160 ? full : item.description;
+}
 
 function shell({ title, description, path, body, breadcrumbs = [], structuredData = null }) {
   const canonical = `https://gismap.online${path}`;
@@ -57,7 +118,7 @@ function examplePage(item) {
   const tutorialContent = tutorial ? `<h2>Follow the finished briefing</h2><p>This is the stable dataset behind GISMap’s Historical Quakes example briefing. The guided version loads its source-authored magnitude symbols, an M6.5+ map scope, editable event slides, and an observed-time cinematic clip. It then walks through the source, style, filter, slides, playback, and sharing controls.</p><p><a class="button" href="${tutorial}">Start the step-by-step briefing tutorial</a></p>` : "";
   const body = `<main><section class="hero"><div class="wrap"><div class="eyebrow">${esc(item.category)} · ${esc(typeLabel(item.serviceType))}</div><h1>${esc(item.title)}</h1><p class="lede">${esc(item.description)}</p><div class="actions">${tutorial ? `<a class="button" href="${tutorial}">Start briefing tutorial</a>` : ""}<a class="button${tutorial ? " button--secondary" : ""}" href="${appLink(item)}">Open this dataset in GISMap</a><a class="button button--secondary" href="/examples/">All examples</a></div></div></section><section><div class="wrap prose">${tutorialContent}<h2>What this dataset contains</h2><p>${esc(item.description)} ${esc(item.whyUseful)}</p><div class="facts"><div class="fact"><strong>Publisher</strong>${esc(item.sourceOrganization)}</div><div class="fact"><strong>Service type</strong>${esc(typeLabel(item.serviceType))}</div><div class="fact"><strong>Category</strong>${esc(item.category)}</div></div><h2>Open the source directly</h2><p>The button above creates a shareable GISMap URL using the catalog slug. You can also inspect or reuse the publisher endpoint:</p><pre class="endpoint"><code>${esc(item.url)}</code></pre><h2>For AI agents and scripts</h2><p>Open the endpoint without the catalog with a <code>?layer=</code> link, or describe the whole map as one <a href="/schemas/map-v1.schema.json">map-v1</a> JSON object (see <a href="/guides/ai-agents/">Making maps with an AI agent</a>):</p><pre class="endpoint"><code>${esc(layerLink(item))}</code></pre><pre><code class="language-json">${esc(JSON.stringify({ version: 1, layers: [{ url: item.url, title: item.title }] }, null, 2))}</code></pre><h2>Attribution and terms</h2><p>${esc(item.licenseOrTerms)}</p><p><a href="${esc(item.sourcePage)}">View the publisher’s source page and metadata</a>.</p><div class="callout"><strong>Availability note.</strong> Public services can change without notice. Confirm currency, coverage, accuracy, and usage terms with the publisher before operational use.</div></div></section></main>`;
   const structuredData = { "@type": "Dataset", name: item.title, description: item.description, url: `https://gismap.online/examples/${item.slug}/`, distribution: { "@type": "DataDownload", contentUrl: item.url, encodingFormat: typeLabel(item.serviceType) }, creator: { "@type": "Organization", name: item.sourceOrganization }, keywords: item.tags.join(", ") };
-  return shell({ title: item.title, description: `${item.description} Open this ${typeLabel(item.serviceType)} dataset directly in GISMap Online.`, path: `/examples/${item.slug}/`, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: item.title, path: `/examples/${item.slug}/` }], body, structuredData });
+  return shell({ title: item.title, description: serviceDescription(item), path: `/examples/${item.slug}/`, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: item.title, path: `/examples/${item.slug}/` }], body, structuredData });
 }
 
 const aiExampleCard = (example) => `<article class="card"><div class="eyebrow">${esc(example.kind)}</div><h3>${esc(example.title)}</h3><p>${esc(example.description)}</p><div class="card__links"><a href="${aiExamplePath(example)}">See how it was made</a></div></article>`;
@@ -75,7 +136,7 @@ function fireExamplePage() {
   const body = `<main><section class="hero"><div class="wrap"><div class="eyebrow">AI agent · map refinement</div><h1>California historical fires: two views from one map</h1><p class="lede">Preserve a 2000–2010 filter while producing separate year and acreage styles.</p></div></section><section><div class="wrap prose"><h2>Prompt</h2><blockquote>Make one map colored by fire year and another map showing fire acreage with graduated colors. Keep the 2000–2010 filter and give me two links.</blockquote><h2>Prepared artifacts</h2><p>These links have passed static and round-trip checks; their rendering and browser reopening have not been independently verified for this example.</p><ul><li><a href="${esc(FIRE_START_LINK)}">Starting filtered map</a> · <a href="${path}base.json">base JSON</a></li><li><a href="${esc(year)}">Fires by year</a> · <a href="${path}year.json">year JSON</a></li><li><a href="${esc(acres)}">Fires by acreage</a> · <a href="${path}acreage.json">acreage JSON</a></li></ul><p>Copyable URLs:</p><pre><code>${esc(year)}
 
 ${esc(acres)}</code></pre><h2>How to refine</h2><p>Inspect the source metadata and filter first. Start with a map-v1 specification or reconstruct a simple parameter URL; clone it, replace only the renderer, validate each clone and generate independent links. In an authorized browser use mapSpec.fromCurrent() to capture current context. The <a href="/guides/ai-agents/">agent guide</a> contains the executable recipe.</p><h2>Check before sharing</h2><p>The live public service returned 3,112 records for the filter when checked on 2026-10-20; its data can change. Category rendering depends on the data actually sampled; confirm all 11 years and legend entries in the running map. Acreage uses five quantile classes computed from available data, not fixed breakpoints. Layer opacity affects fills and outlines; the portable category renderer has no independent outline setting. No numeric year slider is specified in map-v1. Test loading, styles, legend and reopening before calling either map verified.</p><p><a href="${esc(FIRE_BASE.layers[0].url)}?f=pjson">Publisher layer metadata</a> · <a href="https://www.fire.ca.gov/what-we-do/fire-resource-assessment-program/fire-perimeters">CAL FIRE data limitations</a></p></div></section></main>`;
-  return shell({ title: "Refine California fire maps by year and acreage", description: "Derive two styled fire maps from the same filtered layer.", path, body, breadcrumbs: [{name:"Examples",path:"/examples/"},{name:"AI examples",path:"/examples/ai/"}] });
+  return shell({ title: "Refine California fire maps by year and acreage", description: "Derive two styled California fire maps from one filtered layer: a map by year and a map by acreage, each shared as a single link.", path, body, breadcrumbs: [{name:"Examples",path:"/examples/"},{name:"AI examples",path:"/examples/ai/"}] });
 }
 
 function promptExamplePage(example) {
@@ -103,7 +164,7 @@ function aiExamplePage(example, link) {
 <h2>Data</h2><ul>${example.sources.map((source) => `<li><a href="${esc(source.url)}">${esc(source.label)}</a></li>`).join("")}</ul>
 <div class="callout"><strong>Make your own.</strong> The <a href="/guides/ai-agents/">guide for AI agents</a> and <a href="/llms.txt">llms.txt</a> explain the link formats, the map and briefing schemas, and the in-page API, for chatbots and agents alike.</div></div></section></main>`;
   const structuredData = { "@type": "TechArticle", headline: example.title, description: example.description, url: `https://gismap.online${path}`, about: example.sources.map((source) => ({ "@type": "Dataset", name: source.label, url: source.url })) };
-  return shell({ title: example.title, description: example.description, path, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: "AI examples", path: "/examples/ai/" }, { name: example.short, path }], body, structuredData });
+  return shell({ title: example.seoTitle || example.title, description: example.seoDescription || example.description, path, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: "AI examples", path: "/examples/ai/" }, { name: example.short, path }], body, structuredData });
 }
 
 const workflowExampleCard = (example) => `<article class="card"><div class="eyebrow">${esc(example.kind)}</div><h3>${esc(example.title)}</h3><p>${esc(example.description)}</p><div class="card__links"><a href="${workflowExamplePath(example)}">See how it was made</a></div></article>`;
@@ -129,7 +190,7 @@ ${example.agent ? `<h2>${esc(example.agent.heading)}</h2><p>${esc(example.agent.
 <h2>Check before you share</h2><ul>${example.caveats.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>
 <h2>Data</h2><ul>${example.sources.map((source) => `<li><a href="${esc(source.url)}">${esc(source.label)}</a></li>`).join("")}</ul></div></section></main>`;
   const structuredData = { "@type": "TechArticle", headline: example.title, description: example.description, url: `https://gismap.online${path}` };
-  return shell({ title: example.title, description: example.description, path, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: example.short, path }], body, structuredData });
+  return shell({ title: example.title, description: example.seoDescription || example.description, path, breadcrumbs: [{ name: "Examples", path: "/examples/" }, { name: example.short, path }], body, structuredData });
 }
 
 export const GUIDES = [
@@ -232,7 +293,7 @@ function agentRecipePage(recipe) {
   const examples = recipe.examples.map((item) => `<article class="card"><div class="eyebrow">Example · ${esc(item.status)}${item.checkedOn ? ` · checked ${esc(item.checkedOn)}` : ""}</div><h3>${esc(item.title)}</h3><p><strong>Prompt:</strong> “${esc(item.prompt)}”</p><p><strong>Data:</strong> ${item.dataset.map((source) => `<a href="${esc(source.url)}">${esc(source.label)}</a>`).join(", ")}</p>${item.url ? `<p><a class="button" href="${esc(item.url)}">Open the result</a>${item.page ? ` <a class="button button--secondary" href="${esc(item.page)}">Worked example</a>` : ""}</p>` : item.page ? `<p><a href="${esc(item.page)}">Reference</a></p>` : ""}${item.spec ? `<details><summary>map-v1 JSON</summary><pre><code class="language-json">${esc(JSON.stringify(item.spec, null, 2))}</code></pre></details>` : ""}<p><strong>What was checked:</strong></p>${list(item.checks)}</article>`).join("");
   const body = `<main><section class="hero"><div class="wrap"><div class="eyebrow">Agent recipe · ${esc(STATUS_NOTE[recipe.status])} · tested on ${esc(recipe.lastTestedVersion)}</div><h1>${esc(recipe.title)}</h1><h2>${esc(recipe.question)}</h2><p class="lede">${esc(recipe.answer)}</p><div class="actions"><a class="button" href="/api/agent-recipes/${esc(recipe.id)}.json">Machine-readable recipe</a><a class="button button--secondary" href="/agent-recipes/">All recipes</a></div></div></section><section><div class="wrap prose"><h2>Ask for it like this</h2>${list(recipe.triggers.map((text) => `“${text}”`))}<h2>Inputs</h2><p>Accepts: ${esc(recipe.inputTypes.join(", "))}. Engines: ${esc(recipe.engines.join(", "))}.</p><ul>${inputs(recipe.inputs.required)}</ul>${recipe.inputs.optional.length ? `<p>Optional:</p><ul>${inputs(recipe.inputs.optional)}</ul>` : ""}<h2>Steps</h2><p>Discover → inspect → plan → validate → execute → verify → share. Each step names where it runs; none is a hosted REST endpoint.</p><ol>${steps}</ol><h2>Result</h2><p>${esc(recipe.artifact.structure)}${recipe.artifact.schema ? ` Schema: <a href="${esc(recipe.artifact.schema)}">${esc(recipe.artifact.schema.replace("https://gismap.online", ""))}</a>.` : ""}</p><ul>${outputs}</ul><h2>Verify before reporting success</h2>${list(recipe.verification)}<p>Report <code>prepared</code>, <code>validated</code>, <code>loaded</code>, <code>rendered</code> and <code>verified</code> separately, and <code>partial</code> or <code>failed</code> when they apply. A generated link alone is only prepared.</p><h2>Limitations</h2>${list(recipe.limitations)}<h2>If something goes wrong</h2>${list(recipe.recovery)}</div></section><section><div class="wrap"><h2>Examples</h2><div class="grid">${examples}</div></div></section></main>`;
   const structuredData = { "@type": "HowTo", name: recipe.title, description: recipe.answer, step: recipe.steps.map((step, index) => ({ "@type": "HowToStep", position: index + 1, name: step.stage, text: step.action })) };
-  return shell({ title: recipe.title, description: `${recipe.question} ${recipe.answer}`.slice(0, 300), path: agentRecipePath(recipe), breadcrumbs: [{ name: "Agent recipes", path: "/agent-recipes/" }, { name: recipe.title, path: agentRecipePath(recipe) }], body, structuredData });
+  return shell({ title: RECIPE_META[recipe.id].title || recipe.title, description: RECIPE_META[recipe.id].description, path: agentRecipePath(recipe), breadcrumbs: [{ name: "Agent recipes", path: "/agent-recipes/" }, { name: recipe.title, path: agentRecipePath(recipe) }], body, structuredData });
 }
 
 function agentRecipesIndex(recipes) {
@@ -287,7 +348,9 @@ export async function buildSiteOutputs({ readText: readRepositoryText }) {
   };
   for (const [path, contents] of Object.entries(await buildAgentOutputs({ readText, examples }))) outputs.set(path, contents);
   const discoverPaths = ["/discover/", "/discover/examples/", "/discover/engines/", "/discover/learn/", "/discover/ai/", "/discover/data/", "/discover/demos/", "/discover/embed/", "/discover/about/", "/discover/get-involved/"];
-  const urls = ["/", ...discoverPaths, "/examples/", "/examples/data-connections/local-postgis/", "/guides/", ...PROMPT_EXAMPLES.map(promptExamplePath), ...POPULAR_SERVICES.filter((item) => item.featured).map((item) => `/examples/${item.slug}/`), ...GUIDES.map(guidePath), "/examples/ai/", ...AI_EXAMPLES.map(aiExamplePath), "/examples/ai/california-fire-refinement/", ...WORKFLOW_EXAMPLES.map(workflowExamplePath), "/agent-recipes/", ...recipes.map(agentRecipePath), "/skills/", "/api/explorer/", "/llms.txt", "/llms-full.txt", "/api/catalog.json"];
-  outputs.set("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((path) => `  <url><loc>https://gismap.online${path}</loc>${path === "/examples/data-connections/local-postgis/" ? "<lastmod>2026-10-18</lastmod>" : ""}</url>`).join("\n")}\n</urlset>\n`);
+  const urls = ["/", ...discoverPaths, "/examples/", "/examples/data-connections/local-postgis/", "/guides/", ...PROMPT_EXAMPLES.map(promptExamplePath), ...POPULAR_SERVICES.filter((item) => item.featured).map((item) => `/examples/${item.slug}/`), ...GUIDES.map(guidePath), "/examples/ai/", ...AI_EXAMPLES.map(aiExamplePath), "/examples/ai/california-fire-refinement/", ...WORKFLOW_EXAMPLES.map(workflowExamplePath), "/agent-recipes/", ...recipes.map(agentRecipePath), "/skills/", "/api/explorer/", "/field/", "/llms.txt", "/llms-full.txt", "/api/catalog.json"];
+  const dates = await sitemapDates(urls, outputs, readText);
+  outputs.set("scripts/sitemap-lastmod.json", `${JSON.stringify(dates, null, 2)}\n`);
+  outputs.set("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((path) => `  <url><loc>https://gismap.online${path}</loc><lastmod>${dates[path].lastmod}</lastmod></url>`).join("\n")}\n</urlset>\n`);
   return outputs;
 }

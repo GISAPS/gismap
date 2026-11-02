@@ -29,7 +29,7 @@ test("generated pages have unique technical SEO metadata and valid schema", asyn
     const description = html.match(/<meta name="description" content="([^"]+)">/)?.[1];
     const canonical = html.match(/<link rel="canonical" href="([^"]+)">/)?.[1];
     assert.ok(title && title.length <= 65, `${page} needs a concise title`);
-    assert.ok(description && description.length >= 70 && description.length <= 180, `${page} needs a useful description`);
+    assert.ok(description && description.length >= 70 && description.length <= 160, `${page} needs a useful description`);
     assert.ok(canonical?.startsWith("https://gismap.online/"), `${page} needs a canonical URL`);
     assert.ok(!titles.has(title), `duplicate title: ${title}`);
     assert.ok(!canonicals.has(canonical), `duplicate canonical: ${canonical}`);

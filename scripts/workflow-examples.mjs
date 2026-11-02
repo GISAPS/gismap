@@ -66,6 +66,7 @@ const link = \`https://gismap.online/?tourOnly=1#tour=\${base64url(JSON.stringif
   },
   {
     slug: "opening-day-wayfinding",
+    seoDescription: "A field task link for an opening-day wayfinding check: staff walk the route, tick off steps and places, and send a report back by link.",
     section: "field-tasks",
     kind: "Field task",
     title: "A field task and its report, sent as two links",
