@@ -254,6 +254,23 @@ test("saved charts stay inside standard panels and retain the active skin", () =
   assert.doesNotMatch(html, /dashboard-settings-open/);
 });
 
+test("a chart added to the ordinary workspace leaves the sidebar panels as they were", () => {
+  const runtime = fs.readFileSync(new URL("../js/application-runtime.js", import.meta.url), "utf8");
+  assert.match(runtime, /if \(!this\.currentConfig && id !== "application\.preset\.apply"\) \{\s*current\.layout\.sidebar = "workspace";\s*current\.panels = current\.panels\.filter\(\(panel\) => !STATIC_PANELS\[panel\.type\]\);/);
+  assert.match(runtime, /config\.layout\?\.sidebar !== "workspace"/);
+});
+
+test("hovering a chart mark lights up its group and a click frames it", () => {
+  const runtime = fs.readFileSync(new URL("../js/application-runtime.js", import.meta.url), "utf8");
+  const maplibre = fs.readFileSync(new URL("../js/engines/maplibre/maplibre-engine.js", import.meta.url), "utf8");
+  const arcgis = fs.readFileSync(new URL("../js/engines/arcgis/arcgis-engine.js", import.meta.url), "utf8");
+  assert.match(runtime, /chartInstance\.on\("mouseover", \(event\) => lightUp\(displayRows\[event\.dataIndex\]\)\)/);
+  assert.match(runtime, /chartInstance\.on\("globalout", restoreHighlight\)/);
+  assert.match(runtime, /this\.mapController\.goToFeatures\(located/);
+  assert.match(maplibre, /this\.highlight\.feature = parts\.map/);
+  assert.match(arcgis, /const target = groupIds\.length \? groupIds/);
+});
+
 test("right-side chart panels use the expandable Workspace utility pane", () => {
   const runtime = fs.readFileSync(new URL("../js/application-runtime.js", import.meta.url), "utf8");
   const layout = fs.readFileSync(new URL("../js/layout-manager.js", import.meta.url), "utf8");

@@ -163,7 +163,7 @@ export class MapChartOverlayController {
     const token = ++this.token;
     const charts = (this.projectManager?.current?.charts || []).filter((chart) => chart?.presentation?.targets?.includes("map") || chart?.presentation?.target === "map");
     if (!charts.length) { this.items = []; this.render(); return; }
-    const { queryChart } = await import("./charting-tools.js");
+    const { queryChart } = await import("./charting-tools.js?v=0.68.0-charts1");
     const next = [];
     for (const chart of charts) {
       const layer = this.mapController?.getLayer?.(chart.source?.layerId || chart.data?.layerId);

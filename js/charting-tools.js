@@ -513,7 +513,7 @@ export function chartOption(result, { palette = THEME_PALETTE, rows = displayCha
   const fill = (color, horizontal) => futuristic
     ? { color: { type: "linear", x: 0, y: horizontal ? 0 : 1, x2: horizontal ? 1 : 0, y2: 0, colorStops: [{ offset: 0, color: chartColorAlpha(color, .15) }, { offset: 1, color }] }, shadowBlur: 14, shadowColor: chartColorAlpha(color, .55), borderRadius: horizontal ? [0, 2, 2, 0] : [2, 2, 0, 0] }
     : { color, borderRadius: horizontal ? [0, 3, 3, 0] : [3, 3, 0, 0] };
-  const emphasis = { focus: "self", itemStyle: { shadowBlur: futuristic ? 24 : 6, shadowColor: futuristic ? "rgba(34,211,238,.8)" : "rgba(0,0,0,.25)" } };
+  const emphasis = { itemStyle: { shadowBlur: futuristic ? 24 : 6, shadowColor: futuristic ? "rgba(34,211,238,.8)" : "rgba(0,0,0,.25)" } };
   if (["scatter", "bubble"].includes(chart.type)) return { ...common, grid: { left: 12, right: 18, top: 28, bottom: 12, containLabel: true }, xAxis: { ...valueAxis, name: chart.dimension?.field || "X", nameTextStyle: axisLabel }, yAxis: { ...valueAxis, name: chart.measure.field || "Y", nameTextStyle: axisLabel }, series: [{ type: "scatter", symbolSize: chart.type === "bubble" ? (value) => Math.max(7, Math.min(42, Math.sqrt(Math.abs(Number(value[2]) || 0)) * 2.5 || 10)) : 9, itemStyle: { color: marks[0], opacity: .82, ...(futuristic ? { shadowBlur: 10, shadowColor: chartColorAlpha(marks[0], .7) } : {}) }, emphasis, data: rows.map((row) => chart.type === "bubble" ? [row.x, row.y, row.size] : [row.x, row.y]) }] };
   if (chart.type === "donut") {
     const total = rows.reduce((sum, row) => sum + rowScalar(row), 0);

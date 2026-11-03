@@ -1,13 +1,13 @@
 import { releaseLayerAnalysis } from "./analysis-dataset.js?v=0.54.0-analysis1";
 import { ApplicationState } from "./application-state.js?v=0.18.2";
 import { PanelRegistry, ToolRegistry } from "./application-registry.js?v=0.27.1";
-import { LayoutManager } from "./layout-manager.js?v=0.18.2";
-import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.18.2";
+import { LayoutManager } from "./layout-manager.js?v=0.68.0-charts1";
+import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.68.0-charts1";
 import { DuckDBBrowserClient } from "./duckdb-client.js?v=0.54.0-analysis1";
 import { normalizeDataCatalog, planNaturalLanguageQuery, validateReadOnlySQL } from "./data-catalog.js?v=0.18.2";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { applyInterfaceSkin } from "./skin-catalog.js?v=0.57.0-skins2";
-import { CHART_DEFAULT_TOP, chartCategories, chartColors, chartFilterForRow, chartOption, chartSummary, createChartSpec, displayChartRows, loadECharts, queryChart, renderChartFallback, resolveChartTheme } from "./charting-tools.js";
+import { CHART_DEFAULT_TOP, chartCategories, chartColors, chartFilterForRow, chartOption, chartSummary, createChartSpec, displayChartRows, loadECharts, queryChart, renderChartFallback, resolveChartTheme } from "./charting-tools.js?v=0.68.0-charts1";
 
 const STATIC_PANELS = {
   places: "places-panel",
@@ -109,7 +109,9 @@ export class ApplicationRuntime {
       return;
     }
     const config = this.layout.current;
-    const visibleTypes = config ? new Set(config.panels
+    // Without an application, or when it leaves the sidebar to the workspace,
+    // the sidebar panels keep whatever the workspace shows.
+    const visibleTypes = config && config.layout?.sidebar !== "workspace" ? new Set(config.panels
       .filter((panel) => config.mode !== "present" || panel.audienceVisible)
       .map((panel) => panel.type)) : new Set(Object.keys(STATIC_PANELS));
     for (const [type, elementId] of Object.entries(STATIC_PANELS)) {
@@ -214,6 +216,13 @@ export class ApplicationRuntime {
       validate: (input) => input && typeof input === "object" ? true : "A configuration object is required.",
       execute: (input) => {
         const current = this.snapshot();
+        // Adding a chart (or any panel) to the ordinary workspace adds just that
+        // panel: the default preset's Places, Bookmarks, Draw… are not pulled
+        // out of the sidebar and opened.
+        if (!this.currentConfig && id !== "application.preset.apply") {
+          current.layout.sidebar = "workspace";
+          current.panels = current.panels.filter((panel) => !STATIC_PANELS[panel.type]);
+        }
         return this.apply(transform(current, input));
       },
     });
@@ -366,11 +375,28 @@ export class ApplicationRuntime {
     let resizeObserver = null;
     let request = 0;
     const root = this.document.documentElement;
+    // The clicked group stays lit on the map; hovering another mark lights it
+    // up until the pointer leaves the chart.
+    let pinned = null;
+    const lightUp = (row) => {
+      const records = row && result ? result.selection(row) : [];
+      if (!records.length) return;
+      void this.mapController.highlightFeature({ kind: "feature", layerUid: result.layer.uid, layerTitle: result.layer.title, attributes: records[0].attributes || {}, geometry: records[0].geometry || null, features: records.slice(0, 2000).map((record) => ({ attributes: record.attributes || {}, geometry: record.geometry || null })) }, { pulse: false });
+    };
+    const restoreHighlight = () => {
+      const row = pinned && displayRows.find((item) => item.label === pinned);
+      if (row) lightUp(row);
+      else this.mapController.clearFeatureHighlight?.();
+    };
     const selectRow = (row) => {
       const records = result?.selection(row) || [];
       const ids = records.map((record) => record.attributes?.[result.layer.objectIdField]).filter((value) => value != null);
       context.dispatch("selection:set", { layerId: result.layer.uid, objectIds: ids, features: records.slice(0, 100).map((record) => ({ attributes: record.attributes || {}, geometry: record.geometry || null, layerTitle: result.layer.title })) }, { undoable: false });
-      if (records[0]) void this.mapController.highlightFeature({ kind: "feature", layerUid: result.layer.uid, layerTitle: result.layer.title, attributes: records[0].attributes || {}, geometry: records[0].geometry || null }, { pulse: false });
+      pinned = row.label;
+      lightUp(row);
+      // Frame the group so a click on a bar takes the map to that area.
+      const located = records.filter((record) => record.geometry);
+      if (located.length) void this.mapController.goToFeatures(located.slice(0, 2000), { animate: true }).catch(() => {});
       const note = host.querySelector("[data-dashboard-chart-selection]");
       if (note) note.textContent = `${records.length.toLocaleString()} matching feature${records.length === 1 ? "" : "s"} selected on the map.`;
     };
@@ -438,6 +464,11 @@ export class ApplicationRuntime {
         const activate = () => filterRow(displayRows[Number(mark.dataset.chartRow)]);
         mark.addEventListener("click", activate);
         mark.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+        const hover = () => lightUp(displayRows[Number(mark.dataset.chartRow)]);
+        mark.addEventListener("mouseenter", hover);
+        mark.addEventListener("focus", hover);
+        mark.addEventListener("mouseleave", restoreHighlight);
+        mark.addEventListener("blur", restoreHighlight);
       });
       try {
         const echarts = await loadECharts();
@@ -449,6 +480,9 @@ export class ApplicationRuntime {
         chartInstance = echarts.init(canvas, null, { renderer: "canvas" });
         chartInstance.setOption(chartOption(chartResult, { rows: displayRows, colors: colored.colors, theme, tokens: interfaceTokens, palette: palette.length ? palette : undefined }));
         chartInstance.on("click", (event) => { const row = displayRows[event.dataIndex]; if (row) filterRow(row); });
+        chartInstance.on("mouseover", (event) => lightUp(displayRows[event.dataIndex]));
+        chartInstance.on("mouseout", restoreHighlight);
+        chartInstance.on("globalout", restoreHighlight);
       } catch { /* Keep the accessible fallback chart. */ }
     };
     const query = async () => {
@@ -466,7 +500,8 @@ export class ApplicationRuntime {
           ? `Map filter active: ${activeFilter.expression.label}.`
           : "Click a chart mark to filter the map to that group.";
         host.innerHTML = `<div class="composable-chart chart-dashboard"><header class="chart-dashboard__head"><span class="eyebrow">${escapeHtml(result.layer.title || "Layer")} · linked</span>${toolbar()}</header><div data-chart-stats></div><div class="chart-dashboard__plot" data-chart-plot></div><footer class="chart-dashboard__notes"><p class="form-note">${escapeHtml(warning)} · <span data-dashboard-chart-filter>${escapeHtml(filterHint)}</span></p><p class="form-note" data-chart-colors></p><p data-dashboard-chart-selection class="form-note"></p>${activeFilter ? '<button type="button" class="chart-dashboard__clear" data-dashboard-chart-clear>Show all map data</button>' : ""}</footer></div>`;
-        host.querySelector("[data-dashboard-chart-clear]")?.addEventListener("click", () => context.dispatch("filters:clear", { id: filterId }));
+        if (!activeFilter) pinned = null;
+        host.querySelector("[data-dashboard-chart-clear]")?.addEventListener("click", () => { pinned = null; this.mapController.clearFeatureHighlight?.(); context.dispatch("filters:clear", { id: filterId }); });
         host.querySelector("[data-chart-top]")?.addEventListener("change", (event) => restyle({ topN: Number(event.target.value) }));
         host.querySelector("[data-chart-other]")?.addEventListener("change", (event) => restyle({ other: event.target.value }));
         host.querySelectorAll("[data-chart-category]").forEach((box) => box.addEventListener("change", () => {

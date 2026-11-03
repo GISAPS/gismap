@@ -837,7 +837,9 @@ export class ArcGISEngine {
       const objectId = objectIdField
         ? (result.attributes?.[objectIdField] ?? graphic?.attributes?.[objectIdField])
         : null;
-      const target = objectId != null ? objectId : graphic;
+      // A chart group highlights every one of its features.
+      const groupIds = objectIdField && Array.isArray(result.features) ? result.features.map((feature) => feature?.attributes?.[objectIdField]).filter((id) => id != null) : [];
+      const target = groupIds.length ? groupIds : objectId != null ? objectId : graphic;
       if (!target) return false;
 
       const applyHighlight = () => {

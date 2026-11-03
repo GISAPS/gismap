@@ -4,7 +4,7 @@ import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js
 import { NoteRelationshipsRegistry, normalizeNoteRelationships } from "./note-relationships.js?v=0.2.0";
 import { previewMapNoteTasks, prepareMapNoteTasks } from "./map-note-task-planner.js?v=0.1.0";
 import { MapNotesRegistry, normalizeNotes } from "./map-notes.js?v=0.3.0";
-import { applicationToLegacyPresentation, normalizeApplicationConfig } from "./application-config.js?v=0.18.2";
+import { applicationToLegacyPresentation, normalizeApplicationConfig } from "./application-config.js?v=0.68.0-charts1";
 import { normalizeDataCatalog } from "./data-catalog.js?v=0.18.2";
 import { normalizeSkin, normalizeSkinColors } from "./skin-catalog.js?v=0.57.0-skins2";
 import { normalizeMapColors } from "./basemap-themes.js?v=0.53.0-mapcolors1";
@@ -13,7 +13,7 @@ import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-play
 import { importCinematicSpec } from "./cinematic/state.js?v=0.2.8";
 import { normalizeCinematicClips } from "./cinematic/clip-model.js?v=0.3.9";
 import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
-import { normalizeCharts } from "./charting-tools.js";
+import { normalizeCharts } from "./charting-tools.js?v=0.68.0-charts1";
 import { stripProjectCredentials } from "./project-privacy.js?v=0.62.7-save-all";
 
 const STORAGE_KEY = "gismap-online:projects:v1";
