@@ -72,7 +72,7 @@ test("a 401 refreshes once, and a failed refresh signs out quietly", async () =>
   const seen = [];
   other.subscribe((snap) => seen.push(snap.signedIn));
   await other.signIn({ email: "a", password: "b" });
-  await assert.rejects(other.client.get("/auth/me"), (error) => error instanceof SiError && error.status === 401);
+  await assert.rejects(other.client.get("/auth/me"), (error) => error.name === "SiError" && error.status === 401);
   assert.equal(other.snapshot().signedIn, false);
   assert.deepEqual(other.snapshot().flags, NO_FLAGS);
   assert.deepEqual(seen, [true, false]);
