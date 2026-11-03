@@ -152,7 +152,7 @@ export function openMapNotesPanel(ui, { point = null, editId = null, locationSou
         const button = event.currentTarget; button.disabled = true;
         const progress = ui.dialog.querySelector('[data-report-progress]');
         try {
-          const { createMapNotesReport } = await import('./map-notes-report.js?v=0.1.0');
+          const { createMapNotesReport } = await import('./map-notes-report.js?v=0.69.1-pdflinks');
           const blob = await createMapNotesReport(APP_ROOT, field.session, registry.list(), { onProgress: (current, total) => { if (progress?.isConnected) progress.textContent = `Preparing observation ${current} of ${total}…`; } });
           const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'gismap-field-report.pdf'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 5000);
           if (progress?.isConnected) ui.dialog.close(); ui.toast('Field report created locally. Keep a JSON backup.');

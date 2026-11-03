@@ -38,7 +38,7 @@ import {
   SMART_IMAGE_VERSION,
   embedProjectInPng,
   readProjectFromPng,
-} from "./smart-image.js?v=0.54.0-print";
+} from "./smart-image.js?v=0.69.1-pdflinks";
 
 import { AUTHORING_TOOL_DEFINITIONS } from "./agent-authoring-tools.js?v=0.53.0";
 import { APP_VERSION } from "./version.js?v=0.54.0-print";
