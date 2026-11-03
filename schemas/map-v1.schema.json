@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gismap.online/schemas/map-v1.schema.json",
   "title": "GISMap Online map spec (map-v1)",
-  "description": "A whole map as one JSON object: layers with styles and filters, basemap, look and camera. Open it at https://gismap.online/#map=json:<URI-encoded JSON> (written by hand, up to 8 KB), as the compressed #map= form from mapSpec.createLink, or host the file and open https://gismap.online/?spec=<https URL>. Invalid parts are skipped and reported; the rest of the map still opens.",
+  "description": "A whole map as one JSON object: layers with styles and filters, linked chart panels, basemap, look and camera. Open it at https://gismap.online/#map=json:<URI-encoded JSON> (written by hand, up to 8 KB), as the compressed #map= form from mapSpec.createLink, or host the file and open https://gismap.online/?spec=<https URL>. Invalid parts are skipped and reported; the rest of the map still opens.",
   "type": "object",
   "required": ["layers"],
   "properties": {
@@ -59,6 +59,12 @@
         },
         "additionalProperties": false
       }
+    },
+    "charts": {
+      "type": "array",
+      "maxItems": 6,
+      "description": "Chart panels opened beside the map when the link opens, each linked to one of the layers: colours follow the layer's map style, hovering a mark highlights its features and clicking zooms to them. Only the definition travels (type, fields, layer, look, placement); the numbers are computed from the layer in the browser. The sidebar is left as it is. A chart that cannot be drawn (unknown type, missing field, its layer did not load) is left out and reported.",
+      "items": { "$ref": "#/$defs/chart" }
     },
     "legend": { "type": "boolean", "default": false, "description": "Open the legend." },
     "briefing": {
@@ -135,6 +141,44 @@
         "ignoreServiceScaleRange": { "type": "boolean", "default": false, "description": "Draw at every zoom level, even where the publisher hides the layer (its minScale/maxScale)." },
         "refreshInterval": { "type": "number", "minimum": 0, "maximum": 1440, "description": "Reload the layer every this many minutes (for live feeds)." },
         "popup": { "type": "object", "properties": { "fields": { "type": "array", "items": { "type": "string" }, "maxItems": 50, "description": "Fields to feature when a feature is inspected." } }, "additionalProperties": false, "description": "Fields of interest for inspecting features." }
+      },
+      "additionalProperties": false
+    },
+    "chart": {
+      "type": "object",
+      "required": ["type"],
+      "description": "One chart panel, at most 4,000 characters of JSON. Field names only: no records, values or credentials.",
+      "properties": {
+        "type": { "enum": ["arcgis-auto", "feature", "map-image", "imagery", "geojson", "geoparquet", "wms", "wfs", "kml", "pointcloud", "model", "vector-tiles"], "description": "bar, column and donut compare categories; line and area show a trend over a date field; histogram bins one numeric field; kpi is one headline value." },
+        "title": { "type": "string", "maxLength": 160, "description": "Shown on the panel. Default: the measure and dimension, such as \"Count by POOState\"." },
+        "layer": { "description": "The layer to chart: its position in layers (0 is the first, the default) or its url.", "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "string", "pattern": "^https://" }], "default": 0 },
+        "dimension": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]{0,159}$", "description": "The field to group by (categories, or dates for line and area). Required except for histogram and kpi." },
+        "measure": {
+          "description": "The field to aggregate, as a name or { field, aggregation }. Leave it out to count features.",
+          "oneOf": [
+            { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]{0,159}$" },
+            { "type": "object", "properties": { "field": { "type": ["string", "null"], "pattern": "^[A-Za-z_][A-Za-z0-9_.]{0,159}$" }, "aggregation": { "enum": ["count", "sum", "avg", "min", "max"] } }, "additionalProperties": false }
+          ]
+        },
+        "aggregation": { "enum": ["count", "sum", "avg", "min", "max"], "description": "Shorthand for measure.aggregation. Default: sum with a measure field, count without." },
+        "scope": { "enum": ["filtered", "all", "viewport"], "default": "filtered", "description": "filtered follows the layer's where and map filters; viewport follows the view." },
+        "placement": { "enum": ["right", "bottom"], "default": "right", "description": "Where the panel docks." },
+        "size": { "enum": ["compact", "regular", "expanded"], "default": "regular" },
+        "style": {
+          "type": "object",
+          "description": "How the chart looks; it never changes the numbers.",
+          "properties": {
+            "palette": { "enum": ["inherit", "theme", "neon"], "default": "inherit", "description": "inherit uses the layer's map colours; theme the interface skin; neon the futuristic palette." },
+            "theme": { "enum": ["auto", "standard", "futuristic"], "default": "auto", "description": "futuristic is the HUD look; auto uses it under the violet-circuit, velvet-orbit and wavelength skins." },
+            "topN": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "How many categories show; 0 shows all. Default: the chart type's own (16 for bar)." },
+            "other": { "enum": ["group", "hide"], "default": "group", "description": "The categories beyond topN: grouped as one Other mark, or left out." },
+            "sort": { "enum": ["auto", "value", "label"], "default": "auto" },
+            "hidden": { "type": "array", "maxItems": 200, "items": { "type": "string", "maxLength": 200 }, "description": "Category labels left out of the chart." },
+            "legend": { "type": "boolean", "default": true },
+            "stacked": { "type": "boolean", "default": false }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     }

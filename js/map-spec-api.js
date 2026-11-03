@@ -2,14 +2,15 @@
 // through the `layers` and `camera` APIs, and exports the current map as one.
 // Issues (from the schema, and from loading: a misspelled field, a service that
 // will not load) are collected so describe() and the issues panel can show them.
-import { MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.66.0-analysis1";
+import { MAP_SPEC_VERSION, chartSpecFromMapChart, createMapSpecLink, decodeMapSpec, encodeMapSpec, mapChartFromChartSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.69.0-linkcharts1";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { basemapEntry, basemapLabel, basemapOnEngine } from "./basemap-catalog.js?v=0.53.0-gallery1";
 
 const within = (promise, seconds) => Promise.race([promise, new Promise((resolve) => setTimeout(resolve, seconds * 1000))]);
 
 /**
- * host: { setBasemap(id), applySkin(id), setTitle(text), showLegend(), showIssues(issues), loadBriefing(doc) }
+ * host: { setBasemap(id), applySkin(id), setTitle(text), showLegend(), showIssues(issues), loadBriefing(doc),
+ *         addChart(chartSpec), clearCharts(), getCharts() }
  * issues: the shared list describe() reports (replaced on each load).
  */
 export function createMapSpecApi({ layers, camera, mapController, analysis = null, host = {}, issues = [], allowHttp = false }) {
@@ -26,7 +27,11 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
     issues.splice(0, issues.length, ...found);
     const ready = (async () => {
       if (!spec) throw new GisMapError("INVALID_SPEC", found[0]?.message || "The map spec cannot be used.", { details: { issues: found } });
-      if (replace) layers.list().forEach((layer) => layers.remove(layer.id));
+      if (replace) {
+        layers.list().forEach((layer) => layers.remove(layer.id));
+        // Chart panels bound to the removed layers would have nothing left to chart.
+        await host.clearCharts?.();
+      }
       if (spec.basemap) {
         host.setBasemap?.(spec.basemap);
         // Vector stand-ins are close enough; imagery replaced by a street map is not.
@@ -39,6 +44,7 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
       if (spec.skin) host.applySkin?.(spec.skin);
       if (spec.title) host.setTitle?.(spec.title);
       const loaded = [];
+      const loadedAt = new Map(); // position in spec.layers → loaded layer
       for (const [index, entry] of spec.layers.entries()) {
         const path = `layers[${index}]`;
         let info;
@@ -84,6 +90,7 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
           }
         }
         if (entry.popup) popups.set(info.id, entry.popup);
+        loadedAt.set(index, info);
         loaded.push(info);
       }
       for (const [index, step] of (spec.analysis || []).entries()) {
@@ -92,6 +99,20 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
           await analysis?.run(step.operation, { ...step, input: source(step.input), overlay: source(step.overlay) });
         } catch (error) {
           issues.push({ level: "warning", code: "INVALID_SPEC", path: `analysis[${index}]`, message: `${step.operation}: ${error.message}` });
+        }
+      }
+      // Chart panels open beside the map (the sidebar is left as it is), each
+      // bound to its layer, before the camera fits the space that is left.
+      for (const [index, chart] of (spec.charts || []).entries()) {
+        const position = Number.isInteger(chart.layer) ? chart.layer : spec.layers.findIndex((entry) => entry.url === chart.layer);
+        const info = loadedAt.get(position);
+        if (!info) {
+          issues.push({ level: "warning", code: "LAYER_LOAD_FAILED", path: `charts[${index}]`, message: `${chart.title || chart.type}: its layer did not load, so the chart was not added.` });
+          continue;
+        }
+        try { await host.addChart?.(chartSpecFromMapChart(chart, info.id)); } catch (error) {
+          const problem = toGisMapError(error, "INVALID_SPEC");
+          issues.push({ level: "warning", code: problem.code, path: `charts[${index}]`, message: `${chart.title || chart.type}: ${problem.message} The chart was not added.`, hint: problem.hint });
         }
       }
       if (spec.camera?.center) {
@@ -141,6 +162,11 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
       ...(layer.ignoreServiceScaleRange ? { ignoreServiceScaleRange: true } : {}),
       ...(popups.has(layer.id) ? { popup: popups.get(layer.id) } : {}),
     }));
+    const exported = layers.list().filter((layer) => layer.url && !/^blob:/.test(layer.url)).map((layer) => layer.id);
+    const charts = (host.getCharts?.() || [])
+      .filter((chart) => chart.presentation?.targets?.some((target) => target === "panel" || target === "dashboard") && exported.includes(chart.source?.layerId))
+      .map((chart) => mapChartFromChartSpec(chart, exported.indexOf(chart.source.layerId)));
+    if (charts.length) spec.charts = charts;
     const briefing = host.getBriefing?.();
     if (briefing?.slides?.length) spec.briefing = briefing;
     return spec;

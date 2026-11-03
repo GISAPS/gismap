@@ -25,7 +25,13 @@ Dashboard charts also show headline numbers (total, group count, leading group a
 2. With the default palette, compare mark colours with the map legend; they should match for the styled field. Check whether "Other" or hidden categories hide anything the reader needs.
 3. Hover a mark and confirm its features light up on the map. Click or keyboard-activate a bar, donut segment or other grouped mark, and confirm that the map zooms to the matching features and reports the linked selection/filter.
 4. Clear the chart filter and confirm that the layer returns to its prior visible data.
-5. Reopen the project/share URL and verify skin, basemap, chart panel and no-data behavior. A map share carries map configuration; test saved application/dashboard layout separately before claiming it is portable.
+5. Reopen the project/share URL and verify skin, basemap, chart panel and no-data behavior.
+
+### Charts in a map link
+
+A map-v1 link carries chart panels in its top-level `charts` list (see [map-spec.md](map-spec.md)): type, dimension, measure, the layer by position or URL, `style` (palette, theme, topN, other, hidden) and placement (`right` or `bottom`). Opening the link adds each chart beside the map, linked to its layer, without changing the sidebar. In a running page `gisMapOnline.mapSpec.fromCurrent()` writes open chart panels back into `charts`, and `mapSpec.createLink` turns them into a link. Example: https://gismap.online/examples/ai/wildfires-by-state-chart/.
+
+The link does not carry other application panels, floating positions or pixel sizes, or the skin an Instant Dashboard picked unless `skin` is set in the spec; the app's Share menu link carries no charts. Reopen the link and check every chart before calling a dashboard shared.
 
 ## Cinematic animation
 

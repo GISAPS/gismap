@@ -274,13 +274,14 @@ export function buildLlmsTxt({ capabilities, examples = null }) {
 
 ${noToolsPath()}
 
-The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. It can also carry "analysis" steps the browser runs after loading, such as [{"operation":"buffer","input":0,"options":{"distanceKm":5}}]; the operations are in /api/capabilities.json under map.analysisOperations. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
+The map in a link is one JSON object (map-v1): layers with filters and styles, basemap, camera. It can also carry "analysis" steps the browser runs after loading, such as [{"operation":"buffer","input":0,"options":{"distanceKm":5}}]; the operations are in /api/capabilities.json under map.analysisOperations. It can open linked chart panels beside the map with "charts", such as [{"type":"bar","layer":0,"dimension":"POOState","style":{"topN":10}}]: field names only, and the numbers are computed from the layer when the link opens. Write it after #map=json: in the URL. Invalid parts are skipped and reported; the rest of the map still opens.
 
 ## Links a chatbot can write (no code, no account)
 
 Every GISMap Online artifact can be written as one link: URI-encode the JSON (encodeURIComponent) after \`json:\`. Return the link to the user; it opens the finished result. To credit the agent that wrote it, start the link with \`?via=<agent>\`, as in \`${SITE}/?via=<agent>#map=json:…\` (lowercase letters, digits and hyphens; aggregate counts only, never personal data).
 
 - Map: \`https://gismap.online/#map=json:{"version":1,"layers":[{"url":"<layer URL>","where":"<filter>","renderer":{"type":"choropleth","field":"<FIELD>","ramp":"purples"}}],"basemap":"gray-vector"}\`
+- Map with a linked chart: add \`"charts":[{"type":"bar","title":"…","layer":0,"dimension":"<CATEGORY FIELD>","measure":{"field":"<NUMERIC FIELD>","aggregation":"sum"},"placement":"right","style":{"topN":10,"theme":"futuristic"}}]\` to the map JSON (leave \`measure\` out to count features). The chart's colours follow the layer's style; hovering a mark highlights its features and clicking zooms to them.
 - Briefing (slides): add \`"briefing":{"layerId":"<layer URL>","selection":{"useAll":true},"slides":[{"template":"title","title":"…"},{"template":"key-numbers","title":"At a glance","blocks":[{"type":"stat","stat":"count","label":"Features"}]},{"template":"feature","title":"…","featureId":"<OBJECTID>","fit":"feature","blocks":[{"type":"text","markdown":"…"}]}]}\` to the map JSON; the link opens presenting (schema: [briefing-v1](${SITE}/schemas/briefing-v1.schema.json)).
 - Guided tour: \`https://gismap.online/?tourOnly=1#tour=json:{"title":"…","autoplay":true,"stops":[{"name":"Coit Tower","caption":"…","lat":37.80238,"lon":-122.40583,"zoom":17,"tilt":55,"heading":200,"basemap":"usgs-imagery","seconds":6}]}\`
 - LiDAR or 3D model (MapLibre engine): a map layer with \`"type":"pointcloud"\` (LAS, LAZ, XYZ) or \`"type":"model"\` (glTF/GLB, OBJ, PLY) and \`"scene3d":{"crs":"EPSG:26910","classes":[3,4,5,14],"colorBy":"classification"}\` or, for models, \`"scene3d":{"anchor":[lon,lat,0],"heading":0,"scale":1}\`.
@@ -316,7 +317,9 @@ Combine recipes for one request: a 3D fire-history map with chronological strata
 
 Inspect the actual layer before choosing a chart. Use category or time values for grouping and a verified numeric measure for sum/mean/min/max; otherwise use count. Chart Builder supports bar, column, line, area, histogram, scatter, bubble, box, donut, metric, conventional 3D bar/scatter and map-chart presets. Its destinations are Chart panel, Instant Dashboard, On the map and Brief slide. A chart scope can be filtered, all, viewport or selected data; label a bounded browser query, sample or partial response honestly.
 
-For a fast, coherent dashboard in an active GISMap Online session, use \`create_instant_dashboard\` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: \`skin\` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states. Do not call a dashboard layout portable in a map-only share until it has been reopened and checked.
+For a fast, coherent dashboard in an active GISMap Online session, use \`create_instant_dashboard\` only after inspecting a loaded queryable layer. Choose a skin and basemap based on the subject and data density: \`skin\` basemap follows the selected skin on MapLibre, while the renderer must still keep meaningful data colours and readable contrast. The resulting chart marks must filter/select the matching map records; activate a bar, donut segment or grouped mark, then clear the map filter and verify both states.
+
+A map-v1 link carries chart panels in its \`charts\` list: type, dimension, measure, the layer (its position in \`layers\` or its URL), \`style\` (palette, theme, topN, other, hidden) and placement (right or bottom). Opening it adds each chart beside the map, linked to its layer, and leaves the sidebar as it is; \`mapSpec.fromCurrent()\` writes the open chart panels back into \`charts\`. Worked example: [wildfires by state](${SITE}/examples/ai/wildfires-by-state-chart/). The link does not carry the skin chosen by an Instant Dashboard unless \`skin\` is set, nor other application panels, floating positions or panel sizes in pixels; the app's Share menu link carries no charts. Reopen the link and check the chart before calling the dashboard shared.
 
 Chart colours follow the layer's map style by default (\`style.palette: "inherit"\`): a chart grouped by the styled category field takes the map's category colours, classed and ramped styles colour marks along the same ramp, and a single symbol (including a 3D extrusion) colours every mark. Keep that link when the colours carry meaning; \`theme\` (the interface skin) and \`neon\` are the alternatives. \`style.topN\` sets how many categories show (0 = all), \`style.other\` groups the rest as one clickable "Other" mark (\`group\`) or leaves them out (\`hide\`), and \`style.hidden\` lists categories left out by name; say so when categories are left out. \`create_instant_dashboard\` accepts \`chartTheme\`: \`futuristic\` draws a neon HUD for operations, tech or night-time subjects, and \`auto\` (default) uses it with the violet-circuit, velvet-orbit and wavelength skins. Hovering a chart mark highlights its features on the map and clicking one also zooms to them. Adding a chart to the ordinary workspace leaves the sidebar panels as they were.
 
@@ -344,7 +347,7 @@ When a user wants to publish a configured map on another site, use \`get_map_emb
 Follow-up refinement: [derive year and acreage maps from one filtered California fire map](${SITE}/examples/ai/california-fire-refinement/). Preserve the source, filter, basemap and camera; use map-v1 when a simple URL is insufficient. The linked example reports which checks remain unverified.
 
 ## Contracts
-- [Map spec schema](${SITE}/schemas/map-v1.schema.json): layers, renderers, filters, camera, basemap
+- [Map spec schema](${SITE}/schemas/map-v1.schema.json): layers, renderers, filters, linked charts, camera, basemap
 - [Renderer schema](${SITE}/schemas/renderer-v1.schema.json): choropleth, graduated symbols, categories, heat map, simple
 - [Briefing schema](${SITE}/schemas/briefing-v1.schema.json): slides that present a map
 - [Layer style schema](${SITE}/schemas/layer-style-v1.schema.json): a reusable 2D or 3D layer file from the Cartography Lab (colour, 3D height, filter, opacity); \`gisMapOnline.layerStyles\` saves, applies and turns it into a map link or briefing
@@ -422,6 +425,10 @@ ${schemaProperties(mapSchema)}
 Layer properties:
 
 ${schemaProperties(mapSchema.$defs.layer, "layers[].")}
+
+Chart properties:
+
+${schemaProperties(mapSchema.$defs.chart, "charts[].")}
 
 ## RendererSpec (styles)
 

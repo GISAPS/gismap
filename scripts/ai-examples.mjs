@@ -3,13 +3,29 @@
 // spec here was opened in GISMap Online and checked slide by slide; the
 // committed files beside each page (link.txt, map.json, briefing.json, qr.png)
 // are what the pages offer, and tests/ai-examples.test.mjs keeps them in step.
-import { CORN_LINK, CORN_SPEC, CORN_URL } from "./agent-docs.mjs";
+import { CORN_LINK, CORN_SPEC, CORN_URL, readableLink } from "./agent-docs.mjs";
 
 const SITE = "https://gismap.online";
 const PHILLY_DIVISIONS = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/1";
 const PHILLY_DISTRICTS = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Philadelphia_Crime_Map_WFL1/FeatureServer/2";
 const STATES = "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0";
 const BALLPARKS = "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0";
+const WILDFIRES = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/USA_Wildfires_v1/FeatureServer/0";
+
+// A map with two linked chart panels. The map colours the ten states with the
+// most incidents; the bar chart inherits those colours, so a state's bar and
+// its points match.
+export const WILDFIRE_CHART_SPEC = Object.freeze({
+  version: 1,
+  title: "U.S. wildfire incidents by state",
+  basemap: "dark-gray-vector",
+  skin: "dark-analytical",
+  layers: [{ url: WILDFIRES, title: "Current wildfire incidents", renderer: { type: "categories", field: "POOState", maxCategories: 10 } }],
+  charts: [
+    { type: "bar", title: "Incidents by state", layer: 0, dimension: "POOState", placement: "right", style: { topN: 10, theme: "futuristic" } },
+    { type: "column", title: "Acres burned today: wildfire or prescribed", layer: 0, dimension: "IncidentTypeCategory", measure: { field: "DailyAcres", aggregation: "sum" }, placement: "bottom", size: "compact", style: { theme: "futuristic" } },
+  ],
+});
 
 export const AI_EXAMPLES = Object.freeze([
   {
@@ -129,6 +145,59 @@ const { url, qr } = await mapSpec.createLink(spec); // compressed #map= link; qr
       { label: "USA States Generalized Boundaries", url: STATES },
       { label: "Major League Baseball Stadiums", url: BALLPARKS },
     ],
+  },
+  {
+    slug: "wildfires-by-state-chart",
+    openLabel: "Open the map and its charts",
+    title: "A map with linked charts, in one link",
+    seoTitle: "Wildfire map with linked charts in one link",
+    seoDescription: "A readable GISMap Online link that opens current U.S. wildfire incidents with two linked chart panels: incidents by state and acres burned by incident type.",
+    short: "U.S. wildfire incidents with linked charts",
+    kind: "Chatbot",
+    eyebrow: "Chatbot or agent · one layer · linked chart panels",
+    description: "Current U.S. wildfire incidents coloured by state, with a bar chart of incidents by state and a column chart of today's acres, wildfire against prescribed fire, both opened and linked to the map by one readable link.",
+    intro: "The map spec's charts list opens chart panels beside the map when the link opens. Each chart names its layer, its fields and its look; the numbers are counted from the live layer in the browser, so the link stays short and carries no data. The map colours the ten states with the most incidents and the bar chart takes the same colours; hovering a bar highlights that state's incidents and clicking it zooms to them.",
+    shows: [
+      "\"charts\": two chart panels, docked right and bottom, each linked to layers[0]",
+      "\"palette\" left at inherit: the bars take the map's category colours, so a state looks the same in both",
+      "\"topN\": 10 with the rest grouped as Other, matching the map's ten categories",
+      "\"theme\": \"futuristic\": the HUD chart look on a dark skin and basemap",
+      "A readable #map=json: link that a chat-only model can write by hand, with no record data in it",
+    ],
+    link: readableLink(WILDFIRE_CHART_SPEC),
+    files: [{ label: "Map spec with the charts (JSON)", file: "map.json" }],
+    qr: { file: "qr.png", caption: "Scan to open the map and its charts on a phone." },
+    chat: {
+      intro: "Any chatbot can write this one; it needs the layer's field names, which it can read with ?f=pjson or be given:",
+      prompt: `Make a GISMap Online (https://gismap.online) link of current U.S. wildfire incidents with a linked chart dashboard. Layer: ${WILDFIRES}. Colour the points by POOState (a "categories" renderer, maxCategories 10). Add two charts in the map spec's "charts" list: a bar chart "Incidents by state" grouped by POOState, counting features, top 10, docked right; and a compact column chart of DailyAcres summed by IncidentTypeCategory (WF is wildfire, RX prescribed fire), docked bottom. Use the futuristic chart theme, the dark-analytical skin and the dark-gray-vector basemap. Write it as one map-v1 spec (${SITE}/schemas/map-v1.schema.json), URI-encode it after ${SITE}/#map=json: and give me the link. Do not put any counts in the link; the app computes them.`,
+    },
+    agent: {
+      heading: "For a code-running agent",
+      intro: "An agent can check the fields, validate the charts with the map and make the link. A chart whose field or layer is wrong is left out with a warning, so read the issues before sharing.",
+      lang: "js",
+      code: `import { sources, mapSpec } from "https://gismap.online/js/gismap-core.js";
+
+const url = "${WILDFIRES}";
+const { fields } = await sources.inspect(url); // POOState, IncidentTypeCategory, DailyAcres…
+const spec = {
+  version: 1, basemap: "dark-gray-vector", skin: "dark-analytical",
+  layers: [{ url, renderer: { type: "categories", field: "POOState", maxCategories: 10 } }],
+  charts: [
+    { type: "bar", title: "Incidents by state", layer: 0, dimension: "POOState", style: { topN: 10, theme: "futuristic" } },
+    { type: "column", layer: 0, dimension: "IncidentTypeCategory", measure: { field: "DailyAcres", aggregation: "sum" }, placement: "bottom", size: "compact" },
+  ],
+};
+const { valid, issues } = mapSpec.validate(spec); // a chart with a bad field or layer is reported here
+const { url: link } = await mapSpec.createLink(spec, { compress: false }); // the readable #map=json: form`,
+      after: "In a running GISMap Online page, gisMapOnline.mapSpec.fromCurrent() writes the open chart panels back into charts, so a dashboard made in the app can be shared the same way.",
+    },
+    caveats: [
+      "The incidents are a live feed: counts and acres change through the day, and the chart shows what the layer holds when the link is opened.",
+      "Incidents include prescribed fires (IncidentTypeCategory RX) as well as wildfires (WF); filter with \"where\": \"IncidentTypeCategory = 'WF'\" for wildfires only.",
+      "DailyAcres is empty for many incidents, so the acres chart sums only the incidents that report it.",
+      "POOState is the state of the point of origin, written like US-CA.",
+    ],
+    sources: [{ label: "USA Current Wildfires (incidents), Esri Disaster Response Program", url: WILDFIRES }],
   },
   {
     slug: "corn-sales-one-link",

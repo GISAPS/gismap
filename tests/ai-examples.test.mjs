@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { AI_EXAMPLES, CORN_EXAMPLE_SPEC, aiExampleLinks } from "../scripts/ai-examples.mjs";
+import { AI_EXAMPLES, CORN_EXAMPLE_SPEC, WILDFIRE_CHART_SPEC, aiExampleLinks } from "../scripts/ai-examples.mjs";
 import { CORN_LINK } from "../scripts/agent-docs.mjs";
 import { mapSpec } from "../js/gismap-core.js";
 import { normalizeBriefing } from "../js/briefing-document.js";
@@ -80,4 +80,19 @@ test("the corn example is the documented readable link a chat-only model can wri
   assert.deepEqual(await json("examples/ai/corn-sales-one-link/map.json"), CORN_EXAMPLE_SPEC);
   assert.match(CORN_LINK, /#map=json:/);
   assert.equal(mapSpec.validate(CORN_EXAMPLE_SPEC).valid, true);
+});
+
+test("the wildfire example is a readable link whose charts follow the map's categories", async () => {
+  assert.deepEqual(await json("examples/ai/wildfires-by-state-chart/map.json"), WILDFIRE_CHART_SPEC);
+  const decoded = await mapSpec.decode(links["wildfires-by-state-chart"].split("#map=")[1]);
+  const { valid, issues, spec } = mapSpec.validate(decoded);
+  assert.equal(valid, true, JSON.stringify(issues));
+  assert.deepEqual(issues, []);
+  assert.equal(spec.charts.length, 2);
+  const [bar, column] = spec.charts;
+  assert.equal(bar.dimension, spec.layers[0].renderer.field, "the bar chart groups by the field the map colours by");
+  assert.equal(bar.style.topN, spec.layers[0].renderer.maxCategories);
+  assert.equal(bar.style.palette, undefined, "inherit (the default) takes the map's colours");
+  assert.deepEqual([bar.placement, column.placement], ["right", "bottom"]);
+  assert.deepEqual(column.measure, { field: "DailyAcres", aggregation: "sum" });
 });

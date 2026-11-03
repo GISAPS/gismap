@@ -17,7 +17,7 @@ import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } f
 import { createShareUrl } from "./share.js?v=0.54.0-unified4";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.54.0-print";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.0-linkcharts1";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -35,7 +35,7 @@ import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.54.0-uni
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.62.3-briefing-slide-engines";
+import { BriefingSlides } from "./briefing-slides.js?v=0.69.0-linkcharts1";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -9992,6 +9992,40 @@ export class UIController {
         { label: "Close", primary: true, handler: () => this.dialog.close() },
       ],
     });
+  }
+
+  /**
+   * Opens a chart panel from a map spec (createChartSpec input bound to a loaded
+   * layer) beside the map. Without an application the sidebar is left as it is.
+   */
+  async addLinkedChart(input) {
+    const layer = this.mapController.getLayer(input.source?.layerId);
+    if (!layer?.queryable) throw Object.assign(new Error(`The layer “${layer?.title || "?"}” cannot be charted.`), { hint: "Charts need a feature layer with attributes." });
+    // Field names are matched as the service spells them, whatever the case in the link.
+    const fields = (layer.fields || []).map((field) => field.name);
+    const named = (name) => !name || !fields.length ? name : fields.find((field) => field === name) || fields.find((field) => field.toLowerCase() === name.toLowerCase()) || undefined;
+    const dimension = named(input.dimension);
+    const measure = named(input.measure?.field);
+    const missing = [[input.dimension, dimension], [input.measure?.field, measure]].filter(([asked, found]) => asked && !found).map(([asked]) => `“${asked}”`);
+    if (missing.length) throw Object.assign(new Error(`${layer.title || "The layer"} has no field ${missing.join(" or ")}.`), { hint: `Its fields: ${fields.slice(0, 40).join(", ")}.` });
+    const chart = createChartSpec({ ...input, dimension, measure: { ...input.measure, field: measure } });
+    this.projectManager.setCharts?.([...(this.projectManager.current.charts || []), chart]);
+    const size = chart.presentation.size;
+    await this.applicationRuntime.runTool("application.chart.create", {
+      title: chart.title,
+      region: chart.presentation.placement,
+      size: size === "compact" ? { width: 360, height: 220 } : size === "expanded" ? { width: 620, height: 420 } : { width: 460, height: 300 },
+      binding: { layerId: layer.uid, followActiveLayer: false },
+      settings: { chart },
+    });
+    return chart;
+  }
+
+  /** Removes the chart panels (and saved charts) before a map spec replaces the layers they chart. */
+  async clearChartPanels() {
+    const panels = this.applicationRuntime.currentConfig ? this.applicationRuntime.snapshot().panels.filter((panel) => panel.type === "charts") : [];
+    for (const panel of panels) await this.applicationRuntime.runTool("application.panel.remove", { instanceId: panel.instanceId });
+    if (this.projectManager.current.charts?.length) this.projectManager.setCharts?.([]);
   }
 
   #showProject(project, state = "Local") {
