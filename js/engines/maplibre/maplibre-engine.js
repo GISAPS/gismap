@@ -13,6 +13,7 @@
 // one lower for the same scale (512-pixel tiles). Everything that crosses the
 // boundary uses GISMap Online levels, so links and projects mean the same view.
 import { createConsoleBridge } from "./console-overlay.js?v=0.67.0-si-console";
+import { tourChapterPoint, tourMarkerDataUrl } from "../tour-markers.js?v=0.65.9-tourpins";
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
 import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
@@ -47,7 +48,7 @@ import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatia
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
 import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.4";
 
-export const MAPLIBRE_CAPABILITIES = Object.freeze(["view-2d", "view-3d", "spatial-chart-3d", "three-3d", "basemaps", "basemap-themes", "ground", "layers-arcgis", "layers-files", "query", "feature-filter", "renderer-spec", "renderer-native", "identify", "highlight", "capture", "geocode", "buildings-3d", "draw", "measurement", "legend", "native"]);
+export const MAPLIBRE_CAPABILITIES = Object.freeze(["view-2d", "view-3d", "spatial-chart-3d", "three-3d", "basemaps", "basemap-themes", "ground", "layers-arcgis", "layers-files", "query", "feature-filter", "renderer-spec", "renderer-native", "identify", "highlight", "capture", "geocode", "buildings-3d", "draw", "measurement", "legend", "tour-markers", "native"]);
 
 const ZOOM_OFFSET = 1;
 const SCALE_AT_ZOOM_0 = 591657527.591555;
@@ -170,6 +171,8 @@ export class MaplibreEngine {
     this.basemapTheme = null;
     this.highlight = { enabled: true, color: "#00b8d9", style: "fill", feature: null };
     this.noteMarkers = [];
+    this.tourMarkers = [];
+    this.tourMarkerChapters = [];
     this.drawings = [];
     this.drawingsStyle = { color: "#d9951e", outline: "#ffffff", width: 3, fillOpacity: 0.18, pointRadius: 6, animatedEffect: null };
     this.drawing = null;
@@ -2230,6 +2233,36 @@ export class MaplibreEngine {
       element.setAttribute("aria-label", point.draft ? "New note location" : "Map note location");
       this.noteMarkers.push(new this.maplibregl.Marker({ element, anchor: "center" }).setLngLat([point.longitude, point.latitude]).addTo(this.map));
     }
+  }
+
+  setTourMarkers(chapters = [], activeIndex = null) {
+    this.tourMarkerChapters = Array.isArray(chapters) ? chapters : [];
+    this.tourMarkers.forEach((marker) => marker.remove());
+    this.tourMarkers = [];
+    if (!this.map || !this.maplibregl?.Marker) return;
+    this.tourMarkerChapters.forEach((chapter, chapterIndex) => {
+      const point = tourChapterPoint(chapter);
+      if (!point) return;
+      const active = chapterIndex === activeIndex;
+      const element = document.createElement("button");
+      element.type = "button";
+      element.className = "tour-marker";
+      element.setAttribute("aria-label", String(chapter?.title || `Chapter ${chapterIndex + 1}`));
+      element.style.cssText = `width:${active ? 44 : 36}px;height:${active ? 58 : 48}px;padding:0;border:0;cursor:pointer;background:url("${tourMarkerDataUrl(active)}") center/contain no-repeat;`;
+      element.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.events.publish("tour-marker:click", { index: chapterIndex });
+      });
+      this.tourMarkers.push(new this.maplibregl.Marker({ element, anchor: "bottom" }).setLngLat([point.longitude, point.latitude]).addTo(this.map));
+    });
+  }
+
+  setActiveTourMarker(index = null) {
+    this.setTourMarkers(this.tourMarkerChapters, Number.isInteger(index) ? index : null);
+  }
+
+  clearTourMarkers() {
+    this.setTourMarkers([]);
   }
 
   /* ---------------- View ---------------- */
