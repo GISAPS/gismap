@@ -6130,14 +6130,14 @@ export class UIController {
     controls.dataset.presentation = template;
     const chapters = presentation.chapters || [];
     const index = Number.isInteger(this.presentationState.atlasChapterIndex) ? this.presentationState.atlasChapterIndex : 0;
-    const auto = presentation.playbackMode !== "manual";
     const previous = controls.querySelector("[data-mobile-atlas-previous]");
     const next = controls.querySelector("[data-mobile-atlas-next]");
     const play = controls.querySelector("[data-mobile-atlas-play]");
     const settings = controls.querySelector("[data-mobile-atlas-settings]");
     previous.disabled = !chapters.length || index <= 0;
     next.disabled = !chapters.length || index >= chapters.length - 1;
-    play.hidden = !auto;
+    // Manual tours do not start on their own, but viewers can still play them.
+    play.hidden = chapters.length < 2;
     play.textContent = this.presentationState.atlasPlaying ? "❚❚" : "▶";
     play.setAttribute("aria-label", this.presentationState.atlasPlaying ? "Pause tour" : "Play tour");
     settings.hidden = this.sharedTourOnly;
@@ -7010,15 +7010,30 @@ export class UIController {
     };
   }
 
+  /** The editor's longitude/latitude/altitude: the camera eye when there is one, else the view centre. */
+  #atlasEditorPosition(state = {}) {
+    if (state.camera?.position) return this.#atlasGeographicCameraPosition(state.camera.position);
+    const [longitude, latitude] = state.center || [];
+    return { longitude, latitude, altitude: undefined };
+  }
+
   #atlasEditorViewState() {
     const state = structuredClone(this.atlasEditingViewState || this.mapController.getViewState());
-    const camera = state.camera || {};
-    const position = camera.position || {};
-    const geographic = this.#atlasGeographicCameraPosition(position);
     const number = (selector, fallback) => {
       const value = Number(this.dialog.querySelector(selector)?.value);
       return Number.isFinite(value) ? value : fallback;
     };
+    if (!state.camera?.position) {
+      // MapLibre views have no eye-position camera: the fields edit the centre the view looks at.
+      const [longitude, latitude] = state.center || [];
+      state.center = [number("#atlas-camera-longitude", longitude), number("#atlas-camera-latitude", latitude)];
+      state.heading = number("#atlas-camera-heading", state.heading ?? 0);
+      state.tilt = number("#atlas-camera-tilt", state.tilt ?? 0);
+      return state;
+    }
+    const camera = state.camera;
+    const position = camera.position;
+    const geographic = this.#atlasGeographicCameraPosition(position);
     camera.position = {
       ...position,
       x: number("#atlas-camera-longitude", geographic.longitude),
@@ -7039,8 +7054,7 @@ export class UIController {
     const state = this.mapController.getViewState();
     if (syncCamera) this.atlasEditingViewState = structuredClone(state);
     const editingState = this.atlasEditingViewState || state;
-    const position = editingState.camera?.position || {};
-    const geographic = this.#atlasGeographicCameraPosition(position);
+    const geographic = this.#atlasEditorPosition(editingState);
     const setValue = (selector, value, digits = 5) => {
       const input = this.dialog.querySelector(selector);
       if (input && Number.isFinite(Number(value))) input.value = Number(value).toFixed(digits);
@@ -7076,8 +7090,7 @@ export class UIController {
     const chapter = chapters[index];
     if (!chapter) return;
     this.atlasEditingViewState = structuredClone(chapter.viewState || this.mapController.getViewState());
-    const position = this.atlasEditingViewState.camera?.position || {};
-    const geographicPosition = this.#atlasGeographicCameraPosition(position);
+    const geographicPosition = this.#atlasEditorPosition(this.atlasEditingViewState);
     const basemapOptions = this.#basemapOptionsMarkup(chapter.basemapId || this.mapController.getBasemapId());
     const visibility = new Map((chapter.layerVisibility || []).map((entry) => [entry.key, entry.visible !== false]));
     const layerChoices = this.mapController.getLayers().map((layer) => {
@@ -7230,8 +7243,8 @@ export class UIController {
     const play = document.querySelector("#atlas-chapter-play");
     const exit = document.querySelector("#atlas-tour-exit");
     if (exit) exit.hidden = this.sharedTourOnly;
-    const auto = this.projectManager.current.presentation?.playbackMode !== "manual";
-    play.hidden = !auto;
+    // Manual tours do not start on their own, but viewers can still play them.
+    play.hidden = chapters.length < 2;
     play.setAttribute("aria-label", this.presentationState.atlasPlaying ? "Stop tour" : "Play tour");
     play.innerHTML = this.presentationState.atlasPlaying ? "■ <span>Stop</span>" : "▶ <span>Play</span>";
     overlay.hidden = false;
