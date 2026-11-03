@@ -5,7 +5,7 @@ import { buildAssistantInstructions, runAssistantTurn } from "./map-assistant.js
 import { renderMarkdown } from "./markdown.js?v=0.18.2";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-const PROVIDER_NAMES = { ollama: "Ollama", openai: "OpenAI", anthropic: "Anthropic", "openai-compatible": "your AI endpoint", "gismap-si": "GISMap SI" };
+const PROVIDER_NAMES = { ollama: "Ollama", openai: "OpenAI", anthropic: "Anthropic", "openai-compatible": "your AI endpoint" };
 const MAX_HISTORY = 40;
 
 // What a first-time user can try: a short label, and the fuller request it sends.

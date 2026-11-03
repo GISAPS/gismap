@@ -9,12 +9,12 @@ import { BASEMAP_IDS } from "./basemap-catalog.js?v=0.53.0-gallery1";
 import { ProjectManager } from "./project.js?v=0.54.0-print";
 import { IdentifyController } from "./identify.js?v=0.54.0-pan2";
 import { AttributeTableController } from "./attribute-table.js?v=0.61.2-layer-tools";
-import { AIController } from "./ai.js?v=0.68.3-si-workspace";
+import { AIController } from "./ai.js?v=0.57.0-skins1";
 import { ToolManager } from "./tool-manager.js?v=0.37.0";
-import { UIController } from "./ui.js?v=0.68.3-si-workspace";
-import { ExportController } from "./export/export-controller.js?v=0.68.3-si-workspace";
+import { UIController } from "./ui.js?v=0.67.0-si-console";
+import { ExportController } from "./export/export-controller.js?v=0.37.0";
 import { SHARE_BASEMAPS, parseShareParameters } from "./share.js?v=0.54.0-unified4";
-import { createShareLink, readShareLocation } from "./map-share.js?v=0.65.0-paths";
+import { readShareLocation } from "./map-share.js?v=0.65.0-paths";
 import { decodeEmbeddedTour } from "./tour-share.js?v=0.55.0-readable1";
 import { decodeFieldTask, featureLayerUrl, readFieldTaskHash, readFocus } from "./field-task-share.js?v=0.55.0-readable1";
 import { readFieldNoteHash } from "./field-note-link.js?v=0.1.0";
@@ -23,7 +23,7 @@ import { ApplicationRuntime } from "./application-runtime.js?v=0.57.0-skins1";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { MobilePanelManager } from "./mobile-panel-manager.js?v=0.18.2";
 import { MobileWorkflowRouter } from "./mobile-workflow-router.js?v=0.57.0-skins1";
-import { createClientApi } from "./briefing-api.js?v=0.68.3-si-workspace";
+import { createClientApi } from "./briefing-api.js?v=0.67.0-si-console";
 import { createPrintApi, hasWebgl, registerPrintTools, webglIssue } from "./print-api.js?v=0.54.0-print";
 import { MAP_TEMPLATES } from "./map-templates.js?v=0.54.0-print";
 import { readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
@@ -37,7 +37,7 @@ import { mapSpecFromShareParameters } from "./map-spec.js?v=0.66.1-finish1";
 import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.54.0-print";
 
 import { loadSharedLayer } from "./shared-layer-loader.js?v=0.53.0";
-import { allowedParents, validConsoleMessage } from "./si-console-embed.js?v=0.68.3-si-workspace";
+import { allowedParents, validConsoleMessage } from "./si-console-embed.js?v=0.67.0-si-console";
 
 // Readiness for agents and scripts: gisMapOnline.ready, a `gismap:ready` event,
 // and <html data-gismap-state="loading|ready|error">.
@@ -375,23 +375,6 @@ async function start() {
       });
     };
     connect();
-  }
-  // GISMap SI accounts ship dark: only invited testers on /beta load this.
-  // It never waits on the map, and the map never waits on it.
-  if (!sharedEmbed && location.pathname.replace(/\/+$/, "") === "/beta") {
-    import("./si-account-ui.js?v=0.68.3-si-workspace").then(({ initSiAccountUi }) => initSiAccountUi({
-      // Restores to this /beta address so the sign-in button comes back too.
-      getDraftLink: async () => (await createShareLink({
-        baseUrl: location.href,
-        kind: "map",
-        title: projectManager.current.name || "Map",
-        skin: document.documentElement.dataset.skin,
-        basemap: mapController.getBasemapId(),
-        camera: mapController.getViewState(),
-        layers: mapController.getAllLayerConfigs(),
-        textBoxes: mapController.getTextBoxes?.() ?? [],
-      })).url.replace(/^[^#]*/, `${location.origin}${location.pathname}${location.search}`),
-    })).then((account) => account && uiController.attachSiAccount(account)).catch((error) => console.warn("GISMap SI sign-in is unavailable.", error?.message));
   }
   await mapController.initialize();
   consoleBridge?.refit();
