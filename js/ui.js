@@ -779,9 +779,7 @@ export class UIController {
     projectDropTarget.addEventListener("drop", (event) => {
       event.preventDefault();
       projectDropTarget.classList.remove("is-project-drop-target");
-      const file = [...event.dataTransfer?.files || []].find((item) => /\.(?:png|jpe?g|webp|gif|heic|heif|gis|gisx|gisbrief|gisclip|gmo|gmop|gisatlas|gmoatlas|gismap|json|zip)$/i.test(item.name) || item.type.startsWith("image/"));
-      if (file) void this.importProjectFile(file);
-      else this.error("Drop a GISMap Online project, package, tour, Smart Image, or a picture of a GISMap Online QR code.");
+      void this.#importDroppedFiles([...event.dataTransfer?.files || []]);
     });
     document.querySelector("#data-file-input").addEventListener("change", (event) => this.#addFiles(event));
     document.querySelector("#tool-file-input").addEventListener("change", (event) => this.#loadTool(event));
@@ -8837,6 +8835,39 @@ export class UIController {
       await this.#addFiles(event);
     } catch (error) {
       this.events.publish("app:error", { message: error.message });
+    }
+  }
+
+  /** Dropped files: projects, packages and pictures open as projects; local geodata is added as layers. */
+  async #importDroppedFiles(files) {
+    const projectName = /\.(?:png|jpe?g|webp|gif|heic|heif|gis|gisx|gisbrief|gisclip|gmo|gmop|gisatlas|gmoatlas|gismap)$/i;
+    const dataName = /\.(?:csv|tsv|tab|txt|xlsx|xlsm|ods|xls|geojson|kml|kmz|parquet|geoparquet|las|laz|xyz|glb|gltf|obj|ply)$/i;
+    const data = [];
+    let project = null;
+    for (const file of files) {
+      if (projectName.test(file.name) || file.type.startsWith("image/")) project ??= file;
+      else if (dataName.test(file.name)) data.push(file);
+      else if (/\.(?:json|zip)$/i.test(file.name)) {
+        // Both projects and geodata (GeoJSON, zipped shapefiles) use these extensions: look inside.
+        if (await this.#isProjectFile(file)) project ??= file;
+        else data.push(file);
+      }
+    }
+    if (!project && !data.length) {
+      this.error("Drop GIS data (GeoJSON, CSV, KML, shapefile ZIP, GeoParquet…), a GISMap Online project or package, a Smart Image, or a picture of a GISMap Online QR code.");
+      return;
+    }
+    if (project) await this.importProjectFile(project);
+    if (data.length) await this.#addFiles({ target: { files: data, value: "" } });
+  }
+
+  async #isProjectFile(file) {
+    try {
+      if (/\.zip$/i.test(file.name)) return Boolean(globalThis.JSZip && (await JSZip.loadAsync(file)).file("project.json"));
+      const json = JSON.parse(await file.text());
+      return !/^(?:FeatureCollection|Feature|GeometryCollection|Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon|Topology)$/.test(json?.type);
+    } catch {
+      return false;
     }
   }
 
