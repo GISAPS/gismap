@@ -89,6 +89,9 @@ export function normalizeApplicationConfig(value = {}) {
       bottomHeight: Number.isFinite(value.layout?.bottomHeight) ? Math.min(720, Math.max(180, value.layout.bottomHeight)) : 280,
       activeBottomPanel: typeof value.layout?.activeBottomPanel === "string" ? value.layout.activeBottomPanel : null,
       bottomCollapsed: value.layout?.bottomCollapsed === true,
+      // "workspace": the sidebar panels (Places, Layers, …) stay in the user's
+      // sidebar as they were; the application only adds its own panels.
+      sidebar: value.layout?.sidebar === "workspace" ? "workspace" : "application",
     },
     panels: panels.map((panel, index) => {
       let instanceId = String(panel?.instanceId || `${panel?.type || "panel"}-${index + 1}`);

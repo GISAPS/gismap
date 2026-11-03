@@ -66,7 +66,8 @@ test("AI Map and dock layouts retain independent persisted placement state", () 
     layout: { kind: "bottom-workspace", bottomHeight: 418, activeBottomPanel: "ai-map-main", bottomCollapsed: true },
     panels: [{ ...aiMap.panels[0], placement: { region: "floating", order: 0, size: { width: 512, height: 384 }, position: { x: 91, y: 73 } } }],
   });
-  assert.deepEqual(normalized.layout, { kind: "bottom-workspace", bottomHeight: 418, activeBottomPanel: "ai-map-main", bottomCollapsed: true });
+  assert.deepEqual(normalized.layout, { kind: "bottom-workspace", bottomHeight: 418, activeBottomPanel: "ai-map-main", bottomCollapsed: true, sidebar: "application" });
+  assert.equal(normalizeApplicationConfig({ layout: { sidebar: "workspace" } }).layout.sidebar, "workspace");
   assert.deepEqual(normalized.panels[0].placement.size, { width: 512, height: 384 });
   assert.deepEqual(normalized.panels[0].placement.position, { x: 91, y: 73 });
 });

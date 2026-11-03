@@ -11,8 +11,8 @@ import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
 import { POPULAR_SERVICES } from "./catalog.js?v=0.18.2";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
-import { MapAssistantPanel } from "./assistant-panel.js?v=0.57.0-skins1";
-import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.66.0-analysis1";
+import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
+import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
 import { createShareUrl } from "./share.js?v=0.54.0-unified4";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
@@ -21,7 +21,7 @@ import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.54.0-
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
-import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.18.2";
+import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.68.0-charts1";
 import { featureFilterFor, featureId, fieldKind, filterRecords, histogram, requestGuard, sortRecords } from "./presentation-query.js?v=0.30.0";
 import { DEFAULT_SKIN, INTERFACE_SKINS, applyInterfaceSkin, normalizeSkin, resolveSkinTheme, setSkinThemeResolver, skinIsDark, skinOptionsMarkup, skinTone } from "./skin-catalog.js?v=0.57.0-skins2";
 import { applyMapColors, MAP_COLOR_COMPONENTS, SKIN_BASEMAP, themeFromComputedStyle } from "./basemap-themes.js?v=0.53.0-mapcolors1";
@@ -65,8 +65,8 @@ const PROVENANCE_HELP = Object.freeze({
 import { numericFieldCandidates, temporalFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.3.1";
 import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.9";
 import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.3.8-fire-points";
-import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js";
-import { MapChartOverlayController } from "./map-chart-tools.js?v=0.65.0-paths";
+import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
+import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
 import { readTextBoxEditor, textBoxEditorMarkup, textBoxRunMarkup, textBoxSummary } from "./text-box-editor.js?v=0.65.0-paths";
 import { labelEditorMarkup, labelableFields, readLabelEditor, syncLabelEditor } from "./label-editor.js?v=0.65.0-paths";
 import { normalizeLabeling } from "./layer-labels.js?v=0.65.0-paths";
@@ -3139,7 +3139,7 @@ export class UIController {
       },
       setMode: (mode) => document.querySelector(`[data-mobile-workflow="${mode}"]`)?.click(),
       setSkin: (skin) => this.applySkinChoice(skin),
-      createInstantDashboard: async ({ layer: layerInfo, title, skin, basemap }) => {
+      createInstantDashboard: async ({ layer: layerInfo, title, skin, basemap, chartTheme = "auto" }) => {
         const layer = this.mapController.getLayer(layerInfo.id);
         if (!layer?.queryable) throw Object.assign(new Error(`The layer “${layerInfo.title || layerInfo.id}” cannot be charted.`), { hint: "Choose a loaded feature layer with attributes." });
         const fields = layer.fields || [];
@@ -3154,6 +3154,8 @@ export class UIController {
           measure: { field: numeric?.name || null, aggregation: numeric ? "sum" : "count" },
           presentation: { target: "dashboard", targets: ["panel", "dashboard"], placement: "bottom", size: "regular" },
           interaction: { mapHighlight: true, crossFilter: true },
+          // Colours follow the layer's map style; the look follows the skin unless asked.
+          style: { palette: "inherit", theme: chartTheme },
         });
         this.applySkinChoice(skin);
         this.mapController.setBasemap(basemap);
@@ -3168,7 +3170,7 @@ export class UIController {
         return {
           dashboard: chart.title,
           layer: layer.title || layer.uid,
-          chart: { type, dimension: category?.name || null, measure: numeric?.name || null, aggregation: numeric ? "sum" : "count" },
+          chart: { type, dimension: category?.name || null, measure: numeric?.name || null, aggregation: numeric ? "sum" : "count", theme: chart.style.theme },
           skin,
           basemap,
           interaction: "Click a chart mark to filter and select matching map features.",
@@ -3256,10 +3258,12 @@ export class UIController {
     const placement = panel.placement.region === "floating" ? "floating-top" : panel.placement.region;
     const initialSize = panel.placement.size?.height <= 240 ? "compact" : panel.placement.size?.height >= 380 ? "expanded" : "regular";
     const sizeFor = (size) => size === "compact" ? { width: 360, height: 220 } : size === "expanded" ? { width: 620, height: 420 } : { width: 460, height: 300 };
+    const chart = panel.settings?.chart ? createChartSpec(panel.settings.chart) : null;
+    const style = chart?.style || null;
     this.openDialog({
       eyebrow: "Chart panel",
       title: "Chart panel settings",
-      content: `<section class="chart-panel-settings"><p class="form-note">Choose where this chart sits in the workspace. Top overlay panels can be dragged and resized directly on the map.</p><div class="field-grid"><label class="field"><span>Placement</span><select data-chart-panel-placement><option value="right"${placement === "right" ? " selected" : ""}>Right side</option><option value="left"${placement === "left" ? " selected" : ""}>Left side</option><option value="bottom"${placement === "bottom" ? " selected" : ""}>Bottom strip</option><option value="floating-top"${placement === "floating-top" ? " selected" : ""}>Top overlay</option></select></label><label class="field"><span>Panel size</span><select data-chart-panel-size><option value="compact"${initialSize === "compact" ? " selected" : ""}>Compact</option><option value="regular"${initialSize === "regular" ? " selected" : ""}>Regular</option><option value="expanded"${initialSize === "expanded" ? " selected" : ""}>Expanded</option></select></label></div></section>`,
+      content: `<section class="chart-panel-settings"><p class="form-note">Choose where this chart sits in the workspace. Top overlay panels can be dragged and resized directly on the map.</p><div class="field-grid"><label class="field"><span>Placement</span><select data-chart-panel-placement><option value="right"${placement === "right" ? " selected" : ""}>Right side</option><option value="left"${placement === "left" ? " selected" : ""}>Left side</option><option value="bottom"${placement === "bottom" ? " selected" : ""}>Bottom strip</option><option value="floating-top"${placement === "floating-top" ? " selected" : ""}>Top overlay</option></select></label><label class="field"><span>Panel size</span><select data-chart-panel-size><option value="compact"${initialSize === "compact" ? " selected" : ""}>Compact</option><option value="regular"${initialSize === "regular" ? " selected" : ""}>Regular</option><option value="expanded"${initialSize === "expanded" ? " selected" : ""}>Expanded</option></select></label>${style ? `<label class="field"><span>Look</span><select data-chart-panel-theme><option value="auto"${style.theme === "auto" ? " selected" : ""}>Match the skin</option><option value="standard"${style.theme === "standard" ? " selected" : ""}>Standard</option><option value="futuristic"${style.theme === "futuristic" ? " selected" : ""}>Futuristic HUD</option></select></label><label class="field"><span>Colours</span><select data-chart-panel-palette><option value="inherit"${style.palette === "inherit" ? " selected" : ""}>Match the map style</option><option value="theme"${style.palette === "theme" ? " selected" : ""}>Dashboard skin</option><option value="neon"${style.palette === "neon" ? " selected" : ""}>Neon</option></select></label>` : ""}</div>${style ? `<p class="form-note">“Match the map style” uses the layer's own category colours or colour ramp, so the chart and the map read the same way. Top N, Other and hidden categories are set on the chart itself.</p>` : ""}</section>`,
       actions: [
         { label: "Cancel", handler: () => this.dialog.close() },
         { label: "Apply", primary: true, handler: async () => {
@@ -3274,6 +3278,17 @@ export class UIController {
             placement: { region, size, ...(position ? { position } : {}) },
             ...(region === "bottom" ? { layout: { bottomHeight: size.height } } : {}),
           });
+          if (chart) {
+            const theme = this.dialog.querySelector("[data-chart-panel-theme]")?.value || style.theme;
+            const palette = this.dialog.querySelector("[data-chart-panel-palette]")?.value || style.palette;
+            if (theme !== style.theme || palette !== style.palette) {
+              const next = createChartSpec({ ...chart, style: { ...style, theme, palette } });
+              const latest = this.applicationRuntime.snapshot().panels.find((item) => item.instanceId === instanceId);
+              await this.applicationRuntime.runTool("application.panel.configure", { instanceId, changes: { settings: { ...(latest?.settings || panel.settings), chart: next } } });
+              const charts = this.projectManager.current.charts || [];
+              if (charts.some((item) => item.id === next.id)) this.projectManager.setCharts?.(charts.map((item) => item.id === next.id ? next : item));
+            }
+          }
           this.dialog.close();
           this.toast("Chart panel settings applied.");
         } },

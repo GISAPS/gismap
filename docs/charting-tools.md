@@ -66,6 +66,35 @@ scatter, bubble, box plot, donut, and KPI charts. It does not turn a chart
 click into a permanent layer filter: selection and filtering remain separate
 operations.
 
+## Colours, categories and looks
+
+`chart.style` holds presentation choices that never change the aggregate:
+
+```json
+{ "palette": "inherit", "theme": "auto", "topN": 12, "other": "group", "sort": "auto", "hidden": ["Unknown"] }
+```
+
+- **palette** `inherit` (default) reads the layer's renderer JSON, the same way
+  the map legend does: a chart grouped by the styled category field takes the
+  map's category colours (unstyled categories take the map's default colour);
+  classed and colour-ramp styles colour each mark along that ramp; a single
+  symbol, including a 3D extrusion, draws in its symbol colour. `theme` uses
+  the interface skin and `neon` the futuristic palette.
+- **topN** is how many categories show (`0` shows all, `null` the type's
+  default); **other** `group` folds the rest into one clickable "Other" mark and
+  `hide` leaves them out. **hidden** lists categories left out by name; the
+  chart panel's Categories menu edits it and keeps every category listed.
+- **sort** `auto` ranks named categories largest first and keeps years and
+  other numeric categories in order.
+- **theme** `futuristic` draws a neon HUD (gradient marks with a glow, a faint
+  grid, monospace numerals); `auto` uses it under the Violet Circuit, Velvet
+  Orbit and Wavelength skins. Instant Dashboards accept `chartTheme`.
+
+The chart fills its panel, so resizing the bottom strip or Workspace pane
+resizes the chart; horizontal bars keep a readable row height and scroll past
+it. Dashboard charts show headline numbers (total, groups, leading group and
+its share) and drop them when the panel is short.
+
 ## Map Charts subsystem and implementation phases
 
 `js/map-chart-tools.js` defines a renderer-neutral Map Charts contract:

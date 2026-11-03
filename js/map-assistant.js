@@ -44,6 +44,7 @@ export const ASSISTANT_TOOLS = Object.freeze([
       title: { type: "string", description: "Short dashboard and chart title." },
       skin: { enum: INTERFACE_SKINS.map(({ id }) => id), description: "Choose a preset skin that supports the subject and audience." },
       basemap: { enum: BASEMAPS, description: "Use skin for a skin-coloured MapLibre basemap, otherwise choose a readable geographic basemap." },
+      chartTheme: { enum: ["auto", "standard", "futuristic"], description: "The chart's look. futuristic draws a neon HUD (glowing gradient marks on a grid) that suits operations, tech and night-time subjects; auto uses it with the violet-circuit, velvet-orbit and wavelength skins." },
     } },
   },
   {
@@ -373,13 +374,13 @@ export function createAssistantTools(host) {
       host.setBasemap(basemap);
       return { basemap };
     },
-    async create_instant_dashboard({ layer, title = "", skin = "gismap", basemap = "skin" }) {
+    async create_instant_dashboard({ layer, title = "", skin = "gismap", basemap = "skin", chartTheme = "auto" }) {
       const found = findLayer(api, layer);
       const skinChoice = INTERFACE_SKINS.find(({ id }) => id === skin);
       if (!skinChoice) throw Object.assign(new Error(`Unknown skin "${skin}".`), { hint: `Use one of: ${INTERFACE_SKINS.map(({ id }) => id).join(", ")}.` });
       if (!BASEMAPS.includes(basemap)) throw Object.assign(new Error(`Unknown basemap "${basemap}".`), { hint: `Use one of: ${BASEMAPS.join(", ")}.` });
       if (typeof host.createInstantDashboard !== "function") throw Object.assign(new Error("Instant Dashboard is not available in this GISMap Online session."), { hint: "Open the map workspace and try again after it has finished loading." });
-      return host.createInstantDashboard({ layer: found, title, skin: skinChoice.id, basemap });
+      return host.createInstantDashboard({ layer: found, title, skin: skinChoice.id, basemap, chartTheme: ["standard", "futuristic"].includes(chartTheme) ? chartTheme : "auto" });
     },
     async load_map({ spec, replace = true }) {
       const result = api.mapSpec.load(spec, { replace, showIssues: false });

@@ -1,4 +1,4 @@
-import { fromProviderResponse, toProviderRequest } from "./map-assistant.js?v=0.66.0-analysis1";
+import { fromProviderResponse, toProviderRequest } from "./map-assistant.js?v=0.68.0-charts1";
 
 const CONFIG_KEY = "gismap-online:ai-config:v2";
 const LEGACY_CONFIG_KEY = "gismap-online:ai-config:v1";

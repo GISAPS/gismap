@@ -2128,7 +2128,7 @@ export class MaplibreEngine {
   /* ---------------- Highlight ---------------- */
 
   #highlightSource() {
-    return { type: "geojson", data: { type: "FeatureCollection", features: this.highlight.feature ? [this.highlight.feature] : [] } };
+    return { type: "geojson", data: { type: "FeatureCollection", features: this.highlight.feature ? [this.highlight.feature].flat() : [] } };
   }
 
   /** The selected feature, drawn above the data in the feedback colour: filled with an outline, or the outline only. */
@@ -2162,13 +2162,17 @@ export class MaplibreEngine {
     }
   }
 
-  /** Marks a feature (an identify result or presentation record) on the map. */
+  /**
+   * Marks a feature (an identify result or presentation record) on the map,
+   * or every feature in result.features (a chart group).
+   */
   async highlightFeature(result) {
-    if (!this.highlight.enabled || result?.kind !== "feature" || !result.geometry?.type) {
+    const parts = (Array.isArray(result?.features) && result.features.length ? result.features : [result]).filter((part) => part?.geometry?.type);
+    if (!this.highlight.enabled || result?.kind !== "feature" || !parts.length) {
       this.clearFeatureHighlight();
       return false;
     }
-    this.highlight.feature = { type: "Feature", geometry: result.geometry, properties: {} };
+    this.highlight.feature = parts.map((part) => ({ type: "Feature", geometry: part.geometry, properties: {} }));
     this.#drawHighlight();
     return true;
   }

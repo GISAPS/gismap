@@ -1,13 +1,13 @@
 import { releaseLayerAnalysis } from "./analysis-dataset.js?v=0.54.0-analysis1";
 import { ApplicationState } from "./application-state.js?v=0.18.2";
 import { PanelRegistry, ToolRegistry } from "./application-registry.js?v=0.27.1";
-import { LayoutManager } from "./layout-manager.js?v=0.18.2";
-import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.18.2";
+import { LayoutManager } from "./layout-manager.js?v=0.68.0-charts1";
+import { normalizeApplicationConfig, presetApplication } from "./application-config.js?v=0.68.0-charts1";
 import { DuckDBBrowserClient } from "./duckdb-client.js?v=0.54.0-analysis1";
 import { normalizeDataCatalog, planNaturalLanguageQuery, validateReadOnlySQL } from "./data-catalog.js?v=0.18.2";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { applyInterfaceSkin } from "./skin-catalog.js?v=0.57.0-skins2";
-import { chartFilterForRow, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, renderChartFallback } from "./charting-tools.js";
+import { CHART_DEFAULT_TOP, chartCategories, chartColors, chartFilterForRow, chartOption, chartSummary, createChartSpec, displayChartRows, loadECharts, queryChart, renderChartFallback, resolveChartTheme } from "./charting-tools.js?v=0.68.0-charts1";
 
 const STATIC_PANELS = {
   places: "places-panel",
@@ -109,7 +109,9 @@ export class ApplicationRuntime {
       return;
     }
     const config = this.layout.current;
-    const visibleTypes = config ? new Set(config.panels
+    // Without an application, or when it leaves the sidebar to the workspace,
+    // the sidebar panels keep whatever the workspace shows.
+    const visibleTypes = config && config.layout?.sidebar !== "workspace" ? new Set(config.panels
       .filter((panel) => config.mode !== "present" || panel.audienceVisible)
       .map((panel) => panel.type)) : new Set(Object.keys(STATIC_PANELS));
     for (const [type, elementId] of Object.entries(STATIC_PANELS)) {
@@ -214,6 +216,13 @@ export class ApplicationRuntime {
       validate: (input) => input && typeof input === "object" ? true : "A configuration object is required.",
       execute: (input) => {
         const current = this.snapshot();
+        // Adding a chart (or any panel) to the ordinary workspace adds just that
+        // panel: the default preset's Places, Bookmarks, Draw… are not pulled
+        // out of the sidebar and opened.
+        if (!this.currentConfig && id !== "application.preset.apply") {
+          current.layout.sidebar = "workspace";
+          current.panels = current.panels.filter((panel) => !STATIC_PANELS[panel.type]);
+        }
         return this.apply(transform(current, input));
       },
     });
@@ -358,67 +367,179 @@ export class ApplicationRuntime {
   }
 
   #mountConfiguredChartPanel(host, context) {
-    const spec = createChartSpec(context.config.settings.chart);
+    let spec = createChartSpec(context.config.settings.chart);
     const filterId = `${context.config.instanceId}:chart`;
     let result = null;
+    let displayRows = [];
     let chartInstance = null;
     let resizeObserver = null;
     let request = 0;
+    const root = this.document.documentElement;
+    // The clicked group stays lit on the map; hovering another mark lights it
+    // up until the pointer leaves the chart.
+    let pinned = null;
+    const lightUp = (row) => {
+      const records = row && result ? result.selection(row) : [];
+      if (!records.length) return;
+      void this.mapController.highlightFeature({ kind: "feature", layerUid: result.layer.uid, layerTitle: result.layer.title, attributes: records[0].attributes || {}, geometry: records[0].geometry || null, features: records.slice(0, 2000).map((record) => ({ attributes: record.attributes || {}, geometry: record.geometry || null })) }, { pulse: false });
+    };
+    const restoreHighlight = () => {
+      const row = pinned && displayRows.find((item) => item.label === pinned);
+      if (row) lightUp(row);
+      else this.mapController.clearFeatureHighlight?.();
+    };
     const selectRow = (row) => {
       const records = result?.selection(row) || [];
       const ids = records.map((record) => record.attributes?.[result.layer.objectIdField]).filter((value) => value != null);
       context.dispatch("selection:set", { layerId: result.layer.uid, objectIds: ids, features: records.slice(0, 100).map((record) => ({ attributes: record.attributes || {}, geometry: record.geometry || null, layerTitle: result.layer.title })) }, { undoable: false });
-      if (records[0]) void this.mapController.highlightFeature({ kind: "feature", layerUid: result.layer.uid, layerTitle: result.layer.title, attributes: records[0].attributes || {}, geometry: records[0].geometry || null }, { pulse: false });
-      host.querySelector("[data-dashboard-chart-selection]").textContent = `${records.length.toLocaleString()} matching feature${records.length === 1 ? "" : "s"} selected on the map.`;
+      pinned = row.label;
+      lightUp(row);
+      // Frame the group so a click on a bar takes the map to that area.
+      const located = records.filter((record) => record.geometry);
+      if (located.length) void this.mapController.goToFeatures(located.slice(0, 2000), { animate: true }).catch(() => {});
+      const note = host.querySelector("[data-dashboard-chart-selection]");
+      if (note) note.textContent = `${records.length.toLocaleString()} matching feature${records.length === 1 ? "" : "s"} selected on the map.`;
     };
     const filterRow = (row) => {
       const expression = chartFilterForRow(result, row);
       selectRow(row);
       if (expression?.where) context.dispatch("filters:set", { id: filterId, owner: context.config.instanceId, scope: "project", layerId: result.layer.uid, expression });
     };
-    const render = async () => {
+    // Style changes (top N, Other, hidden categories, look) are presentation
+    // only: they are kept with the panel and redrawn without a new query.
+    const restyle = (changes) => {
+      spec = createChartSpec({ ...spec, style: { ...spec.style, ...changes } });
+      this.#storeChartSpec(context.config.instanceId, spec);
+      draw();
+    };
+    const tokens = () => {
+      const style = getComputedStyle(root);
+      const token = (name) => style.getPropertyValue(name).trim();
+      return {
+        tokens: { ink: token("--ink"), muted: token("--muted"), line: token("--line"), surface: token("--surface"), font: token("--ui-font") },
+        palette: ["--green-2", "--amber", "--green", "--danger"].map(token).filter(Boolean),
+      };
+    };
+    const categorical = () => ["bar", "column", "donut", "bar3d", "boxplot"].includes(spec.type);
+    const toolbar = () => {
+      if (!categorical()) return "";
+      const all = chartCategories(result);
+      const topN = spec.style.topN ?? CHART_DEFAULT_TOP[spec.type] ?? 0;
+      const options = [...new Set([5, 8, 12, 16, 24, 40, topN])].filter((value) => value > 0).sort((a, b) => a - b);
+      const hidden = new Set(spec.style.hidden);
+      return `<div class="chart-dashboard__tools" role="group" aria-label="Chart categories"><label><span>Show</span><select data-chart-top>${options.map((value) => `<option value="${value}"${value === topN ? " selected" : ""}>Top ${value}</option>`).join("")}<option value="0"${topN === 0 ? " selected" : ""}>All ${all.length}</option></select></label><label><span>Rest</span><select data-chart-other><option value="group"${spec.style.other === "group" ? " selected" : ""}>Group as Other</option><option value="hide"${spec.style.other === "hide" ? " selected" : ""}>Leave out</option></select></label><details class="chart-dashboard__categories"><summary data-chart-category-count>${all.length - hidden.size}/${all.length}</summary><div class="chart-dashboard__category-list"><button type="button" data-chart-show-all>Show all</button>${all.map((item) => `<label title="${escapeHtml(item.label)}"><input type="checkbox" value="${escapeHtml(item.label)}"${hidden.has(String(item.label)) ? "" : " checked"} data-chart-category><span>${escapeHtml(item.label)}</span><small>${item.value.toLocaleString(undefined, { maximumFractionDigits: 1 })}</small></label>`).join("")}</div></details></div>`;
+    };
+    const stats = (summary, theme) => {
+      if (!summary) return "";
+      const number = (value) => Number(value).toLocaleString(undefined, { notation: Math.abs(value) >= 100000 ? "compact" : "standard", maximumFractionDigits: Math.abs(value) >= 100 ? 0 : 2 });
+      const measure = summary.aggregation === "count" ? "Records" : `${summary.aggregation === "sum" ? "Total" : summary.aggregation === "avg" ? "Average" : summary.aggregation === "min" ? "Lowest" : "Highest"} ${summary.field || ""}`.trim();
+      const tiles = [
+        summary.total != null ? [measure, number(summary.total)] : ["Matching records", number(summary.records ?? 0)],
+        ["Groups", `${summary.groups.toLocaleString()}${summary.shown < summary.groups ? `<small> · ${summary.shown} shown</small>` : ""}`],
+        summary.top ? [`Leading ${spec.dimension?.field || "group"}`, `${escapeHtml(summary.top.label)}${summary.top.share != null ? `<small> · ${(summary.top.share * 100).toFixed(summary.top.share < .1 ? 1 : 0)}%</small>` : ""}`] : null,
+      ].filter(Boolean);
+      return `<dl class="chart-dashboard__stats chart-dashboard__stats--${theme}">${tiles.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`).join("")}</dl>`;
+    };
+    const draw = async () => {
+      if (!result) return;
+      const token = request;
+      const shell = host.querySelector(".chart-dashboard");
+      if (!shell) return;
+      const theme = resolveChartTheme(spec, root.dataset.skin);
+      const chartResult = { ...result, chart: spec };
+      displayRows = displayChartRows(chartResult);
+      const { tokens: interfaceTokens, palette } = tokens();
+      const colored = chartColors(chartResult, displayRows, { renderer: result.layer.renderer || this.mapController.getLayerConfig?.(result.layer.uid)?.renderer || null, palette: palette.length ? palette : undefined, theme });
+      shell.className = `composable-chart chart-dashboard chart-dashboard--${theme}`;
+      fit();
+      shell.querySelector("[data-chart-stats]").innerHTML = stats(chartSummary(chartResult, displayRows), theme);
+      const hidden = spec.style.hidden.length;
+      const count = shell.querySelector("[data-chart-category-count]");
+      if (count) count.textContent = `${chartCategories(chartResult).length - hidden}/${chartCategories(chartResult).length}`;
+      shell.querySelector("[data-chart-colors]").textContent = [colored.note, hidden ? `${hidden} categor${hidden === 1 ? "y" : "ies"} left out.` : ""].filter(Boolean).join(" ");
+      const plot = shell.querySelector("[data-chart-plot]");
+      chartInstance?.dispose?.(); chartInstance = null;
+      plot.innerHTML = renderChartFallback(chartResult, { rows: displayRows, colors: colored.colors });
+      plot.querySelectorAll("[data-chart-row]").forEach((mark) => {
+        const activate = () => filterRow(displayRows[Number(mark.dataset.chartRow)]);
+        mark.addEventListener("click", activate);
+        mark.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+        const hover = () => lightUp(displayRows[Number(mark.dataset.chartRow)]);
+        mark.addEventListener("mouseenter", hover);
+        mark.addEventListener("focus", hover);
+        mark.addEventListener("mouseleave", restoreHighlight);
+        mark.addEventListener("blur", restoreHighlight);
+      });
+      try {
+        const echarts = await loadECharts();
+        if (token !== request || !displayRows.length || ["kpi", "bar3d", "scatter3d"].includes(spec.type)) return;
+        const canvas = this.document.createElement("div"); canvas.className = "chart-builder__canvas";
+        // Horizontal bars keep a readable row height; the plot scrolls past that.
+        if (spec.type === "bar") canvas.style.minHeight = `${displayRows.length * 20 + 24}px`;
+        plot.replaceChildren(canvas);
+        chartInstance = echarts.init(canvas, null, { renderer: "canvas" });
+        chartInstance.setOption(chartOption(chartResult, { rows: displayRows, colors: colored.colors, theme, tokens: interfaceTokens, palette: palette.length ? palette : undefined }));
+        chartInstance.on("click", (event) => { const row = displayRows[event.dataIndex]; if (row) filterRow(row); });
+        chartInstance.on("mouseover", (event) => lightUp(displayRows[event.dataIndex]));
+        chartInstance.on("mouseout", restoreHighlight);
+        chartInstance.on("globalout", restoreHighlight);
+      } catch { /* Keep the accessible fallback chart. */ }
+    };
+    const query = async () => {
       const token = ++request;
       const layer = this.mapController.getLayer(spec.source.layerId) || this.mapController.getLayer(context.state.value.activeLayerId) || this.mapController.getLayers()[0];
       if (!layer?.queryable) { host.innerHTML = `<div class="panel-empty"><strong>Choose a feature layer</strong><p>This chart’s source is unavailable.</p></div>`; return; }
-      host.innerHTML = `<div class="panel-empty"><strong>Computing ${escapeHtml(spec.title)}…</strong><p>Applying the current layer filter.</p></div>`;
+      if (!result) host.innerHTML = `<div class="panel-empty"><strong>Computing ${escapeHtml(spec.title)}…</strong><p>Applying the current layer filter.</p></div>`;
       try {
-        result = await queryChart(this.mapController, layer, { ...spec, source: { ...spec.source, layerId: layer.uid } });
+        const next = await queryChart(this.mapController, layer, { ...spec, source: { ...spec.source, layerId: layer.uid } });
         if (token !== request) return;
+        result = next;
         const warning = result.quality.status === "complete" ? `${result.quality.processedRecords.toLocaleString()} matching records` : result.quality.warning;
-        const displayRows = displayChartRows(result);
         const activeFilter = context.state.value.filters[filterId];
         const filterHint = activeFilter?.expression?.label
           ? `Map filter active: ${activeFilter.expression.label}.`
           : "Click a chart mark to filter the map to that group.";
-        host.innerHTML = `<div class="composable-chart chart-dashboard"><span class="eyebrow">${escapeHtml(result.layer.title || "Layer")} · linked</span>${renderChartFallback(result, { rows: displayRows })}<p class="form-note">${escapeHtml(warning)}</p><p data-dashboard-chart-filter class="form-note">${escapeHtml(filterHint)}</p><p data-dashboard-chart-selection class="form-note"></p>${activeFilter ? '<button type="button" class="chart-dashboard__clear" data-dashboard-chart-clear>Show all map data</button>' : ""}</div>`;
-        const fallback = host.querySelector(".chart-fallback");
-        host.querySelectorAll("[data-chart-row]").forEach((mark) => {
-          const activate = () => filterRow(displayRows[Number(mark.dataset.chartRow)]);
-          mark.addEventListener("click", activate);
-          mark.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+        host.innerHTML = `<div class="composable-chart chart-dashboard"><header class="chart-dashboard__head"><span class="eyebrow">${escapeHtml(result.layer.title || "Layer")} · linked</span>${toolbar()}</header><div data-chart-stats></div><div class="chart-dashboard__plot" data-chart-plot></div><footer class="chart-dashboard__notes"><p class="form-note">${escapeHtml(warning)} · <span data-dashboard-chart-filter>${escapeHtml(filterHint)}</span></p><p class="form-note" data-chart-colors></p><p data-dashboard-chart-selection class="form-note"></p>${activeFilter ? '<button type="button" class="chart-dashboard__clear" data-dashboard-chart-clear>Show all map data</button>' : ""}</footer></div>`;
+        if (!activeFilter) pinned = null;
+        host.querySelector("[data-dashboard-chart-clear]")?.addEventListener("click", () => { pinned = null; this.mapController.clearFeatureHighlight?.(); context.dispatch("filters:clear", { id: filterId }); });
+        host.querySelector("[data-chart-top]")?.addEventListener("change", (event) => restyle({ topN: Number(event.target.value) }));
+        host.querySelector("[data-chart-other]")?.addEventListener("change", (event) => restyle({ other: event.target.value }));
+        host.querySelectorAll("[data-chart-category]").forEach((box) => box.addEventListener("change", () => {
+          restyle({ hidden: [...host.querySelectorAll("[data-chart-category]")].filter((item) => !item.checked).map((item) => item.value) });
+        }));
+        host.querySelector("[data-chart-show-all]")?.addEventListener("click", () => {
+          host.querySelectorAll("[data-chart-category]").forEach((item) => { item.checked = true; });
+          restyle({ hidden: [] });
         });
-        host.querySelector("[data-dashboard-chart-clear]")?.addEventListener("click", () => context.dispatch("filters:clear", { id: filterId }));
-        try {
-          const echarts = await loadECharts();
-          if (token !== request || !displayRows.length || ["kpi", "bar3d", "scatter3d"].includes(result.chart.type)) return;
-          const canvas = document.createElement("div"); canvas.className = "chart-builder__canvas";
-          host.querySelector(".chart-dashboard").insertBefore(canvas, fallback);
-          chartInstance?.dispose?.(); chartInstance = echarts.init(canvas); chartInstance.setOption(chartOption(result, { rows: displayRows }));
-          resizeObserver?.disconnect();
-          if (typeof ResizeObserver !== "undefined") {
-            resizeObserver = new ResizeObserver(() => chartInstance?.resize?.());
-            resizeObserver.observe(host);
-          }
-          chartInstance.on("click", (event) => { const row = displayRows[event.dataIndex]; if (row) filterRow(row); });
-          fallback?.remove();
-        } catch { /* Keep the accessible fallback chart. */ }
+        await draw();
       } catch (error) {
         if (token === request) host.innerHTML = `<div class="panel-empty"><strong>Chart unavailable</strong><p>${escapeHtml(error.message)}</p></div>`;
       }
     };
-    const subscription = context.state.subscribe(() => void render(), (state) => state.filters);
-    context.onCleanup(() => { subscription.remove(); resizeObserver?.disconnect(); chartInstance?.dispose?.(); });
-    void render();
+    // A short panel gives its height to the plot: the stats and colour note step aside.
+    const fit = () => host.querySelector(".chart-dashboard")?.classList.toggle("is-short", host.clientHeight > 0 && host.clientHeight < 300);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => { fit(); chartInstance?.resize?.(); });
+      resizeObserver.observe(host);
+    }
+    // A new skin or light/dark switch redraws in the new colours.
+    const appearance = typeof MutationObserver !== "undefined" ? new MutationObserver(() => void draw()) : null;
+    appearance?.observe(root, { attributes: true, attributeFilter: ["data-skin", "data-theme", "style"] });
+    // The layer's style can change after the chart is made; its colours follow.
+    const styled = this.events.subscribe?.("layer:changed", ({ uid } = {}) => { if (result && uid === result.layer.uid) void draw(); });
+    const subscription = context.state.subscribe(() => void query(), (state) => state.filters);
+    context.onCleanup(() => { subscription.remove(); styled?.remove?.(); appearance?.disconnect(); resizeObserver?.disconnect(); chartInstance?.dispose?.(); });
+    void query();
+  }
+
+  /** Keep a chart panel's edited definition without remounting the workspace. */
+  #storeChartSpec(instanceId, chart) {
+    for (const config of new Set([this.currentConfig, this.layout.current].filter(Boolean))) {
+      const panel = config.panels?.find((item) => item.instanceId === instanceId);
+      if (panel) panel.settings = { ...panel.settings, chart };
+    }
+    const charts = this.projectManager.current?.charts;
+    if (Array.isArray(charts) && charts.some((item) => item.id === chart.id)) this.projectManager.setCharts?.(charts.map((item) => item.id === chart.id ? chart : item));
   }
 
   #catalogWithActiveLayer() {
