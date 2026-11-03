@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { aggregateChart, chartFields, chartFilterForRow, createChartSpec, displayChartRows, normalizeCharts, queryChart, recommendCharts, rowsAsCsv } from "../js/charting-tools.js";
+import { aggregateChart, chartCategories, chartColors, chartFields, chartFilterForRow, chartOption, chartSummary, chartSymbology, createChartSpec, displayChartRows, normalizeCharts, queryChart, recommendCharts, resolveChartTheme, rowsAsCsv } from "../js/charting-tools.js";
 import { mapChartAnchor, normalizeMapChartPresentation, planMapChartDisplay, renderMapChartSvg } from "../js/map-chart-tools.js";
 
 const fields = [
@@ -77,6 +77,61 @@ test("large categorical previews retain the most material values and an Other bu
   assert.equal(display.length, 16);
   assert.match(display.at(-1).label, /^Other \(9\)$/);
   assert.equal(display.at(-1).records.length, 9);
+});
+
+test("chart style chooses the top N, hides Other, and leaves out chosen categories", () => {
+  const many = Array.from({ length: 24 }, (_, index) => ({ attributes: { CATEGORY: `Category ${index + 1}`, VALUE: index + 1 } }));
+  const spec = (style) => createChartSpec({ type: "bar", dimension: "CATEGORY", measure: { field: "VALUE", aggregation: "sum" }, style });
+  const rows = (style) => displayChartRows(aggregateChart(many, spec(style)));
+  // Ranked largest first, so the chart reads down from the leader.
+  assert.deepEqual(rows({ topN: 5 }).map((row) => row.label), ["Category 24", "Category 23", "Category 22", "Category 21", "Other (20)"]);
+  assert.equal(rows({ topN: 5 }).at(-1).other, true);
+  assert.deepEqual(rows({ topN: 3, other: "hide" }).map((row) => row.label), ["Category 24", "Category 23", "Category 22"]);
+  assert.equal(rows({ topN: 0 }).length, 24);
+  assert.deepEqual(rows({ topN: 3, other: "hide", hidden: ["Category 24"] }).map((row) => row.label), ["Category 23", "Category 22", "Category 21"]);
+  const result = aggregateChart(many, spec({ hidden: ["Category 1"] }));
+  assert.equal(chartCategories(result).length, 24, "every category stays listed so it can be shown again");
+  assert.equal(chartSummary(result).total, 300);
+  assert.equal(chartSummary(result).top.label, "Category 24");
+  assert.equal(createChartSpec({ style: { topN: "abc", other: "nope", theme: "x" } }).style.other, "group");
+});
+
+test("year-like categories keep their order instead of ranking", () => {
+  const records = [2021, 2019, 2020].map((year, index) => ({ attributes: { YEAR: year, VALUE: [5, 50, 10][index] } }));
+  const rows = displayChartRows(aggregateChart(records, createChartSpec({ type: "column", dimension: "YEAR", measure: { field: "VALUE", aggregation: "sum" } })));
+  assert.deepEqual(rows.map((row) => row.label), ["2019", "2020", "2021"]);
+});
+
+test("chart colours follow the layer's map style", () => {
+  const records = [["Park", 3], ["River", 9], ["Road", 1]].map(([TYPE, VALUE]) => ({ attributes: { TYPE, VALUE } }));
+  const result = aggregateChart(records, createChartSpec({ type: "bar", dimension: "TYPE", measure: { field: "VALUE", aggregation: "sum" } }));
+  const rows = displayChartRows(result);
+  // Service WebMap JSON (0–255 alpha) and GISMap's autocast form both read.
+  const webMap = { type: "uniqueValue", field1: "TYPE", uniqueValueInfos: [{ value: "Park", symbol: { type: "esriSFS", color: [0, 128, 0, 255] } }, { value: "River", symbol: { type: "esriSFS", color: [0, 0, 255, 255] } }], defaultSymbol: { type: "esriSFS", color: [200, 200, 200, 255] } };
+  const categories = chartColors(result, rows, { renderer: webMap });
+  assert.equal(categories.source, "map");
+  assert.deepEqual(categories.colors, ["rgba(0,0,255,1)", "rgba(0,128,0,1)", "rgba(200,200,200,1)"]);
+  const simple = chartColors(result, rows, { renderer: { type: "simple", symbol: { type: "polygon-3d", symbolLayers: [{ type: "extrude", material: { color: "#ff6a00" } }] } } });
+  assert.deepEqual(simple.colors, ["#ff6a00", "#ff6a00", "#ff6a00"]);
+  const ramp = chartColors(result, rows, { renderer: { type: "class-breaks", field: "VALUE", classBreakInfos: [{ minValue: 0, maxValue: 5, symbol: { type: "simple-fill", color: "#ffffff" } }, { minValue: 5, maxValue: 10, symbol: { type: "simple-fill", color: "#000000" } }] } });
+  assert.equal(ramp.colors[0], "#000000", "the largest value takes the dark end of the ramp");
+  assert.equal(ramp.colors.at(-1), "#ffffff");
+  assert.equal(chartSymbology(null).kind, "none");
+  const neon = chartColors({ ...result, chart: createChartSpec({ ...result.chart, style: { palette: "neon" } }) }, rows);
+  assert.equal(neon.source, "neon");
+});
+
+test("the futuristic look draws glowing gradient marks and follows console skins", () => {
+  const records = [["A", 3], ["B", 9]].map(([TYPE, VALUE]) => ({ attributes: { TYPE, VALUE } }));
+  const result = aggregateChart(records, createChartSpec({ type: "bar", dimension: "TYPE", measure: { field: "VALUE", aggregation: "sum" } }));
+  const option = chartOption(result, { theme: "futuristic", colors: ["#22d3ee", "#a78bfa"] });
+  assert.equal(option.series[0].data[0].itemStyle.color.type, "linear");
+  assert.ok(option.series[0].data[0].itemStyle.shadowBlur > 0);
+  assert.equal(option.yAxis.inverse, true);
+  assert.equal(option.grid.containLabel, true, "labels never overlap the plot");
+  assert.equal(resolveChartTheme(result.chart, "violet-circuit"), "futuristic");
+  assert.equal(resolveChartTheme(result.chart, "gismap"), "standard");
+  assert.equal(resolveChartTheme(createChartSpec({ style: { theme: "futuristic" } }), "gismap"), "futuristic");
 });
 
 test("Map Charts primitives keep anchors, SVG glyphs, and collision plans engine-neutral", () => {
@@ -185,14 +240,16 @@ test("saved charts stay inside standard panels and retain the active skin", () =
   const css = fs.readFileSync(new URL("../css/app.css", import.meta.url), "utf8");
   assert.match(ui, /skin: document\.documentElement\.dataset\.skin \|\| this\.projectManager\.current\.presentation\?\.skin/);
   assert.match(runtime, /application\.chart\.create[\s\S]*?const activeSkin = String\(input\.skin \|\| this\.document\.documentElement\.dataset\.skin/);
-  assert.match(runtime, /new ResizeObserver\(\(\) => chartInstance\?\.resize\?\.\(\)\)/);
+  assert.match(runtime, /new ResizeObserver\(\(\) => \{ fit\(\); chartInstance\?\.resize\?\.\(\); \}\)/);
   assert.match(runtime, /region: input\.region \|\| "right"/);
   assert.match(runtime, /input\.size \? \{ size: input\.size \}/);
   assert.match(runtime, /chartFilterForRow\(result, row\)/);
   assert.match(runtime, /data-dashboard-chart-clear>Show all map data/);
-  assert.match(runtime, /host\.querySelectorAll\("\[data-chart-row\]"\)/);
+  assert.match(runtime, /plot\.querySelectorAll\("\[data-chart-row\]"\)/);
   assert.match(css, /\.application-panel\[data-panel-type="charts"\] \.application-panel__body \{ overflow-x:hidden; \}/);
-  assert.match(css, /\.chart-dashboard \.chart-builder__canvas \{[^}]*max-height:190px/s);
+  // The chart fills its panel: resizing the panel resizes the chart.
+  assert.match(css, /\.chart-dashboard \.chart-builder__canvas \{ width:100%; height:100%;/);
+  assert.doesNotMatch(css, /\.chart-dashboard \.chart-builder__canvas \{[^}]*max-height/);
   assert.match(css, /\.application-panel__settings/);
   assert.doesNotMatch(html, /dashboard-settings-open/);
 });

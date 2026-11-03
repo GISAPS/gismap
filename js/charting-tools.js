@@ -2,6 +2,9 @@
 // GISMap Online; ECharts is only the lazy-loaded renderer for a configuration.
 
 import { fieldKind, featureFilterFor } from "./presentation-query.js";
+// Pure renderer-JSON readers (no SDK), shared with the map legend so a chart's
+// colours are the colours the legend shows.
+import { rendererValue, symbolColor, symbolPaint } from "./engines/maplibre/arcgis-renderer.js?v=0.42.0";
 
 export const CHART_SCHEMA_VERSION = 1;
 export const ECHARTS_URL = "https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js";
@@ -31,6 +34,19 @@ export const CHART_TYPES = Object.freeze([
   { id: "scatter3d", label: "3D scatterplot", dimension: true, measure: true },
 ]);
 export const AGGREGATIONS = Object.freeze(["count", "sum", "avg", "min", "max"]);
+// "inherit" follows the layer's map style; "theme" the interface skin; "neon"
+// the futuristic dashboard palette.
+export const CHART_PALETTES = Object.freeze(["inherit", "theme", "neon"]);
+// "auto" draws the futuristic look under the console-style dark skins.
+export const CHART_THEMES = Object.freeze(["auto", "standard", "futuristic"]);
+export const FUTURISTIC_SKINS = Object.freeze(["violet-circuit", "velvet-orbit", "wavelength"]);
+// Categories beyond the top N are grouped as one "Other" mark, or left out.
+export const CHART_OTHER_MODES = Object.freeze(["group", "hide"]);
+export const CHART_SORTS = Object.freeze(["auto", "value", "label"]);
+export const THEME_PALETTE = Object.freeze(["#1b7f6a", "#e0ad35", "#2f7f9d", "#b23f62", "#667085", "#728b3f", "#8054a0", "#bf6545"]);
+export const NEON_PALETTE = Object.freeze(["#22d3ee", "#a78bfa", "#f472b6", "#34d399", "#facc15", "#60a5fa", "#fb7185", "#c084fc"]);
+const OTHER_COLOR = "#8b9590";
+export const CHART_DEFAULT_TOP = Object.freeze({ bar: 16, column: 12, donut: 8, bar3d: 12, boxplot: 16 });
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const id = () => globalThis.crypto?.randomUUID?.() || `chart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -144,8 +160,34 @@ export function createChartSpec(input = {}) {
       maxZoom: Number.isFinite(Number(input.presentation?.maxZoom)) ? Number(input.presentation.maxZoom) : null,
     },
     interaction: { mapHighlight: input.interaction?.mapHighlight !== false, crossFilter: input.interaction?.crossFilter === true },
-    style: { palette: input.style?.palette || "inherit", legend: input.style?.legend !== false, stacked: input.style?.stacked === true },
+    style: normalizeChartStyle(input.style),
   };
+}
+
+/**
+ * Presentation choices that never change the aggregate: colours, look, how
+ * many categories show, what happens to the rest, and categories left out.
+ * topN null is the chart type's default; 0 shows every category.
+ */
+export function normalizeChartStyle(style = {}) {
+  const top = style?.topN == null || style.topN === "" ? null : Math.round(Number(style.topN));
+  return {
+    palette: allowed(style?.palette, CHART_PALETTES, "inherit"),
+    legend: style?.legend !== false,
+    stacked: style?.stacked === true,
+    theme: allowed(style?.theme, CHART_THEMES, "auto"),
+    topN: Number.isFinite(top) ? Math.max(0, Math.min(100, top)) : null,
+    other: allowed(style?.other, CHART_OTHER_MODES, "group"),
+    sort: allowed(style?.sort, CHART_SORTS, "auto"),
+    hidden: unique((Array.isArray(style?.hidden) ? style.hidden : []).map((value) => String(value).slice(0, 200))).slice(0, 200),
+  };
+}
+
+/** The look a chart draws with, given the active interface skin. */
+export function resolveChartTheme(chart, skin = "") {
+  const theme = chart?.style?.theme || "auto";
+  if (theme !== "auto") return theme;
+  return FUTURISTIC_SKINS.includes(String(skin)) ? "futuristic" : "standard";
 }
 
 export function normalizeCharts(value) {
@@ -233,32 +275,284 @@ export async function queryChart(mapController, layer, spec) {
   return { ...result, layer: loaded, features: response.features };
 }
 
-export function displayChartRows(result, { limit = null } = {}) {
-  const rows = result?.rows || [];
-  const type = result?.chart?.type;
-  const maximum = limit || ({ bar: 16, column: 12, donut: 8, bar3d: 12 }[type] || Infinity);
-  if (rows.length <= maximum || !Number.isFinite(maximum)) return rows;
-  const scalar = (row) => Array.isArray(row.value) ? Number(row.value[2]) || 0 : Number(row.value ?? row.y) || 0;
-  const ranked = [...rows].sort((a, b) => Math.abs(scalar(b)) - Math.abs(scalar(a)) || String(a.label).localeCompare(String(b.label)));
-  const retained = ranked.slice(0, Math.max(1, maximum - 1));
-  const remainder = ranked.slice(retained.length);
-  return [...retained, { label: `Other (${remainder.length})`, value: remainder.reduce((total, row) => total + scalar(row), 0), records: remainder.flatMap((row) => row.records || []) }];
+const CATEGORICAL_TYPES = ["bar", "column", "donut", "bar3d"];
+const rowScalar = (row) => Array.isArray(row?.value) ? Number(row.value[2]) || 0 : Number(row?.value ?? row?.y) || 0;
+const byLabel = (a, b) => String(a.label).localeCompare(String(b.label), undefined, { numeric: true });
+
+/** Every category the chart could show, before Top N and hidden categories apply. */
+export function chartCategories(result) {
+  if (!CATEGORICAL_TYPES.includes(result?.chart?.type) && result?.chart?.type !== "boxplot") return [];
+  return [...(result?.rows || [])].sort((a, b) => Math.abs(rowScalar(b)) - Math.abs(rowScalar(a)) || byLabel(a, b)).map((row) => ({ label: row.label, value: rowScalar(row), count: row.records?.length || 0 }));
 }
 
-export function chartOption(result, { palette = ["#1b7f6a", "#e0ad35", "#2f7f9d", "#b23f62", "#667085"], rows = displayChartRows(result) } = {}) {
+/**
+ * The rows a chart draws: hidden categories removed, categories ranked (or in
+ * label order for years and other ordered values), and those beyond the top N
+ * grouped as "Other" or left out, as the chart's style says.
+ */
+export function displayChartRows(result, { limit = null } = {}) {
+  const chart = result?.chart;
+  const style = chart?.style || {};
+  const type = chart?.type;
+  const categorical = CATEGORICAL_TYPES.includes(type) || type === "boxplot";
+  const hidden = new Set(categorical ? style.hidden || [] : []);
+  let rows = (result?.rows || []).filter((row) => !hidden.has(String(row.label)));
+  if (!categorical) return rows;
+  // Years and other numeric categories read in order; names read by size.
+  const ordered = chart?.dimension?.interpretation === "temporal" || (rows.length && rows.every((row) => Number.isFinite(Number(row.label))));
+  const sort = style.sort === "auto" || !style.sort ? (ordered || type === "boxplot" ? "label" : "value") : style.sort;
+  const ranked = [...rows].sort((a, b) => Math.abs(rowScalar(b)) - Math.abs(rowScalar(a)) || byLabel(a, b));
+  rows = sort === "value" ? ranked : [...rows].sort(byLabel);
+  const maximum = limit || (style.topN === 0 ? Infinity : style.topN || CHART_DEFAULT_TOP[type] || Infinity);
+  if (rows.length <= maximum || !Number.isFinite(maximum)) return rows;
+  const keep = style.other === "hide" ? maximum : Math.max(1, maximum - 1);
+  const retained = new Set(ranked.slice(0, keep));
+  const remainder = ranked.slice(keep);
+  const shown = rows.filter((row) => retained.has(row));
+  if (style.other === "hide" || type === "boxplot") return shown;
+  return [...shown, { label: `Other (${remainder.length})`, other: true, members: remainder.map((row) => row.label), value: remainder.reduce((total, row) => total + rowScalar(row), 0), records: remainder.flatMap((row) => row.records || []) }];
+}
+
+const symbolFill = (symbol) => {
+  const paint = symbolPaint(symbol);
+  const fill = paint.fill && !/,\s*0\)$/.test(paint.fill) ? paint.fill : null;
+  return fill || paint.circle || paint.line || paint.outline || null;
+};
+
+/**
+ * What a layer's style says about colour, read from its renderer JSON (either
+ * the service WebMap form or the autocast form GISMap compiles):
+ * { kind: "categories" | "classes" | "single" | "none", field, categories, classes, color, defaultColor }.
+ */
+export function chartSymbology(renderer) {
+  if (!renderer || typeof renderer !== "object") return { kind: "none", field: null };
+  const type = String(renderer.type || "");
+  const defaultColor = symbolFill(renderer.defaultSymbol);
+  const field = rendererValue(renderer).field || renderer.field1 || null;
+  if (/^unique-?value$/i.test(type) && field) {
+    const categories = new Map();
+    for (const info of renderer.uniqueValueInfos || []) {
+      const color = symbolFill(info.symbol);
+      if (color) categories.set(String(info.value), color);
+    }
+    return { kind: "categories", field, categories, defaultColor };
+  }
+  if (/^class-?breaks$/i.test(type) && field) {
+    let lower = Number.isFinite(renderer.minValue) ? renderer.minValue : -Infinity;
+    const classes = (renderer.classBreakInfos || []).map((info) => {
+      const min = Number.isFinite(info.classMinValue) ? info.classMinValue : Number.isFinite(info.minValue) ? info.minValue : lower;
+      const max = Number.isFinite(info.classMaxValue) ? info.classMaxValue : info.maxValue;
+      lower = max;
+      return { min, max, color: symbolFill(info.symbol) };
+    }).filter((item) => item.color);
+    if (classes.length) return { kind: "classes", field, classes, defaultColor };
+  }
+  const variable = (renderer.visualVariables || []).find((item) => /^color(Info)?$/.test(item?.type) && item.field && item.stops?.length);
+  if (variable) {
+    const classes = variable.stops.filter((stop) => Number.isFinite(stop.value)).sort((a, b) => a.value - b.value)
+      .map((stop) => ({ min: stop.value, max: stop.value, color: symbolColor(stop.color, { webMap: variable.type === "colorInfo" }) })).filter((item) => item.color);
+    if (classes.length) return { kind: "classes", field: variable.field, classes, defaultColor, continuous: true };
+  }
+  const color = symbolFill(renderer.symbol) || defaultColor;
+  return color ? { kind: "single", field: null, color } : { kind: "none", field: null };
+}
+
+const parseColor = (value) => {
+  const text = String(value || "").trim();
+  const hex = text.match(/^#([0-9a-f]{6}|[0-9a-f]{3})(?:[0-9a-f]{2})?$/i)?.[1];
+  if (hex) {
+    const full = hex.length === 3 ? [...hex].map((digit) => digit + digit).join("") : hex;
+    return [0, 2, 4].map((index) => parseInt(full.slice(index, index + 2), 16));
+  }
+  const rgb = text.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+  return rgb ? rgb.slice(1, 4).map(Number) : null;
+};
+const toHex = (rgb) => `#${rgb.map((part) => Math.round(Math.max(0, Math.min(255, part))).toString(16).padStart(2, "0")).join("")}`;
+const mix = (a, b, amount) => {
+  const from = parseColor(a); const to = parseColor(b);
+  if (!from || !to) return a || b;
+  return toHex(from.map((part, index) => part + (to[index] - part) * amount));
+};
+/** A colour with an alpha, for gradients and glows. */
+export function chartColorAlpha(color, alpha) {
+  const rgb = parseColor(color);
+  return rgb ? `rgba(${rgb.join(",")},${alpha})` : color;
+}
+// A position (0–1) along a list of colours.
+const along = (colors, position) => {
+  if (colors.length === 1) return colors[0];
+  const scaled = Math.max(0, Math.min(1, position)) * (colors.length - 1);
+  const index = Math.min(colors.length - 2, Math.floor(scaled));
+  return mix(colors[index], colors[index + 1], scaled - index);
+};
+const classColor = (classes, value) => {
+  if (!Number.isFinite(value)) return null;
+  const found = classes.find((item) => value <= item.max);
+  return (found || classes.at(-1)).color;
+};
+
+/**
+ * One colour per drawn row, and where the colours came from. With the
+ * "inherit" palette a chart grouped by the layer's styled field takes the
+ * map's own category colours; classed and ramped styles colour each mark
+ * along the same ramp; a single-symbol layer draws in its symbol colour.
+ * { colors, source: "map" | "theme" | "neon", note }.
+ */
+export function chartColors(result, rows = displayChartRows(result), { renderer = null, palette = THEME_PALETTE, theme = "standard" } = {}) {
+  const chart = result?.chart || {};
+  const choice = chart.style?.palette || "inherit";
+  const neon = choice === "neon" || (choice === "theme" && theme === "futuristic");
+  const base = neon ? NEON_PALETTE : palette;
+  const multiple = ["donut"].includes(chart.type);
+  const values = rows.map(rowScalar);
+  const low = Math.min(...values); const high = Math.max(...values);
+  const position = (value) => high === low ? 1 : (value - low) / (high - low);
+  const fromPalette = () => {
+    if (multiple) return rows.map((row, index) => row.other ? OTHER_COLOR : base[index % base.length]);
+    // One series in one hue; the futuristic look shades it from cool to warm by value.
+    if (neon) return rows.map((row) => row.other ? OTHER_COLOR : along([NEON_PALETTE[0], NEON_PALETTE[1], NEON_PALETTE[2]], position(rowScalar(row))));
+    return rows.map((row) => row.other ? OTHER_COLOR : base[0]);
+  };
+  if (choice !== "inherit") return { colors: fromPalette(), source: neon ? "neon" : "theme", note: null };
+  const symbology = chartSymbology(renderer);
+  const dimension = chart.dimension?.field;
+  if (symbology.kind === "categories" && dimension && symbology.field === dimension) {
+    const colors = rows.map((row, index) => row.other ? (symbology.defaultColor || OTHER_COLOR) : symbology.categories.get(String(row.records?.[0]?.attributes?.[dimension] ?? row.label)) || symbology.categories.get(String(row.label)) || symbology.defaultColor || base[index % base.length]);
+    return { colors, source: "map", note: `Colours match the map's ${dimension} categories.` };
+  }
+  if (symbology.kind === "classes") {
+    const ramp = symbology.classes.map((item) => item.color);
+    // A histogram of the styled field, or an average of it, sits inside the map's own classes.
+    const sameScale = symbology.field === chart.measure?.field && (chart.type === "histogram" || ["avg", "min", "max"].includes(chart.measure?.aggregation));
+    const colors = rows.map((row) => {
+      if (row.other) return OTHER_COLOR;
+      if (sameScale && !symbology.continuous) return classColor(symbology.classes, chart.type === "histogram" ? (Number(row.min) + Number(row.max)) / 2 : rowScalar(row)) || ramp.at(-1);
+      return along(ramp, position(rowScalar(row)));
+    });
+    return { colors, source: "map", note: sameScale ? `Colours use the map's ${symbology.field} classes.` : "Colours follow the map's colour ramp, low to high." };
+  }
+  if (symbology.kind === "single") {
+    const colors = multiple
+      ? rows.map((row, index) => row.other ? OTHER_COLOR : mix(symbology.color, index % 2 ? "#000000" : "#ffffff", Math.min(.6, Math.floor((index + 1) / 2) * .16)))
+      : rows.map((row) => row.other ? OTHER_COLOR : symbology.color);
+    return { colors, source: "map", note: "Colours match the layer's map symbol." };
+  }
+  return { colors: fromPalette(), source: "theme", note: null };
+}
+
+const compact = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value ?? "");
+  return Math.abs(number) >= 10000 ? number.toLocaleString(undefined, { notation: "compact", maximumFractionDigits: 1 }) : number.toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
+
+/**
+ * Headline numbers for a dashboard chart: the total, how many groups, and the
+ * leading group with its share. Null for charts without groups.
+ */
+export function chartSummary(result, rows = displayChartRows(result)) {
+  const chart = result?.chart;
+  if (!chart || !CATEGORICAL_TYPES.includes(chart.type) || !result.rows?.length) return null;
+  const all = result.rows;
+  const total = all.reduce((sum, row) => sum + rowScalar(row), 0);
+  const top = [...all].sort((a, b) => rowScalar(b) - rowScalar(a))[0];
+  const additive = ["sum", "count"].includes(chart.measure?.aggregation);
+  return {
+    total: additive ? total : null,
+    aggregation: chart.measure?.aggregation || "count",
+    field: chart.measure?.field || null,
+    groups: all.length,
+    shown: rows.filter((row) => !row.other).length,
+    top: top ? { label: top.label, value: rowScalar(top), share: additive && total ? rowScalar(top) / total : null } : null,
+    records: result.quality?.processedRecords ?? null,
+  };
+}
+
+/**
+ * ECharts option for a chart result. `colors` are per-row colours (see
+ * chartColors); `tokens` are the interface's CSS colours and font so the chart
+ * reads in light, dark and every skin; theme "futuristic" draws glowing
+ * gradient marks on a transparent HUD-like grid.
+ */
+export function chartOption(result, { palette = THEME_PALETTE, rows = displayChartRows(result), colors = null, theme = "standard", tokens = {} } = {}) {
   const { chart } = result;
-  const common = { color: palette, animation: !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches, tooltip: { trigger: chart.type === "donut" ? "item" : "axis" } };
   // Conventional 3D charts deliberately use the local SVG renderer below.
   // That keeps analytical 3D independent of the geographic engines and avoids
   // making ECharts GL another CDN/runtime requirement.
   if (["kpi", "bar3d", "scatter3d"].includes(chart.type)) return null;
-  if (["scatter", "bubble"].includes(chart.type)) return { ...common, xAxis: { type: "value", name: chart.dimension?.field || "X" }, yAxis: { type: "value", name: chart.measure.field || "Y" }, series: [{ type: "scatter", symbolSize: chart.type === "bubble" ? (value) => Math.max(7, Math.min(42, Math.sqrt(Math.abs(Number(value[2]) || 0)) * 2.5 || 10)) : 9, data: rows.map((row) => chart.type === "bubble" ? [row.x, row.y, row.size] : [row.x, row.y]) }] };
-  if (chart.type === "donut") return { ...common, tooltip: { trigger: "item" }, series: [{ type: "pie", radius: ["45%", "75%"], data: rows.map((row) => ({ name: row.label, value: row.value })) }] };
-  if (chart.type === "boxplot") return { ...common, grid: { left: 48, right: 18, top: 22, bottom: 55 }, xAxis: { type: "category", data: rows.map((row) => row.label) }, yAxis: { type: "value" }, series: [{ type: "boxplot", data: rows.map((row) => row.value) }] };
+  const futuristic = theme === "futuristic";
+  const ink = tokens.ink || (futuristic ? "#e6f6ff" : "#17221f");
+  const muted = tokens.muted || (futuristic ? "#8fb3c9" : "#68736e");
+  const line = tokens.line || (futuristic ? "rgba(34,211,238,.16)" : "#d9d5c9");
+  const surface = tokens.surface || (futuristic ? "#0b1020" : "#fffdf8");
+  const font = futuristic ? `"JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, monospace` : tokens.font || "system-ui, sans-serif";
+  const marks = colors || rows.map((row, index) => palette[index % palette.length]);
+  const reduced = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const grid = futuristic ? "rgba(34,211,238,.12)" : chartColorAlpha(line, .7);
+  const axisLabel = { color: muted, fontFamily: font, fontSize: 10 };
+  const valueAxis = { type: "value", axisLabel: { ...axisLabel, formatter: compact }, splitLine: { lineStyle: { color: grid, type: futuristic ? "dashed" : "solid" } }, axisLine: { show: false }, axisTick: { show: false } };
+  const categoryAxis = { axisLabel: { ...axisLabel, color: futuristic ? "#bfe9ff" : ink }, axisLine: { lineStyle: { color: futuristic ? "rgba(34,211,238,.35)" : line } }, axisTick: { show: false } };
+  const common = {
+    color: marks,
+    backgroundColor: "transparent",
+    textStyle: { fontFamily: font, color: ink },
+    animation: !reduced,
+    animationDuration: futuristic ? 1100 : 600,
+    animationEasing: "cubicOut",
+    tooltip: {
+      trigger: chart.type === "donut" ? "item" : "axis",
+      axisPointer: { type: "shadow", shadowStyle: { color: futuristic ? "rgba(34,211,238,.08)" : chartColorAlpha(line, .35) } },
+      backgroundColor: futuristic ? "rgba(8,14,30,.92)" : surface,
+      borderColor: futuristic ? "rgba(34,211,238,.5)" : line,
+      textStyle: { color: ink, fontFamily: font, fontSize: 11 },
+      extraCssText: futuristic ? "box-shadow:0 0 18px rgba(34,211,238,.35);backdrop-filter:blur(6px);border-radius:4px;" : "border-radius:6px;",
+      valueFormatter: (value) => Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 }),
+    },
+  };
+  // A mark's fill: flat in the standard look; a gradient with a soft glow in the futuristic one.
+  const fill = (color, horizontal) => futuristic
+    ? { color: { type: "linear", x: 0, y: horizontal ? 0 : 1, x2: horizontal ? 1 : 0, y2: 0, colorStops: [{ offset: 0, color: chartColorAlpha(color, .15) }, { offset: 1, color }] }, shadowBlur: 14, shadowColor: chartColorAlpha(color, .55), borderRadius: horizontal ? [0, 2, 2, 0] : [2, 2, 0, 0] }
+    : { color, borderRadius: horizontal ? [0, 3, 3, 0] : [3, 3, 0, 0] };
+  const emphasis = { focus: "self", itemStyle: { shadowBlur: futuristic ? 24 : 6, shadowColor: futuristic ? "rgba(34,211,238,.8)" : "rgba(0,0,0,.25)" } };
+  if (["scatter", "bubble"].includes(chart.type)) return { ...common, grid: { left: 12, right: 18, top: 28, bottom: 12, containLabel: true }, xAxis: { ...valueAxis, name: chart.dimension?.field || "X", nameTextStyle: axisLabel }, yAxis: { ...valueAxis, name: chart.measure.field || "Y", nameTextStyle: axisLabel }, series: [{ type: "scatter", symbolSize: chart.type === "bubble" ? (value) => Math.max(7, Math.min(42, Math.sqrt(Math.abs(Number(value[2]) || 0)) * 2.5 || 10)) : 9, itemStyle: { color: marks[0], opacity: .82, ...(futuristic ? { shadowBlur: 10, shadowColor: chartColorAlpha(marks[0], .7) } : {}) }, emphasis, data: rows.map((row) => chart.type === "bubble" ? [row.x, row.y, row.size] : [row.x, row.y]) }] };
+  if (chart.type === "donut") {
+    const total = rows.reduce((sum, row) => sum + rowScalar(row), 0);
+    return {
+      ...common,
+      tooltip: { ...common.tooltip, trigger: "item" },
+      legend: chart.style?.legend === false ? undefined : { type: "scroll", orient: "vertical", right: 4, top: "middle", itemWidth: 10, itemHeight: 10, icon: futuristic ? "rect" : "circle", textStyle: { color: muted, fontFamily: font, fontSize: 10, width: 120, overflow: "truncate" }, pageTextStyle: { color: muted } },
+      title: { text: compact(total), subtext: chart.measure?.aggregation === "count" ? "records" : chart.measure?.field || "", left: "34%", top: "center", textAlign: "center", textStyle: { color: futuristic ? "#e6f6ff" : ink, fontFamily: font, fontSize: 18, fontWeight: 700, textShadowBlur: futuristic ? 12 : 0, textShadowColor: "rgba(34,211,238,.8)" }, subtextStyle: { color: muted, fontFamily: font, fontSize: 10 } },
+      series: [{ type: "pie", center: ["35%", "50%"], radius: ["52%", "76%"], padAngle: futuristic ? 2 : 1, itemStyle: { borderRadius: futuristic ? 2 : 4, borderColor: futuristic ? "transparent" : surface, borderWidth: futuristic ? 0 : 2 }, label: { show: false }, emphasis: { scale: true, scaleSize: 6, itemStyle: emphasis.itemStyle }, data: rows.map((row, index) => ({ name: row.label, value: rowScalar(row), itemStyle: { color: marks[index], ...(futuristic ? { shadowBlur: 16, shadowColor: chartColorAlpha(marks[index], .6) } : {}) } })) }],
+    };
+  }
+  if (chart.type === "boxplot") return { ...common, grid: { left: 12, right: 18, top: 22, bottom: 12, containLabel: true }, xAxis: { ...categoryAxis, type: "category", data: rows.map((row) => row.label), axisLabel: { ...categoryAxis.axisLabel, rotate: rows.length > 7 ? 35 : 0, width: 90, overflow: "truncate" } }, yAxis: valueAxis, series: [{ type: "boxplot", itemStyle: { color: chartColorAlpha(marks[0], .25), borderColor: marks[0], borderWidth: 1.5 }, data: rows.map((row) => row.value) }] };
   const categories = rows.map((row) => chart.type === "histogram" ? `${row.min.toLocaleString(undefined, { maximumFractionDigits: 2 })}–${row.max.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : row.label);
-  if (chart.type === "bar") return { ...common, grid: { left: 138, right: 24, top: 22, bottom: 30 }, xAxis: { type: "value" }, yAxis: { type: "category", data: categories, axisLabel: { interval: 0, width: 125, overflow: "truncate" } }, series: [{ type: "bar", barMaxWidth: 22, data: rows.map((row) => row.value) }] };
+  const barData = (horizontal) => rows.map((row, index) => ({ value: row.value, itemStyle: { ...fill(marks[index], horizontal), ...(row.other ? { opacity: .7 } : {}) } }));
+  if (chart.type === "bar") {
+    return {
+      ...common,
+      grid: { left: 8, right: 46, top: 6, bottom: 6, containLabel: true },
+      xAxis: { ...valueAxis, splitNumber: 4 },
+      // Largest first, at the top, so the ranking reads down the chart.
+      yAxis: { ...categoryAxis, type: "category", inverse: true, data: categories, axisLabel: { ...categoryAxis.axisLabel, interval: 0, width: 132, overflow: "truncate" }, axisLine: { show: false } },
+      series: [{ type: "bar", barMaxWidth: 18, barCategoryGap: "28%", showBackground: futuristic, backgroundStyle: { color: "rgba(34,211,238,.05)", borderRadius: 2 }, label: { show: true, position: "right", color: futuristic ? "#bfe9ff" : muted, fontFamily: font, fontSize: 10, formatter: ({ value }) => compact(value) }, emphasis, data: barData(true) }],
+    };
+  }
   const type = chart.type === "histogram" || chart.type === "column" ? "bar" : "line";
-  return { ...common, grid: { left: 48, right: 18, top: 22, bottom: 55 }, xAxis: { type: "category", data: categories, axisLabel: { rotate: categories.length > 7 ? 35 : 0 } }, yAxis: { type: "value" }, series: [{ type, areaStyle: chart.type === "area" ? {} : undefined, data: rows.map((row) => row.value) }] };
+  const rotate = categories.length > 7 ? 35 : 0;
+  const base = { ...common, grid: { left: 8, right: 18, top: 18, bottom: 6, containLabel: true }, xAxis: { ...categoryAxis, type: "category", data: categories, axisLabel: { ...categoryAxis.axisLabel, rotate, interval: "auto", width: rotate ? 80 : 110, overflow: "truncate" } }, yAxis: valueAxis };
+  if (type === "bar") return { ...base, series: [{ type: "bar", barMaxWidth: 34, barCategoryGap: chart.type === "histogram" ? "6%" : "30%", emphasis, data: barData(false) }] };
+  const color = marks[0];
+  return {
+    ...base,
+    xAxis: { ...base.xAxis, boundaryGap: false },
+    series: [{
+      type: "line", smooth: futuristic ? .35 : false, showSymbol: rows.length <= 24, symbolSize: 6, data: rows.map((row) => row.value), emphasis,
+      lineStyle: { width: futuristic ? 2.5 : 2, color, ...(futuristic ? { shadowBlur: 12, shadowColor: chartColorAlpha(color, .8) } : {}) },
+      itemStyle: { color, borderColor: futuristic ? "#e6f6ff" : surface, borderWidth: 1.5 },
+      areaStyle: chart.type === "area" || futuristic ? { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: chartColorAlpha(color, chart.type === "area" ? .45 : .22) }, { offset: 1, color: chartColorAlpha(color, 0) }] } } : undefined,
+    }],
+  };
 }
 
 export async function loadECharts(documentRef = document) {
@@ -286,7 +580,7 @@ function renderThreeDimensionalFallback(chart, rows) {
   return `<div class="chart-3d" aria-label="${escape(chart.title)} three-dimensional bar chart"><svg viewBox="0 0 520 300" role="img"><path class="chart-3d__axis" d="M48 252 458 252M48 252 48 46M48 252 140 202"/>${values.map((row, index) => { const height = Math.max(5, scalar(row) / max * 174); const width = Math.max(14, Math.min(28, spacing - 8)); const left = 66 + index * spacing; const top = 252 - height; const depth = Math.min(12, width * .5); return `<g class="chart-3d__column" data-chart-row="${index}" role="button" tabindex="0" aria-label="${escape(`${row.label}: ${row.value}`)}"><path class="chart-3d__bar-side" d="M${left + width} ${top} l${depth} -${depth} v${height} l-${depth} ${depth}z"/><path class="chart-3d__bar-top" d="M${left} ${top} l${depth} -${depth} h${width} l-${depth} ${depth}z"/><rect class="chart-3d__bar" x="${left}" y="${top}" width="${width}" height="${height}" rx="1"/></g>`; }).join("")}</svg><p>Fixed analytical perspective · geographic 3D remains available through Spatial Charts.</p></div>`;
 }
 
-export function renderChartFallback(result, { rows = displayChartRows(result) } = {}) {
+export function renderChartFallback(result, { rows = displayChartRows(result), colors = null } = {}) {
   const { chart } = result;
   if (!rows.length) return `<div class="chart-builder__empty"><strong>No chartable values</strong><p>Change the fields or adjust the current layer filter.</p></div>`;
   if (chart.type === "kpi") return `<div class="chart-kpi"><span>${escape(chart.measure.aggregation)}</span><strong>${Number(rows[0].value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></div>`;
@@ -294,8 +588,8 @@ export function renderChartFallback(result, { rows = displayChartRows(result) } 
   const scalar = (row) => Array.isArray(row.value) ? row.value[2] : Number(row.value ?? row.y) || 0;
   const max = Math.max(...rows.map(scalar), 1);
   const rowLabel = (row) => row.label || (row.min != null ? `${Number(row.min).toLocaleString(undefined, { maximumFractionDigits: 2 })}–${Number(row.max).toLocaleString(undefined, { maximumFractionDigits: 2 })}` : row.x);
-  if (chart.type === "bar") return `<div class="chart-fallback chart-fallback--horizontal" aria-label="${escape(chart.title)}">${rows.map((row, index) => `<button type="button" data-chart-row="${index}" title="${escape(rowLabel(row))}: ${Number(row.value ?? row.y).toLocaleString()}"><span>${escape(rowLabel(row))}</span><i style="width:${Math.max(2, scalar(row) / max * 100)}%"></i><b>${Number(row.value ?? row.y).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></button>`).join("")}</div>`;
-  return `<div class="chart-fallback" aria-label="${escape(chart.title)}">${rows.map((row, index) => `<button type="button" data-chart-row="${index}" title="${escape(rowLabel(row) || `${row.x}, ${row.y}`)}: ${Array.isArray(row.value) ? row.value[2].toLocaleString() : Number(row.value ?? row.y).toLocaleString()}"><i style="height:${Math.max(4, scalar(row) / max * 100)}%"></i><span>${escape(rowLabel(row))}</span></button>`).join("")}</div>`;
+  if (chart.type === "bar") return `<div class="chart-fallback chart-fallback--horizontal" aria-label="${escape(chart.title)}">${rows.map((row, index) => `<button type="button" data-chart-row="${index}" title="${escape(rowLabel(row))}: ${Number(row.value ?? row.y).toLocaleString()}"><span>${escape(rowLabel(row))}</span><i style="width:${Math.max(2, scalar(row) / max * 100)}%${colors?.[index] ? `;background:${escape(colors[index])}` : ""}"></i><b>${Number(row.value ?? row.y).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></button>`).join("")}</div>`;
+  return `<div class="chart-fallback" aria-label="${escape(chart.title)}">${rows.map((row, index) => `<button type="button" data-chart-row="${index}" title="${escape(rowLabel(row) || `${row.x}, ${row.y}`)}: ${Array.isArray(row.value) ? row.value[2].toLocaleString() : Number(row.value ?? row.y).toLocaleString()}"><i style="height:${Math.max(4, scalar(row) / max * 100)}%${colors?.[index] ? `;background:${escape(colors[index])}` : ""}"></i><span>${escape(rowLabel(row))}</span></button>`).join("")}</div>`;
 }
 
 export function mapSelectionForRows(result, rows) {
