@@ -1,7 +1,7 @@
 // GISMap SI account session: sign in, sign up, sign out, refresh, and the
 // per-user feature flags SI returns from /me. The access token lives only in
 // memory. Anonymous visitors always get every flag off.
-import { createSiClient, SI_API_BASE } from "./si-client.js?v=0.68.2-si-auth";
+import { createSiClient, SI_API_BASE } from "./si-client.js?v=0.68.3-si-workspace";
 
 export const FEATURE_FLAGS = ["accounts", "save_maps", "si_data_browser", "save_datasets", "si_assistant"];
 const FLAG_DEPENDENCIES = {
@@ -11,6 +11,7 @@ const FLAG_DEPENDENCIES = {
   si_assistant: ["accounts", "si_data_browser"],
 };
 const RECOVERY_KEY = "gismap.si.recoveryDraft";
+const WORKSPACE_KEY = "gismap.si.workspace";
 
 export const NO_FLAGS = Object.freeze(Object.fromEntries(FEATURE_FLAGS.map((flag) => [flag, false])));
 
@@ -31,10 +32,11 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
   let accessToken = "";
   let refreshToken = "";
   let user = null;
+  let organizations = [];
   let flags = NO_FLAGS;
   const listeners = new Set();
   const emit = () => listeners.forEach((listener) => listener(snapshot()));
-  const snapshot = () => ({ signedIn: Boolean(user), user, flags });
+  const snapshot = () => ({ signedIn: Boolean(user), user, organizations, flags });
 
   async function refresh() {
     if (!refreshToken) return "";
@@ -55,6 +57,7 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
     accessToken = data?.access_token || data?.accessToken || data?.token || "";
     if (data?.refreshToken) refreshToken = data.refreshToken;
     if (data?.user) user = data.user;
+    if (Array.isArray(data?.organizations)) organizations = data.organizations;
     if (data?.features) flags = resolveFlags(data.features);
   }
 
@@ -62,12 +65,14 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
     accessToken = "";
     refreshToken = "";
     user = null;
+    organizations = [];
     flags = NO_FLAGS;
   }
 
   async function loadMe() {
     const { data } = await client.get("/auth/me");
     user = data?.user || data || user;
+    if (Array.isArray(data?.organizations)) organizations = data.organizations;
     flags = resolveFlags(data?.features);
   }
 
@@ -85,6 +90,15 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
     snapshot,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     isEnabled: (flag) => flags[flag] === true,
+    // The workspace saves go to: the last one used, else the first.
+    workspace() {
+      let last = "";
+      try { last = storage?.getItem(WORKSPACE_KEY) || ""; } catch { /* storage unavailable */ }
+      return organizations.find((org) => org.id === last) || organizations[0] || null;
+    },
+    useWorkspace(id) {
+      try { storage?.setItem(WORKSPACE_KEY, id); } catch { /* storage unavailable */ }
+    },
     signIn: ({ email, password }) => authenticate("/auth/login", { email, password }),
     // SI creates the account's first workspace from organizationName.
     signUp: ({ name, email, password, organizationName, acceptTerms, inviteCode }) => {

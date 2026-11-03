@@ -46,7 +46,7 @@ export async function toSiError(response) {
 
 // getToken() returns the in-memory access token or "". refresh() returns a new
 // token or "" (signed out). Neither is ever written to a URL or the console.
-export function createSiClient({ base = SI_API_BASE, fetchImpl = globalThis.fetch, getToken = () => "", refresh = async () => "", timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+export function createSiClient({ base = SI_API_BASE, fetchImpl = (...args) => globalThis.fetch(...args), getToken = () => "", refresh = async () => "", timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   let capabilities = null;
 
   async function send(method, path, { body, headers = {}, auth = true, signal } = {}) {
@@ -54,10 +54,12 @@ export function createSiClient({ base = SI_API_BASE, fetchImpl = globalThis.fetc
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     signal?.addEventListener("abort", () => controller.abort(), { once: true });
     const token = auth ? getToken() : "";
+    // FormData (file uploads) sets its own multipart Content-Type.
+    const form = typeof FormData !== "undefined" && body instanceof FormData;
     const init = {
       method,
-      headers: { Accept: "application/json", ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: { Accept: "application/json", ...(body === undefined || form ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers },
+      body: body === undefined || form ? body : JSON.stringify(body),
       signal: controller.signal,
       credentials: "omit",
     };

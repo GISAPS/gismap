@@ -8,6 +8,8 @@ const PROVIDER_DEFAULTS = {
   openai: { endpoint: "https://api.openai.com/v1", model: "gpt-6-astra" },
   anthropic: { endpoint: "https://api.anthropic.com/v1", model: "claude-sonnet-5" },
   "openai-compatible": { endpoint: "", model: "" },
+  // Runs in GISMap SI with the signed-in account; no endpoint or key in the browser.
+  "gismap-si": { endpoint: "https://api.gismap.si", model: "gismap-si" },
 };
 
 export const AI_SYSTEM_PROMPT =
@@ -120,6 +122,8 @@ export class AIController {
     this.config = this.#readConfig();
     this.token = "";
     this.lastContext = null;
+    this.siAccount = null;
+    this.siSessionId = null;
     // Remove credentials saved by the foundation build. Secrets now remain in memory only.
     sessionStorage.removeItem(LEGACY_CONFIG_KEY);
     this.events.subscribe("identify:complete", (payload) => {
@@ -137,6 +141,17 @@ export class AIController {
       model: (config.model || defaults.model).trim(),
     };
     this.token = config.token?.trim() || "";
+    if (provider === "gismap-si") {
+      if (!this.siAccount?.session.snapshot().signedIn) throw new Error("Sign in to GISMap SI to use it as the AI provider.");
+      // `model` is only shown in the assistant header, so it names the workspace.
+      const workspace = this.siAccount.session.workspace()?.name;
+      this.config = { provider, endpoint: defaults.endpoint, model: workspace ? `workspace ${workspace}` : "your workspace" };
+      this.token = "";
+      this.siSessionId = null;
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(this.config));
+      this.events.publish("ai:configured", { config: { ...this.config } });
+      return;
+    }
     if (!this.config.endpoint) throw new Error("An AI endpoint URL is required.");
     if (!this.config.model) throw new Error("An AI model is required.");
     if (provider !== "ollama" && !this.token) {
@@ -186,6 +201,7 @@ export class AIController {
   }
 
   isConfigured() {
+    if (this.config?.provider === "gismap-si") return Boolean(this.siAccount?.session.snapshot().signedIn);
     if (!this.config?.endpoint || !this.config?.model) return false;
     return this.config.provider === "ollama" || Boolean(this.token);
   }
@@ -202,7 +218,9 @@ export class AIController {
     if (!quiet) this.events.publish("ai:start", { context });
     try {
       let text;
-      if (this.config.provider === "ollama") {
+      if (this.config.provider === "gismap-si") {
+        text = await this.#askSi(messages[1].content);
+      } else if (this.config.provider === "ollama") {
         const response = await this.#fetchOllama(`${this.config.endpoint}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -281,6 +299,12 @@ export class AIController {
   async chat(messages, { instructions, signal = null } = {}) {
     if (!this.isConfigured()) throw new Error("Configure an AI provider from Tools first.");
     const { provider, endpoint, model } = this.config;
+    // The SI assistant answers from the workspace; it can't run map tools yet.
+    if (provider === "gismap-si") {
+      const last = [...messages].reverse().find((message) => message.role === "user");
+      const content = typeof last?.content === "string" ? last.content : JSON.stringify(last?.content ?? "");
+      return { content: await this.#askSi(content), toolCalls: [] };
+    }
     const send = async (textTools) => {
       const { path, body } = toProviderRequest(provider, { model, system: instructions(textTools), messages, textTools });
       const headers = { "Content-Type": "application/json" };
@@ -303,6 +327,13 @@ export class AIController {
     }
     if (result.error) throw new Error(result.error);
     return result.reply;
+  }
+
+  async #askSi(message) {
+    const { askSiAssistant } = await import("./si-workspace.js?v=0.68.3-si-workspace");
+    const reply = await askSiAssistant(this.siAccount.session, { message, sessionId: this.siSessionId });
+    this.siSessionId = reply.sessionId;
+    return reply.text;
   }
 
   async #fetchOllama(url, options, endpoint, timeoutMs = 8000) {
