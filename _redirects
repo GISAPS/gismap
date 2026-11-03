@@ -8,3 +8,5 @@
 /ai/ /discover/ai/ 302
 # A memorable direct address for the 404 dragon game.
 /dragons /dragons/ 301
+# Invited GISMap SI beta testers sign in from /beta?code=...
+/beta / 200
