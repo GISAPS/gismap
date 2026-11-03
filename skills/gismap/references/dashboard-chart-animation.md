@@ -8,12 +8,24 @@ Before creating one, inspect the layer's real geometry, field types, domain valu
 
 The standard Chart Builder also supports bar, column, line, area, histogram, scatter, bubble, box, donut, metric, conventional 3D bar/scatter and map-chart presets. Its destinations are Chart panel, Instant Dashboard, On the map and Brief slide. Map charts need suitable feature geometry and can use compact SVG or engine-backed displays; they are not automatically analytical spatial aggregation. The chart preview works from the selected data scope (`filtered`, `all`, `viewport` or `selected`) and may use a bounded browser query; label sample/partial coverage rather than presenting it as a complete-source statistic.
 
+### Colours, categories and look
+
+A chart's `style` changes how it is drawn, never the aggregate:
+
+- **Colours** (`palette`): `inherit` (the default) follows the layer's map style. A chart grouped by the styled category field takes the map's own category colours, and categories the map draws in its default colour stay that colour. Classed and colour-ramp styles colour each mark along the same ramp, using the map's exact classes for a histogram, average, min or max of the styled field. A single symbol, including a 3D extrusion, colours every mark. Keep `inherit` when colour carries meaning so chart and map read the same way; `theme` (the interface skin) and `neon` are for when they don't.
+- **Categories**: `topN` sets how many show (`0` shows all; unset uses the chart type's default). `other: "group"` folds the rest into one clickable "Other" mark that filters to all of them; `"hide"` leaves them out. `hidden` lists categories left out by name. The chart panel's Show, Rest and Categories controls edit these. When categories are left out, say so; the chart's totals and headline numbers still count every group.
+- **Order**: named categories rank largest first; years and other numeric categories keep their order.
+- **Look** (`theme`): `futuristic` draws a neon HUD (gradient marks with a glow, a faint grid, monospace numerals) that suits operations, technology or night-time subjects. `auto` uses it with the violet-circuit, velvet-orbit and wavelength skins. `create_instant_dashboard` takes it as `chartTheme`. Don't choose it where a sober, print-like reading matters more.
+
+Dashboard charts also show headline numbers (total, group count, leading group and its share), and these drop away when the panel is short. The chart fills its panel, so resize the bottom strip or Workspace pane rather than settling for a cramped chart. Hovering a mark highlights all of its group's features on the map; clicking also zooms to them. Adding a chart to the ordinary workspace adds only the chart panel and leaves the sidebar as it was.
+
 ### Verification
 
 1. Open the saved chart panel at its chosen placement and confirm title, field aliases, aggregation and source scope.
-2. Click or keyboard-activate a bar, donut segment or other grouped mark. Confirm that the map shows the matching features and reports the linked selection/filter.
-3. Clear the chart filter and confirm that the layer returns to its prior visible data.
-4. Reopen the project/share URL and verify skin, basemap, chart panel and no-data behavior. A map share carries map configuration; test saved application/dashboard layout separately before claiming it is portable.
+2. With the default palette, compare mark colours with the map legend; they should match for the styled field. Check whether "Other" or hidden categories hide anything the reader needs.
+3. Hover a mark and confirm its features light up on the map. Click or keyboard-activate a bar, donut segment or other grouped mark, and confirm that the map zooms to the matching features and reports the linked selection/filter.
+4. Clear the chart filter and confirm that the layer returns to its prior visible data.
+5. Reopen the project/share URL and verify skin, basemap, chart panel and no-data behavior. A map share carries map configuration; test saved application/dashboard layout separately before claiming it is portable.
 
 ## Cinematic animation
 
