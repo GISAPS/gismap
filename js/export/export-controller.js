@@ -45,7 +45,8 @@ export class ExportController {
     return true;
   }
 
-  async exportLayer({ uid, scope = "filtered", fileName, format = "geojson" } = {}) {
+  /** `deliver(blob, fileName)`, when given, receives the file instead of a download. */
+  async exportLayer({ uid, scope = "filtered", fileName, format = "geojson", deliver = null } = {}) {
     if (this.activeJob) throw new Error("Another export is already running.");
     const formatDetails = FORMAT_DETAILS[format];
     if (!formatDetails) throw new Error("That export format is not supported.");
@@ -133,7 +134,8 @@ export class ExportController {
       const result = await completed;
       this.#assertActive(job);
       const blob = await this.#packageResult(result, format, baseName);
-      downloadBlob(blob, outputName);
+      if (deliver) await deliver(blob, outputName, { title, featureCount: result.featureCount });
+      else downloadBlob(blob, outputName);
       this.events.publish("export:complete", { id, title, format, formatLabel: formatDetails.label, fileName: outputName, featureCount: result.featureCount });
       return result;
     } catch (error) {

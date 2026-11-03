@@ -11,7 +11,7 @@ import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
 import { POPULAR_SERVICES } from "./catalog.js?v=0.18.2";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
-import { MapAssistantPanel } from "./assistant-panel.js?v=0.57.0-skins1";
+import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.3-si-workspace";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.66.0-analysis1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
 import { createShareUrl } from "./share.js?v=0.54.0-unified4";
@@ -2302,11 +2302,22 @@ export class UIController {
     this.openDialog({
       eyebrow: "Browser storage",
       title: "Save project",
-      content: `<label class="field"><span>Project name</span><input id="save-project-name" value="${escapeHtml(this.projectManager.current.name)}" /></label><p class="form-note">Service settings persist in localStorage. Browser security prevents saved projects from silently reopening local files; use a project package when those files must travel with the map.</p>`,
-      actions: [{ label: "Save locally", primary: true, handler: () => {
-        this.projectManager.save(this.dialog.querySelector("#save-project-name").value);
-        this.dialog.close();
-      }}],
+      content: `<label class="field"><span>Project name</span><input id="save-project-name" value="${escapeHtml(this.projectManager.current.name)}" /></label><p class="form-note">Service settings persist in localStorage. Browser security prevents saved projects from silently reopening local files; use a project package when those files must travel with the map.</p>${this.#siOffered ? `<p class="form-note">${this.#siSignedIn ? "Save to GISMap SI stores this map in your workspace, with every save kept as a version." : "Sign in to GISMap SI to store this map in your workspace."}</p>` : ""}`,
+      actions: [
+        ...(this.#siOffered ? [{ label: this.#siSignedIn ? "Save to GISMap SI" : "Sign in to save to GISMap SI", handler: async () => {
+          const name = this.dialog.querySelector("#save-project-name").value;
+          try {
+            this.projectManager.save(name);
+            if (await this.saveMapToSi()) this.dialog.close();
+          } catch (error) {
+            this.error(error.message);
+          }
+        }}] : []),
+        { label: "Save locally", primary: true, handler: () => {
+          this.projectManager.save(this.dialog.querySelector("#save-project-name").value);
+          this.dialog.close();
+        }},
+      ],
     });
   }
 
@@ -2404,6 +2415,7 @@ export class UIController {
           ${card("briefing", "Create briefing", `Start a briefing on ${layer ? `“${escapeHtml(layer.title || "this layer")}”` : "a layer"}${styled ? " with its style" : ""} and write the slides yourself.`, { icon: "▣", disabled: queryable ? "" : "Choose a feature layer to brief on." })}
           ${card("tour", "Start a tour here", "Save this view as the first chapter of a guided tour.", { icon: "➤" })}
           ${card("data", "Export data", "Download features as GeoJSON, KML, KMZ or Shapefile.", { icon: "⤓", disabled: exportable.length ? "" : "Add a queryable vector layer first." })}
+          ${this.#siOffered ? card("gismap-si", "Save to GISMap SI", this.#siSignedIn ? "Store this map in your GISMap SI workspace, with versions, to reopen and share from there." : "Sign in to GISMap SI to store this map in your workspace.", { icon: "⬡" }) : ""}
         </div></div>`,
       actions: [{ label: "Close", handler: () => this.dialog.close() }],
     });
@@ -2412,6 +2424,7 @@ export class UIController {
       try {
         if (action === "share") return await this.shareMap();
         if (action === "data") return this.#exportDialog(exportable.some((item) => item.uid === layer?.uid) ? layer.uid : null);
+        if (action === "gismap-si") { this.dialog.close(); return await this.saveMapToSi(); }
         this.dialog.close();
         if (action === "pdf" || action === "smart-image") return await this.#openMapTemplates(action);
         if (action === "briefing") return this.createBriefingFromLayer(layer.uid);
@@ -2421,6 +2434,38 @@ export class UIController {
         this.error(error.message);
       }
     }));
+  }
+
+  /** True when this page offers GISMap SI (the account UI loaded). */
+  get #siOffered() { return Boolean(this.siAccount); }
+
+  get #siSignedIn() { return Boolean(this.siAccount?.session.snapshot().signedIn); }
+
+  /**
+   * Saves the current map to the signed-in user's GISMap SI workspace: a new map
+   * the first time, a new version after. Signed out, it opens sign-in instead.
+   */
+  async saveMapToSi() {
+    if (!this.#siSignedIn) { this.siAccount?.open(); return null; }
+    const { saveMapToSi, toSiState } = await import("./si-workspace.js?v=0.68.3-si-workspace");
+    const project = this.projectManager.current;
+    const { state, blocked } = toSiState({
+      skin: document.documentElement.dataset.skin || project.presentation?.skin,
+      basemap: this.mapController.getBasemapId(),
+      camera: this.mapController.getViewState(),
+      layers: this.mapController.getAllLayerConfigs(),
+      textBoxes: this.mapController.getTextBoxes?.() ?? [],
+      drawings: this.mapController.getDrawings?.() ?? [],
+      engine: this.mapController.getEngineId?.() ?? null,
+    });
+    if (blocked.length) {
+      throw new Error(`${blocked.length === 1 ? `“${blocked[0]}” can't` : `These layers can't`} be saved to GISMap SI yet${blocked.length === 1 ? "" : `: ${blocked.join(", ")}`}. Layers from files on this device can be stored with Export data → My GISMap SI workspace.`);
+    }
+    const saved = await saveMapToSi(this.siAccount.session, { projectId: project.id, title: project.name, state });
+    const workspace = this.siAccount.session.workspace()?.name;
+    this.toast(`${saved.created ? "Saved" : "Saved a new version"} to GISMap SI${workspace ? ` in ${workspace}` : ""}.`);
+    if (saved.warnings.length) this.error(`GISMap SI changed the map while saving: ${saved.warnings.map((warning) => warning.message || warning).join(" ")}`);
+    return saved;
   }
 
   /** The current map as a self-contained link (and QR when it fits). */
@@ -3702,10 +3747,10 @@ export class UIController {
     this.openDialog({
       eyebrow: "Download vector data",
       title: "Export data",
-      content: `<label class="field"><span>Layer</span><select id="export-layer">${layers.map((layer) => `<option value="${escapeHtml(layer.uid)}" ${layer.uid === selectedUid ? "selected" : ""}>${escapeHtml(layer.title)}</option>`).join("")}</select></label>
+      content: `${this.#siOffered ? `<label class="field"><span>Destination</span><select id="export-destination"><option value="download">Download to this device</option><option value="gismap-si">My GISMap SI workspace${this.#siSignedIn ? ` (${escapeHtml(this.siAccount.session.workspace()?.name || "workspace")})` : " (sign in)"}</option></select></label>` : ""}<label class="field"><span>Layer</span><select id="export-layer">${layers.map((layer) => `<option value="${escapeHtml(layer.uid)}" ${layer.uid === selectedUid ? "selected" : ""}>${escapeHtml(layer.title)}</option>`).join("")}</select></label>
         <label class="field"><span>Features</span><select id="export-scope"></select></label>
         <label class="field"><span>Format</span><select id="export-format"><option value="geojson">GeoJSON (.geojson)</option><option value="kml">KML (.kml)</option><option value="kmz">Compressed KML (.kmz)</option><option value="shapefile">Shapefile (.zip)</option></select></label>
-        <label class="field"><span>File name</span><input id="export-file-name" value="${escapeHtml(layers.find((layer) => layer.uid === selectedUid)?.title || "layer")}" /></label>
+        <label class="field"><span><span data-export-name-label>File name</span></span><input id="export-file-name" value="${escapeHtml(layers.find((layer) => layer.uid === selectedUid)?.title || "layer")}" /></label>
         <p class="form-note">Geometry is exported as longitude and latitude in EPSG:4326. Shapefiles are delivered as ZIP archives and split into point, line, and polygon datasets when needed. Retrieval is paginated and conversion runs in a background worker.</p>`,
       actions: [{ label: "Export GeoJSON", primary: true, handler: () => this.#runExport() }],
     });
@@ -3729,17 +3774,49 @@ export class UIController {
       updateScope();
     });
     formatSelect.addEventListener("change", updateFormat);
+    // GISMap SI stores GeoJSON as a private dataset named after the file name.
+    const destinationSelect = this.dialog.querySelector("#export-destination");
+    const updateDestination = () => {
+      const toSi = destinationSelect?.value === "gismap-si";
+      formatSelect.closest(".field").hidden = toSi;
+      if (toSi) formatSelect.value = "geojson";
+      this.dialog.querySelector("[data-export-name-label]").textContent = toSi ? "Dataset name" : "File name";
+      if (toSi) exportButton.textContent = this.#siSignedIn ? "Save to GISMap SI" : "Sign in to GISMap SI";
+      else updateFormat();
+    };
+    destinationSelect?.addEventListener("change", updateDestination);
     updateScope();
     updateFormat();
+    updateDestination();
   }
 
   async #runExport() {
+    const toSi = this.dialog.querySelector("#export-destination")?.value === "gismap-si";
+    if (toSi && !this.#siSignedIn) { this.dialog.close(); this.siAccount.open(); return; }
     const options = {
       uid: this.dialog.querySelector("#export-layer").value,
       scope: this.dialog.querySelector("#export-scope").value,
-      format: this.dialog.querySelector("#export-format").value,
+      format: toSi ? "geojson" : this.dialog.querySelector("#export-format").value,
       fileName: this.dialog.querySelector("#export-file-name").value,
     };
+    let siJob = null;
+    if (toSi) {
+      const SI_STEPS = { uploading: "Sending features to GISMap SI…", queued: "Waiting for GISMap SI to check the data…", inspecting: "GISMap SI is checking layers and geometry…", review_ready: "Checked. Saving the dataset…", publish_queued: "Saving the dataset…", publishing: "Saving the dataset…" };
+      options.deliver = async (blob, fileName) => {
+        const { storeDatasetInSi } = await import("./si-workspace.js?v=0.68.3-si-workspace");
+        document.querySelector("#dialog-title").textContent = "Saving to GISMap SI";
+        siJob = await storeDatasetInSi(this.siAccount.session, {
+          blob,
+          fileName,
+          name: options.fileName || fileName.replace(/\.geojson$/i, ""),
+          description: "Saved from GISMap Online",
+          onProgress: (job) => {
+            const status = this.dialog.querySelector("[data-export-status]");
+            if (status && SI_STEPS[job.status]) status.textContent = SI_STEPS[job.status];
+          },
+        });
+      };
+    }
     document.querySelector("#dialog-title").textContent = "Preparing download";
     document.querySelector("#dialog-content").innerHTML = `<div class="export-progress"><progress data-export-progress></progress><strong data-export-status>Preparing feature query…</strong><small>You can continue using the map after starting the download. Cancel stops outstanding service requests and terminates the export worker.</small></div>`;
     const footer = document.querySelector("#dialog-actions");
@@ -3756,10 +3833,14 @@ export class UIController {
       const result = await this.exportController.exportLayer(options);
       if (!result) return;
       this.dialog.close();
+      if (siJob) {
+        this.toast(`Saved ${result.featureCount.toLocaleString()} features to GISMap SI as “${options.fileName || "dataset"}”. Find it in Stored Intel.`);
+        return;
+      }
       const formatLabel = { geojson: "GeoJSON", kml: "KML", kmz: "KMZ", shapefile: "a zipped Shapefile" }[options.format];
       this.toast(`Exported ${result.featureCount.toLocaleString()} features as ${formatLabel}.`);
     } catch (error) {
-      this.error(`Export failed: ${error.message}`);
+      this.error(`${toSi ? "Saving to GISMap SI failed" : "Export failed"}: ${error.message}`);
       this.dialog.close();
     }
   }
@@ -4629,12 +4710,32 @@ export class UIController {
     });
   }
 
+  /** GISMap SI account ({ session, open }), present only where sign-in is enabled. */
+  attachSiAccount(account) {
+    this.siAccount = account;
+    this.aiController.siAccount = account;
+  }
+
   #connectionsDialog() {
+    const si = this.siAccount?.session.snapshot();
+    const siCard = si?.signedIn
+      ? `<article class="connection-card" data-si-connection>
+            <div class="connection-card__head">
+              <div><strong>GISMap SI</strong><small>GISMap SI account</small></div>
+              <span class="connection-badge is-connected">${escapeHtml(si.user?.email || si.user?.name || "Connected")}</span>
+            </div>
+            <code>gismap.si</code>
+            <div class="connection-card__actions">
+              <a class="button" href="https://gismap.si/" target="_blank" rel="noopener">Open GISMap SI</a>
+              <button type="button" class="button--quiet" data-si-sign-out>Sign out</button>
+            </div>
+          </article>`
+      : "";
     const callbackUrl = this.authController.getCallbackUrl();
     const redirectUrl = this.authController.getRedirectUrl();
     const connections = this.authController.list();
-    const connectionCards = connections.length
-      ? connections.map((connection) => {
+    const connectionCards = connections.length || siCard
+      ? siCard + connections.map((connection) => {
           const url = connection.type === "portal" ? connection.portalUrl : connection.serverUrl;
           return `<article class="connection-card" data-connection-id="${escapeHtml(connection.id)}">
             <div class="connection-card__head">
@@ -4657,7 +4758,18 @@ export class UIController {
       content: `<section class="connection-manager">
           <div id="connection-list" class="connection-list">${connectionCards}</div>
 
-          <label class="field"><span>Server configuration</span><select id="connection-kind"><option value="">Choose a configuration…</option><option value="portal">ArcGIS Portal or ArcGIS Online</option><option value="standalone">Standalone server</option></select></label>
+          <label class="field"><span>Server configuration</span><select id="connection-kind"><option value="">Choose a configuration…</option>${si && !si.signedIn ? '<option value="gismap-si">GISMap SI</option>' : ""}<option value="portal">ArcGIS Portal or ArcGIS Online</option><option value="standalone">Standalone server</option></select></label>
+
+          ${si && !si.signedIn ? `<section class="connection-setup" data-connection-config="gismap-si" hidden>
+            <h3>GISMap SI</h3>
+            <div class="connection-setup__body" id="si-connection-form">
+              <label class="field"><span>Email</span><input id="si-connection-email" type="email" autocomplete="email" required /></label>
+              <label class="field"><span>Password</span><input id="si-connection-password" type="password" autocomplete="current-password" required /></label>
+              <p class="form-note" data-si-connection-error role="alert" hidden></p>
+              <button type="button" id="si-connection-sign-in" class="inline-primary">Sign in</button>
+              <p class="form-note">Store and share maps and data in your GISMap SI workspace. No account yet? <button type="button" class="text-button" data-si-sign-up>Create one</button> · <a href="https://gismap.si/reset-password" target="_blank" rel="noopener">Forgot your password?</a></p>
+            </div>
+          </section>` : ""}
 
           <section class="connection-setup" data-connection-config="portal" hidden>
             <h3>ArcGIS Portal or ArcGIS Online</h3>
@@ -4817,6 +4929,36 @@ export class UIController {
         this.#connectionsDialog();
       });
     });
+    const siForm = this.dialog.querySelector("#si-connection-form");
+    const siSignIn = async () => {
+      const email = siForm.querySelector("#si-connection-email");
+      const password = siForm.querySelector("#si-connection-password");
+      if (!email.reportValidity() || !password.reportValidity()) return;
+      const button = siForm.querySelector("#si-connection-sign-in");
+      const note = siForm.querySelector("[data-si-connection-error]");
+      setBusy(button, true, "Sign in");
+      try {
+        await this.siAccount.session.signIn({ email: email.value, password: password.value });
+        this.#connectionsDialog();
+        this.toast("Signed in to GISMap SI.");
+      } catch (error) {
+        setBusy(button, false, "Sign in");
+        note.textContent = error.message;
+        note.hidden = false;
+      }
+    };
+    siForm?.querySelector("#si-connection-sign-in").addEventListener("click", siSignIn);
+    siForm?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && event.target.matches("input")) { event.preventDefault(); siSignIn(); }
+    });
+    this.dialog.querySelector("[data-si-sign-up]")?.addEventListener("click", () => {
+      this.dialog.close();
+      this.siAccount.open("signup");
+    });
+    this.dialog.querySelector("[data-si-sign-out]")?.addEventListener("click", () => {
+      this.siAccount.session.signOut();
+      this.#connectionsDialog();
+    });
     this.authController.getStatuses().then((items) => {
       for (const { connection, status } of items) {
         const card = this.dialog.querySelector(`[data-connection-id="${CSS.escape(connection.id)}"]`);
@@ -4839,6 +4981,7 @@ export class UIController {
       openai: ["https://api.openai.com/v1", "gpt-6-astra"],
       anthropic: ["https://api.anthropic.com/v1", "claude-sonnet-5"],
       "openai-compatible": ["", ""],
+      "gismap-si": ["", ""],
     };
     const readForm = () => ({
       provider: this.dialog.querySelector("#ai-provider").value,
@@ -4854,6 +4997,13 @@ export class UIController {
     };
     const testConnection = async () => {
       const pending = readForm();
+      if (pending.provider === "gismap-si") {
+        const account = this.siAccount?.session;
+        if (!account?.snapshot().signedIn) { setConnectionStatus("error", "Sign in to GISMap SI first."); throw new Error("Sign in to GISMap SI first."); }
+        const who = account.snapshot().user;
+        setConnectionStatus("success", `Signed in as ${who?.display_name || who?.email}. Answers come from workspace ${account.workspace()?.name || "—"}.`);
+        return {};
+      }
       const isOllama = pending.provider === "ollama";
       setConnectionStatus("testing", isOllama ? "Checking Ollama and installed models…" : "Checking provider credentials and model access…");
       try {
@@ -4896,6 +5046,7 @@ export class UIController {
       button.textContent = "Checking…";
       try {
         const pending = readForm();
+        if (pending.provider === "gismap-si" && !this.#siSignedIn) { this.dialog.close(); this.siAccount.open(); return; }
         if (pending.provider === "ollama") await testConnection();
         this.aiController.configure(pending);
         this.dialog.close();
@@ -4910,7 +5061,8 @@ export class UIController {
     this.openDialog({
       eyebrow: "AI adapter",
       title: "Configure intelligence provider",
-      content: `<label class="field"><span>Provider</span><select id="ai-provider"><option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
+      content: `<label class="field"><span>Provider</span><select id="ai-provider">${this.#siOffered ? `<option value="gismap-si" ${provider === "gismap-si" ? "selected" : ""}>GISMap SI${this.#siSignedIn ? "" : " (sign in)"}</option>` : ""}<option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
+        <p id="si-ai-note" class="form-note" hidden>Your questions go to GISMap SI, which answers from your workspace's datasets${this.#siSignedIn ? ` in ${escapeHtml(this.siAccount.session.workspace()?.name || "your workspace")}` : ""}. No endpoint or API key is needed. It can't move or style the map yet.</p>
         <label class="field"><span>Endpoint</span><input id="ai-endpoint" type="url" value="${escapeHtml(config.endpoint || defaults[provider][0])}" /></label>
         <label class="field"><span>Model</span><input id="ai-model" list="ollama-models" value="${escapeHtml(config.model || defaults[provider][1])}" /><datalist id="ollama-models"></datalist><small id="ai-model-hint">Use the complete Ollama tag, including a suffix such as <code>:27b</code>.</small></label>
         <label class="field"><span>API token <small>online providers only</small></span><input id="ai-token" type="password" autocomplete="off" /></label>
@@ -4934,6 +5086,9 @@ export class UIController {
         this.dialog.querySelector("#ai-model").value = model;
       }
       this.dialog.querySelector("#ollama-setup").hidden = providerInput.value !== "ollama";
+      const si = providerInput.value === "gismap-si";
+      this.dialog.querySelector("#si-ai-note").hidden = !si;
+      for (const id of ["#ai-endpoint", "#ai-model", "#ai-token"]) this.dialog.querySelector(id).closest(".field").hidden = si;
       this.dialog.querySelector("#ai-model-hint").innerHTML = providerInput.value === "ollama"
         ? 'Use the complete Ollama tag, including a suffix such as <code>:27b</code>.'
         : providerInput.value === "openai"

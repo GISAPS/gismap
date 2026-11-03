@@ -3190,3 +3190,25 @@ body.briefing-v2 .briefing-data-dock :is(.briefing-select__add-slides, .briefing
 .spatial-analysis { display: grid; gap: 10px; }
 .spatial-analysis__draw { border: 1px solid var(--line, #8884); border-radius: 6px; padding: 8px; }
 .spatial-analysis__done { position: fixed; z-index: 60; left: 50%; bottom: 24px; transform: translateX(-50%); }
+
+/* GISMap SI account (dark-launched on /beta) */
+.brand { position: relative; }
+.si-account-button { flex: none; min-height: 30px; white-space: nowrap; padding: 0 12px; border: var(--ui-border-width, 1px) solid var(--line); border-radius: 999px; color: var(--ink); background: var(--surface); font: 600 13px var(--ui-font, inherit); cursor: pointer; }
+.si-account-button.is-signed-in { width: 32px; padding: 0; color: var(--surface); background: var(--green); border-color: var(--green); }
+.si-account-button:focus-visible, .si-account-menu :focus-visible { outline: 2px solid var(--green-2); outline-offset: 2px; }
+.si-account-menu { position: absolute; z-index: 30; top: calc(100% - 4px); right: 12px; display: grid; min-width: 200px; padding: 6px; border: var(--ui-border-width, 1px) solid var(--line); border-radius: var(--ui-radius-small, 7px); background: var(--surface); box-shadow: var(--shadow); }
+.si-account-menu > :is(button, a) { padding: 8px 10px; border: 0; border-radius: var(--ui-radius-small, 7px); color: var(--ink); background: none; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.si-account-menu > :is(button, a):hover:not([disabled]) { background: var(--surface-2); }
+.si-account-menu > button[disabled] { color: var(--muted); cursor: default; }
+.si-account-menu__who { display: grid; margin: 0 0 4px; padding: 6px 10px 8px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.si-account-menu__who small { color: var(--muted); font-weight: 400; overflow-wrap: anywhere; }
+.si-account-dialog { width: min(420px, calc(100vw - 32px)); }
+.si-account-form .dialog__content { display: grid; gap: 12px; }
+.si-account-form label { display: grid; gap: 4px; font-weight: 600; }
+.si-account-form .si-account-form__check { display: flex; align-items: flex-start; gap: 8px; font-weight: 400; }
+.si-account-form__note { margin: 0; color: var(--muted); }
+.si-account-form__link { justify-self: start; color: var(--green-2); }
+.si-account-form__error { margin: 0; color: var(--danger); }
+.si-account-recovery { position: fixed; z-index: 40; left: 50%; bottom: 16px; display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 8px 8px 8px 14px; transform: translateX(-50%); border: var(--ui-border-width, 1px) solid var(--line); border-radius: var(--ui-radius, 12px); color: var(--ink); background: var(--surface); box-shadow: var(--shadow); }
+.form-note[data-si-connection-error] { color: var(--danger); }
+.si-account-form__hint { color: var(--muted); font-weight: 400; }
