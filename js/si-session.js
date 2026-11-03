@@ -1,7 +1,7 @@
 // GISMap SI account session: sign in, sign up, sign out, refresh, and the
 // per-user feature flags SI returns from /me. The access token lives only in
 // memory. Anonymous visitors always get every flag off.
-import { createSiClient, SI_API_BASE } from "./si-client.js";
+import { createSiClient, SI_API_BASE } from "./si-client.js?v=0.68.2-si-auth";
 
 export const FEATURE_FLAGS = ["accounts", "save_maps", "si_data_browser", "save_datasets", "si_assistant"];
 const FLAG_DEPENDENCIES = {
@@ -52,7 +52,7 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
   const client = createSiClient({ base, fetchImpl, getToken: () => accessToken, refresh });
 
   function accept(data) {
-    accessToken = data?.accessToken || data?.token || "";
+    accessToken = data?.access_token || data?.accessToken || data?.token || "";
     if (data?.refreshToken) refreshToken = data.refreshToken;
     if (data?.user) user = data.user;
     if (data?.features) flags = resolveFlags(data.features);
@@ -66,7 +66,7 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
   }
 
   async function loadMe() {
-    const { data } = await client.get("/me");
+    const { data } = await client.get("/auth/me");
     user = data?.user || data || user;
     flags = resolveFlags(data?.features);
   }
@@ -86,11 +86,16 @@ export function createSiSession({ base = SI_API_BASE, fetchImpl, storage = globa
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     isEnabled: (flag) => flags[flag] === true,
     signIn: ({ email, password }) => authenticate("/auth/login", { email, password }),
-    signUp: ({ name, email, password, acceptTerms, inviteCode }) => {
+    // SI creates the account's first workspace from organizationName.
+    signUp: ({ name, email, password, organizationName, acceptTerms, inviteCode }) => {
       if (!acceptTerms) throw new Error("Accept the terms to create an account.");
-      return authenticate("/auth/register", { name, email, password, acceptTerms: true, ...(inviteCode ? { inviteCode } : {}) });
+      return authenticate("/auth/register", { display_name: name || null, email, password, organization_name: organizationName || `${name || email}'s workspace`, acceptTerms: true, ...(inviteCode ? { inviteCode } : {}) });
     },
-    signOut() { clear(); emit(); },
+    signOut() {
+      if (accessToken) client.post("/auth/logout", undefined).catch(() => {});
+      clear();
+      emit();
+    },
     // Written before the sign-in modal opens so a reload never loses the map.
     saveRecoveryDraft(state) {
       try { storage?.setItem(RECOVERY_KEY, JSON.stringify({ savedAt: Date.now(), state })); } catch { /* storage unavailable */ }

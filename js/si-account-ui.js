@@ -2,7 +2,7 @@
 // invited testers (`/beta?code=...`) or users SI has given the `accounts` flag;
 // everyone else sees no change and no request goes to SI. Opening the dialog
 // never touches the map: the current map is kept as a recovery draft first.
-import { betaInviteCode, createSiSession } from "./si-session.js?v=0.68.1-si-servers";
+import { betaInviteCode, createSiSession } from "./si-session.js?v=0.68.2-si-auth";
 
 const SI_RESET_URL = "https://gismap.si/reset-password";
 const SI_HOME_URL = "https://gismap.si/";
@@ -37,7 +37,7 @@ export function initSiAccountUi({ host = document.querySelector(".studio-header"
     const visible = Boolean(inviteCode) || state.flags.accounts;
     button.hidden = !visible;
     if (state.signedIn) {
-      const name = state.user?.name || state.user?.email || "Account";
+      const name = state.user?.display_name || state.user?.name || state.user?.email || "Account";
       button.textContent = name.trim().charAt(0).toUpperCase() || "A";
       button.title = `Signed in to GISMap SI as ${name}`;
       button.setAttribute("aria-label", `Account menu for ${name}`);
@@ -52,7 +52,7 @@ export function initSiAccountUi({ host = document.querySelector(".studio-header"
       menu.hidden = true;
     }
     menu.innerHTML = state.signedIn ? `
-      <p class="si-account-menu__who">${escapeHtml(state.user?.name || "")}<small>${escapeHtml(state.user?.email || "")}</small></p>
+      <p class="si-account-menu__who">${escapeHtml(state.user?.display_name || state.user?.name || "")}<small>${escapeHtml(state.user?.email || "")}</small></p>
       ${state.flags.save_maps ? '<button type="button" role="menuitem" data-si="my-maps" disabled title="Coming soon">My maps</button>' : ""}
       ${state.flags.save_datasets ? '<button type="button" role="menuitem" data-si="my-datasets" disabled title="Coming soon">My datasets</button>' : ""}
       <a role="menuitem" href="${SI_HOME_URL}" target="_blank" rel="noopener">Open GISMap SI</a>
@@ -69,9 +69,9 @@ export function initSiAccountUi({ host = document.querySelector(".studio-header"
         </header>
         <div class="dialog__content">
           <p class="si-account-form__note">Your map stays exactly as it is while you sign in.</p>
-          ${signUp ? '<label>Name<input name="name" autocomplete="name" required /></label>' : ""}
+          ${signUp ? '<label>Name<input name="name" autocomplete="name" required /></label><label>Workspace name<input name="organizationName" autocomplete="organization" required minlength="2" maxlength="120" placeholder="Your team or organization" /></label>' : ""}
           <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-          <label>Password<input name="password" type="password" autocomplete="${signUp ? "new-password" : "current-password"}" required minlength="${signUp ? 8 : 1}" /></label>
+          <label>Password<input name="password" type="password" autocomplete="${signUp ? "new-password" : "current-password"}" required minlength="${signUp ? 12 : 1}" />${signUp ? '<small class="si-account-form__hint">At least 12 characters.</small>' : ""}</label>
           ${signUp ? '<label class="si-account-form__check"><input name="acceptTerms" type="checkbox" required /> I accept the <a href="https://gismap.si/terms" target="_blank" rel="noopener">terms</a> and <a href="https://gismap.si/privacy" target="_blank" rel="noopener">privacy policy</a></label>' : `<a class="si-account-form__link" href="${SI_RESET_URL}" target="_blank" rel="noopener">Forgot your password?</a>`}
           <p class="si-account-form__error" role="alert" ${message ? "" : "hidden"}>${escapeHtml(message)}</p>
         </div>
@@ -120,13 +120,13 @@ export function initSiAccountUi({ host = document.querySelector(".studio-header"
     submit.disabled = true;
     submit.textContent = mode === "signup" ? "Creating…" : "Signing in…";
     try {
-      if (mode === "signup") await session.signUp({ name: values.name, email: values.email, password: values.password, acceptTerms: values.acceptTerms === "on", inviteCode });
+      if (mode === "signup") await session.signUp({ name: values.name, organizationName: values.organizationName, email: values.email, password: values.password, acceptTerms: values.acceptTerms === "on", inviteCode });
       else await session.signIn({ email: values.email, password: values.password });
       close();
     } catch (error) {
       renderDialog(error?.message || "Sign-in didn't work. Try again.");
       const fields = dialog.querySelector("form").elements;
-      for (const key of ["name", "email"]) if (fields[key] && values[key]) fields[key].value = values[key];
+      for (const key of ["name", "organizationName", "email"]) if (fields[key] && values[key]) fields[key].value = values[key];
     }
   });
 

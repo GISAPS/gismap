@@ -37,7 +37,7 @@ test("flags need their dependencies", () => {
 test("sign in loads flags from /me and sends the token only as a header", async () => {
   const { calls, fetchImpl } = fakeSi({
     "POST /auth/login": () => json(200, { accessToken: "tok-1", refreshToken: "ref-1", user: { name: "Loki" } }),
-    "GET /me": () => json(200, { user: { name: "Loki" }, features: { accounts: true, save_maps: true } }),
+    "GET /auth/me": () => json(200, { user: { name: "Loki" }, features: { accounts: true, save_maps: true } }),
   });
   const storage = memoryStorage();
   const session = createSiSession({ fetchImpl, storage });
@@ -55,24 +55,24 @@ test("a 401 refreshes once, and a failed refresh signs out quietly", async () =>
   let meCalls = 0;
   const { fetchImpl } = fakeSi({
     "POST /auth/login": () => json(200, { accessToken: "old", refreshToken: "ref" }),
-    "GET /me": (call) => (++meCalls === 1 || call.auth === "Bearer new" ? json(200, { features: { accounts: true } }) : json(401, {})),
+    "GET /auth/me": (call) => (++meCalls === 1 || call.auth === "Bearer new" ? json(200, { features: { accounts: true } }) : json(401, {})),
     "POST /auth/refresh": () => json(200, { accessToken: "new" }),
   });
   const session = createSiSession({ fetchImpl, storage: memoryStorage() });
   await session.signIn({ email: "a", password: "b" });
-  const { data } = await session.client.get("/me");
+  const { data } = await session.client.get("/auth/me");
   assert.deepEqual(data.features, { accounts: true });
 
   const failing = fakeSi({
     "POST /auth/login": () => json(200, { accessToken: "old", refreshToken: "ref" }),
-    "GET /me": (call) => (failing.calls.filter((c) => c.path === "/me").length === 1 ? json(200, { features: { accounts: true } }) : json(401, {})),
+    "GET /auth/me": (call) => (failing.calls.filter((c) => c.path === "/auth/me").length === 1 ? json(200, { features: { accounts: true } }) : json(401, {})),
     "POST /auth/refresh": () => json(401, {}),
   });
   const other = createSiSession({ fetchImpl: failing.fetchImpl, storage: memoryStorage() });
   const seen = [];
   other.subscribe((snap) => seen.push(snap.signedIn));
   await other.signIn({ email: "a", password: "b" });
-  await assert.rejects(other.client.get("/me"), (error) => error instanceof SiError && error.status === 401);
+  await assert.rejects(other.client.get("/auth/me"), (error) => error instanceof SiError && error.status === 401);
   assert.equal(other.snapshot().signedIn, false);
   assert.deepEqual(other.snapshot().flags, NO_FLAGS);
   assert.deepEqual(seen, [true, false]);
@@ -110,4 +110,26 @@ test("the beta invite route reads only /beta codes", () => {
   assert.equal(betaInviteCode({ pathname: "/beta/", search: "?code=abc-123" }), "abc-123");
   assert.equal(betaInviteCode({ pathname: "/", search: "?code=abc-123" }), "");
   assert.equal(betaInviteCode({ pathname: "/beta", search: "?code=<x>" }), "");
+});
+
+test("SI's FastAPI shapes: access_token, display_name and detail errors", async () => {
+  const { calls, fetchImpl } = fakeSi({
+    "POST /auth/register": () => json(201, { access_token: "tok", user: { display_name: "Loki", email: "a@b.c" } }),
+    "GET /auth/me": () => json(200, { user: { display_name: "Loki", email: "a@b.c" }, organizations: [] }),
+    "POST /auth/logout": () => json(204, null),
+  });
+  const session = createSiSession({ fetchImpl, storage: memoryStorage() });
+  await session.signUp({ name: "Loki", email: "a@b.c", password: "x".repeat(12), acceptTerms: true });
+  assert.equal(calls[0].body.organization_name, "Loki's workspace");
+  assert.equal(calls[0].body.display_name, "Loki");
+  assert.equal(session.snapshot().user.display_name, "Loki");
+  session.signOut();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(calls.at(-1), { path: "/auth/logout", method: "POST", auth: "Bearer tok", body: undefined });
+
+  const client = createSiClient({ fetchImpl: async (url) => (url.endsWith("/a")
+    ? json(401, { detail: "Email or password is incorrect." })
+    : json(422, { detail: [{ msg: "Field required" }, { msg: "Too short" }] })) });
+  await assert.rejects(client.get("/a"), { message: "Email or password is incorrect." });
+  await assert.rejects(client.get("/b"), { message: "Field required Too short" });
 });

@@ -1,6 +1,7 @@
 // The one place GISMap Online talks to the GISMap SI API. Every call gets a
 // timeout, the bearer token (when signed in), one silent refresh on 401, and
-// errors mapped to a user-facing message from SI's `issues[].message`.
+// errors mapped to a user-facing message from SI's `issues[].message` or
+// FastAPI's `detail` (a string, or a list of `{ msg }`).
 // Anonymous viewing never depends on this module.
 export const SI_API_ORIGINS = ["https://api.gismap.si", "https://api.staging.gismap.si"];
 export const SI_API_BASE = "https://api.gismap.si/api/v1";
@@ -37,7 +38,8 @@ export async function toSiError(response) {
   let body = null;
   try { body = await response.json(); } catch { /* not JSON */ }
   const issues = Array.isArray(body?.issues) ? body.issues : [];
-  const detail = issues.map((issue) => issue?.message).filter((text) => typeof text === "string" && text).join(" ");
+  const details = typeof body?.detail === "string" ? [body.detail] : Array.isArray(body?.detail) ? body.detail.map((item) => item?.msg) : [];
+  const detail = [...issues.map((issue) => issue?.message), ...details].filter((text) => typeof text === "string" && text).join(" ");
   const message = detail || STATUS_MESSAGES[response.status] || `GISMap SI returned ${response.status}.`;
   return new SiError(message, { status: response.status, code: body?.code || `http_${response.status}`, issues });
 }
