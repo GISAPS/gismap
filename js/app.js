@@ -11,7 +11,7 @@ import { IdentifyController } from "./identify.js?v=0.54.0-pan2";
 import { AttributeTableController } from "./attribute-table.js?v=0.61.2-layer-tools";
 import { AIController } from "./ai.js?v=0.68.0-charts1";
 import { ToolManager } from "./tool-manager.js?v=0.37.0";
-import { UIController } from "./ui.js?v=0.68.0-charts1";
+import { UIController } from "./ui.js?v=0.69.0-linkcharts1";
 import { ExportController } from "./export/export-controller.js?v=0.37.0";
 import { SHARE_BASEMAPS, parseShareParameters } from "./share.js?v=0.54.0-unified4";
 import { readShareLocation } from "./map-share.js?v=0.65.0-paths";
@@ -23,7 +23,7 @@ import { ApplicationRuntime } from "./application-runtime.js?v=0.68.0-charts1";
 import { PanelManager } from "./panel-manager.js?v=0.18.2";
 import { MobilePanelManager } from "./mobile-panel-manager.js?v=0.18.2";
 import { MobileWorkflowRouter } from "./mobile-workflow-router.js?v=0.57.0-skins1";
-import { createClientApi } from "./briefing-api.js?v=0.68.0-charts1";
+import { createClientApi } from "./briefing-api.js?v=0.69.0-linkcharts1";
 import { createPrintApi, hasWebgl, registerPrintTools, webglIssue } from "./print-api.js?v=0.54.0-print";
 import { MAP_TEMPLATES } from "./map-templates.js?v=0.54.0-print";
 import { readProjectFromPng } from "./smart-image.js?v=0.54.0-print";
@@ -31,9 +31,9 @@ import { registerAuthoringTools } from "./agent-authoring-tools.js?v=0.53.0";
 import { createCameraApi, createLayersApi } from "./layers-api.js?v=0.54.0-unified4";
 import { registerLayerTools } from "./layer-tools.js?v=0.29.0";
 import { createSpatialAnalysisApi } from "./spatial-analysis.js?v=0.66.1-finish1";
-import { createMapSpecApi } from "./map-spec-api.js?v=0.66.1-finish1";
+import { createMapSpecApi } from "./map-spec-api.js?v=0.69.0-linkcharts1";
 import { createLayerStylesApi } from "./layer-styles-api.js?v=0.60.0-media1";
-import { mapSpecFromShareParameters } from "./map-spec.js?v=0.66.1-finish1";
+import { mapSpecFromShareParameters } from "./map-spec.js?v=0.69.0-linkcharts1";
 import { GisMapError, ERROR_CODES } from "./gismap-errors.js?v=0.54.0-print";
 
 import { loadSharedLayer } from "./shared-layer-loader.js?v=0.53.0";
@@ -241,6 +241,9 @@ async function start() {
       showIssues: (list) => uiController.showSpecIssues(list),
       loadBriefing: (briefing) => clientApi.briefing.load(briefing, { activate: false }).ready,
       getBriefing: () => projectManager.current?.presentation?.briefing || null,
+      addChart: (chart) => uiController.addLinkedChart(chart),
+      clearCharts: () => uiController.clearChartPanels(),
+      getCharts: () => projectManager.current?.charts || [],
     },
   });
   const layerStylesApi = createLayerStylesApi({

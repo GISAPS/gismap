@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "title": "U.S. wildfire incidents by state",
+  "basemap": "dark-gray-vector",
+  "skin": "dark-analytical",
+  "layers": [
+    {
+      "url": "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/USA_Wildfires_v1/FeatureServer/0",
+      "title": "Current wildfire incidents",
+      "renderer": {
+        "type": "categories",
+        "field": "POOState",
+        "maxCategories": 10
+      }
+    }
+  ],
+  "charts": [
+    {
+      "type": "bar",
+      "title": "Incidents by state",
+      "layer": 0,
+      "dimension": "POOState",
+      "placement": "right",
+      "style": {
+        "topN": 10,
+        "theme": "futuristic"
+      }
+    },
+    {
+      "type": "column",
+      "title": "Acres burned today: wildfire or prescribed",
+      "layer": 0,
+      "dimension": "IncidentTypeCategory",
+      "measure": {
+        "field": "DailyAcres",
+        "aggregation": "sum"
+      },
+      "placement": "bottom",
+      "size": "compact",
+      "style": {
+        "theme": "futuristic"
+      }
+    }
+  ]
+}

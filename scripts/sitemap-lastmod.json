@@ -44,8 +44,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/": {
-    "hash": "4c1914918961b8a9",
-    "lastmod": "2026-11-02"
+    "hash": "3c2453245438d734",
+    "lastmod": "2026-11-03"
   },
   "/examples/data-connections/local-postgis/": {
     "hash": "5e88d704404ad446",
@@ -176,8 +176,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/ai/": {
-    "hash": "0480295f55d5612f",
-    "lastmod": "2026-11-01"
+    "hash": "d1b3750b690dcbb7",
+    "lastmod": "2026-11-03"
   },
   "/examples/ai/philadelphia-police-divisions/": {
     "hash": "78e4e05045a5248c",
@@ -186,6 +186,10 @@
   "/examples/ai/mlb-ballparks-by-state/": {
     "hash": "fad4fe14078e702d",
     "lastmod": "2026-11-02"
+  },
+  "/examples/ai/wildfires-by-state-chart/": {
+    "hash": "69edc867e9a3d623",
+    "lastmod": "2026-11-03"
   },
   "/examples/ai/corn-sales-one-link/": {
     "hash": "355b998c78455f9d",
@@ -256,12 +260,12 @@
     "lastmod": "2026-11-02"
   },
   "/llms.txt": {
-    "hash": "2ca6d44679edfa43",
-    "lastmod": "2026-11-02"
+    "hash": "ac0f4f8bb31a69ff",
+    "lastmod": "2026-11-03"
   },
   "/llms-full.txt": {
-    "hash": "87efe4f67f61745b",
-    "lastmod": "2026-11-02"
+    "hash": "0801b299ed95849b",
+    "lastmod": "2026-11-03"
   },
   "/api/catalog.json": {
     "hash": "c85799049c08d432",

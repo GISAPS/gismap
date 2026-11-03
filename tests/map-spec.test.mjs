@@ -5,6 +5,7 @@ import { MAP_SPEC_JSON_LIMIT, createMapSpecLink, decodeMapSpec, encodeMapSpec, m
 import { createShareLink, readShareLocation } from "../js/map-share.js";
 import { parseShareParameters } from "../js/share.js";
 import { createMapSpecApi } from "../js/map-spec-api.js";
+import { createChartSpec } from "../js/charting-tools.js";
 import { GisMapError } from "../js/gismap-errors.js";
 
 const CORN = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Corn/FeatureServer/0";
@@ -168,7 +169,8 @@ test("the schema, capabilities and app describe the same map spec", async () => 
   const schema = JSON.parse(await readFile(new URL("../schemas/map-v1.schema.json", import.meta.url), "utf8"));
   const capabilities = JSON.parse(await readFile(new URL("../api/capabilities.json", import.meta.url), "utf8"));
   assert.equal(schema.$id, "https://gismap.online/schemas/map-v1.schema.json");
-  assert.deepEqual(Object.keys(schema.properties).sort(), ["$schema", "analysis", "basemap", "briefing", "camera", "description", "layers", "legend", "skin", "title", "version"]);
+  assert.deepEqual(Object.keys(schema.properties).sort(), ["$schema", "analysis", "basemap", "briefing", "camera", "charts", "description", "layers", "legend", "skin", "title", "version"]);
+  assert.deepEqual(Object.keys(schema.$defs.chart.properties).sort(), ["aggregation", "dimension", "layer", "measure", "placement", "scope", "size", "style", "title", "type"]);
   assert.deepEqual(Object.keys(schema.$defs.layer.properties).sort(), ["animatedEffect", "ignoreServiceScaleRange", "opacity", "popup", "refreshInterval", "renderer", "scene3d", "spatialChart", "title", "type", "url", "visible", "where"]);
   assert.equal(capabilities.schemas.map, "/schemas/map-v1.schema.json");
   assert.ok(capabilities.namespaces.mapSpec.includes("load") && capabilities.namespaces.mapSpec.includes("fromCurrent"));
@@ -191,4 +193,76 @@ test("renderers in the SDK's autocast form keep their symbols (catalog 3D column
   const webmap = { type: "classBreaks", field: "acres", classBreakInfos: [{ classMaxValue: 1, symbol: { type: "esriSFS" } }] };
   map.restoreRenderer(layer, webmap);
   assert.deepEqual(layer.renderer, { type: "simple" }, "WebMap JSON still goes through the parser");
+});
+
+const FIRES = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/USA_Wildfires_v1/FeatureServer/0";
+
+test("charts are definitions bound to a layer by position or URL; bad ones are left out with a warning", () => {
+  const { valid, issues, spec } = validateMapSpec({
+    version: 1,
+    layers: [{ url: "http://insecure.example/0" }, { url: FIRES }],
+    charts: [
+      { type: "bar", layer: 1, dimension: "POOState", style: { topN: 10, theme: "futuristic", palette: "inherit", other: "group" } },
+      { type: "column", layer: FIRES, dimension: "IncidentTypeCategory", measure: "DailyAcres", placement: "bottom", rows: [{ POOState: "US-CA" }] },
+      { type: "bar", layer: 0, dimension: "POOState" },
+      { type: "pie", dimension: "POOState" },
+      { type: "bar", layer: 1, dimension: "POOState; DROP TABLE" },
+      { type: "kpi", layer: 1, measure: { field: "DailyAcres", aggregation: "median" } },
+    ],
+  });
+  assert.equal(valid, false, "the insecure layer is an error");
+  // Layer 1 is the first layer that loads, so the chart points at position 0; defaults are not written out.
+  assert.deepEqual(spec.charts, [
+    { type: "bar", layer: 0, dimension: "POOState", measure: { field: null, aggregation: "count" }, placement: "right", style: { theme: "futuristic", topN: 10 } },
+    { type: "column", layer: FIRES, dimension: "IncidentTypeCategory", measure: { field: "DailyAcres", aggregation: "sum" }, placement: "bottom" },
+  ]);
+  assert.deepEqual(issues.filter((item) => item.path.startsWith("charts")).map((item) => item.path), ["charts[1].rows", "charts[2]", "charts[3]", "charts[4].dimension", "charts[4]", "charts[5]"]);
+  assert.ok(!JSON.stringify(spec.charts).includes("US-CA"), "record data never survives validation");
+  const big = validateMapSpec({ layers: [{ url: FIRES }], charts: [{ type: "bar", dimension: "POOState", style: { hidden: Array.from({ length: 200 }, (_, index) => `category ${index} ${"x".repeat(20)}`) } }] });
+  assert.equal(big.spec.charts, undefined, "an oversized chart is left out");
+  assert.equal(validateMapSpec({ layers: [{ url: FIRES }], charts: [{ type: "bar" }] }).spec.charts, undefined, "a bar chart needs a dimension");
+  assert.equal(validateMapSpec({ layers: [{ url: FIRES }], charts: Array.from({ length: 8 }, () => ({ type: "kpi" })) }).spec.charts.length, 6);
+});
+
+test("opening a spec with charts mounts each one bound to its loaded layer, and fromCurrent writes them back", async () => {
+  const added = [];
+  const layers = {
+    list: () => added.slice(),
+    remove: (id) => { const index = added.findIndex((item) => item.id === id); if (index >= 0) added.splice(index, 1); },
+    add: async (url, options) => {
+      if (/missing/.test(url)) throw new GisMapError("LAYER_LOAD_FAILED", "The service did not answer.");
+      const info = { id: `uid-${added.length + 1}`, url, title: options.title || "Fires", type: "feature", renderer: { type: "service" }, opacity: 1, visible: true };
+      added.push(info);
+      return info;
+    },
+    update: async (id) => added.find((item) => item.id === id),
+    zoomTo: async () => {},
+  };
+  const charts = [];
+  const steps = [];
+  const host = {
+    addChart: async (chart) => { steps.push("chart"); charts.push(createChartSpec(chart)); },
+    clearCharts: () => { steps.push("clear"); charts.length = 0; },
+    getCharts: () => charts,
+  };
+  const camera = { set: async () => { steps.push("camera"); }, get: () => ({ center: [-110, 40], zoom: 4, heading: 0, tilt: 0 }) };
+  const api = createMapSpecApi({ layers, camera, mapController: {}, host });
+  const { ready } = api.load({
+    camera: { center: [-110, 40], zoom: 4 },
+    layers: [{ url: FIRES.replace("USA_Wildfires", "missing") }, { url: FIRES }],
+    charts: [
+      { type: "bar", title: "Incidents by state", layer: 1, dimension: "POOState", style: { topN: 10 } },
+      { type: "donut", layer: 0, dimension: "POOState" },
+    ],
+  });
+  const { issues } = await ready;
+  assert.deepEqual(steps, ["clear", "chart", "camera"], "charts open after the layers and before the camera fits");
+  assert.deepEqual(issues.map((item) => [item.code, item.path]), [["LAYER_LOAD_FAILED", "layers[0]"], ["LAYER_LOAD_FAILED", "charts[1]"]]);
+  assert.equal(charts[0].source.layerId, "uid-1", "bound to the loaded layer's id, not to its position");
+  assert.equal(charts[0].dimension.field, "POOState");
+  assert.equal(charts[0].presentation.placement, "right");
+  assert.equal(charts[0].style.topN, 10);
+  const exported = api.fromCurrent();
+  assert.deepEqual(exported.charts, [{ type: "bar", title: "Incidents by state", layer: 0, dimension: "POOState", measure: { field: null, aggregation: "count" }, placement: "right", style: { topN: 10 } }]);
+  assert.deepEqual(validateMapSpec(exported).spec.charts, exported.charts, "the exported charts validate unchanged");
 });

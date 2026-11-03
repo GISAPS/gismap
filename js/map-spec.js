@@ -14,6 +14,7 @@ import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=
 import { CINEMATIC_EFFECT_TYPES, normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.2.8";
 import { INTERFACE_SKINS } from "./skin-catalog.js?v=0.57.0-skins2";
 import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
+import { AGGREGATIONS, CHART_TYPES, normalizeChartStyle } from "./charting-tools.js?v=0.68.0-charts1";
 
 export const MAP_SPEC_VERSION = 1;
 export const MAP_SPEC_SCHEMA = "https://gismap.online/schemas/map-v1.schema.json";
@@ -21,8 +22,16 @@ import { SPATIAL_OPERATION_IDS, SPATIAL_OPERATIONS } from "./spatial-analysis.js
 
 export { MAP_SPEC_JSON_LIMIT };
 
-const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "layers", "legend", "briefing", "analysis"]);
+const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "layers", "legend", "briefing", "analysis", "charts"]);
 const LAYER_KEYS = new Set(["url", "type", "title", "where", "renderer", "spatialChart", "animatedEffect", "scene3d", "opacity", "visible", "ignoreServiceScaleRange", "popup", "outFields", "refreshInterval"]);
+// A chart panel is a definition only: which layer, which fields, how it looks.
+// Its numbers are computed from the layer when the link opens.
+const CHART_KEYS = new Set(["type", "title", "layer", "dimension", "measure", "aggregation", "scope", "placement", "size", "style"]);
+const CHART_STYLE_KEYS = ["palette", "theme", "topN", "other", "sort", "legend", "stacked", "hidden"];
+const CHART_SCOPES = ["filtered", "all", "viewport"];
+const CHART_SIZES = ["compact", "regular", "expanded"];
+export const MAP_SPEC_CHART_LIMITS = Object.freeze({ maxCharts: 6, maxJson: 4000 });
+const FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_.]{0,159}$/;
 const SKINS = new Set(INTERFACE_SKINS.map(({ id }) => id));
 const READ_ONLY_WHERE = /;|--|\/\*|\b(drop|delete|insert|update|alter|exec|execute|merge|truncate|create)\b/i;
 const text = (value, max) => String(value ?? "").trim().slice(0, max);
@@ -88,6 +97,7 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
   if (!Array.isArray(input.layers)) issue("error", "INVALID_SPEC", "layers", "layers must be a list of { url } objects.", 'Use "layers": [{ "url": "https://…/FeatureServer/0" }].');
   if (layers.length > SHARE_LIMITS.maxLayers) issue("error", "TOO_MANY_LAYERS", "layers", `A map holds at most ${SHARE_LIMITS.maxLayers} layers; the rest were left out.`);
   spec.layers = [];
+  const kept = new Map(); // position in input.layers → position in spec.layers
   layers.slice(0, SHARE_LIMITS.maxLayers).forEach((raw, index) => {
     const path = `layers[${index}]`;
     if (!raw || typeof raw !== "object") return issue("error", "INVALID_SPEC", path, "Each layer must be an object with a url.");
@@ -146,6 +156,7 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
       if (Array.isArray(popupFields) && popupFields.every((field) => typeof field === "string")) layer.popup = { fields: popupFields.slice(0, 50) };
       else issue("warning", "INVALID_SPEC", `${path}.popup.fields`, "popup.fields must be a list of field names.");
     }
+    kept.set(index, spec.layers.length);
     spec.layers.push(layer);
   });
   if (layers.length && !spec.layers.length) issue("error", "INVALID_SPEC", "layers", "None of the layers can be loaded.");
@@ -170,7 +181,119 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
     });
     if (kept.length) spec.analysis = kept.map(({ operation, input: from, overlay, options, title }) => ({ operation, input: from, ...(overlay !== undefined ? { overlay } : {}), ...(options ? { options } : {}), ...(title ? { title: text(title, 120) } : {}) }));
   }
+  if (input.charts !== undefined && input.charts !== null) {
+    const charts = Array.isArray(input.charts) ? input.charts.slice(0, MAP_SPEC_CHART_LIMITS.maxCharts) : [];
+    if (!Array.isArray(input.charts) || input.charts.length > MAP_SPEC_CHART_LIMITS.maxCharts) issue("warning", "INVALID_SPEC", "charts", `charts must be a list of at most ${MAP_SPEC_CHART_LIMITS.maxCharts} chart panels.`);
+    const valid = charts.map((raw, index) => validateChart(raw, `charts[${index}]`, { issue, kept, layers: spec.layers, allowHttp })).filter(Boolean);
+    if (valid.length) spec.charts = valid;
+  }
   return { valid: !issues.some((item) => item.level === "error"), issues, spec };
+}
+
+/**
+ * One chart panel of a map spec, or null (with a warning) when it cannot be
+ * drawn. `layer` is a position in the spec's layers or one of their URLs;
+ * style keeps only what differs from the chart defaults.
+ */
+function validateChart(raw, path, { issue, kept, layers, allowHttp }) {
+  const skip = (message, hint) => { issue("warning", "INVALID_SPEC", path, `${message} The chart was left out.`, hint); return null; };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return skip("Each chart must be an object.");
+  if (JSON.stringify(raw).length > MAP_SPEC_CHART_LIMITS.maxJson) return skip(`A chart definition holds at most ${MAP_SPEC_CHART_LIMITS.maxJson.toLocaleString("en-US")} characters; charts carry field names, not data.`);
+  for (const key of Object.keys(raw)) if (!CHART_KEYS.has(key)) issue("warning", "INVALID_SPEC", `${path}.${key}`, `Unknown chart property "${key}" was ignored.`, `Known properties: ${[...CHART_KEYS].join(", ")}.`);
+  const type = CHART_TYPES.find((entry) => entry.id === raw.type);
+  if (!type) return skip(`Unknown chart type "${raw.type}".`, `Use one of: ${CHART_TYPES.map((entry) => entry.id).join(", ")}.`);
+  let layer = raw.layer ?? 0;
+  if (Number.isInteger(layer)) {
+    if (!kept.has(layer)) return skip(`layer ${layer} is not one of the map's layers that loads.`, "Use a position in layers (0 is the first) or one of their URLs.");
+    layer = kept.get(layer);
+  } else {
+    let url;
+    try { url = sanitizeSharedResourceUrl(layer, { allowHttp }); } catch { url = null; }
+    if (!url || !layers.some((entry) => entry.url === url)) return skip("layer must be a position in layers or the URL of one of them.");
+    layer = url;
+  }
+  const field = (value, name) => {
+    if (value === undefined || value === null || value === "") return null;
+    if (typeof value === "string" && FIELD_NAME.test(value)) return value;
+    issue("warning", "INVALID_SPEC", `${path}.${name}`, `${name} must be a field name.`);
+    return undefined;
+  };
+  const dimension = field(raw.dimension?.field ?? raw.dimension, "dimension");
+  const measureField = field(typeof raw.measure === "object" && raw.measure ? raw.measure.field : raw.measure, "measure");
+  if (dimension === undefined || measureField === undefined) return skip("The chart's fields are not valid.");
+  const aggregation = raw.measure?.aggregation ?? raw.aggregation ?? (measureField ? "sum" : "count");
+  if (!AGGREGATIONS.includes(aggregation)) return skip(`Unknown aggregation "${aggregation}".`, `Use one of: ${AGGREGATIONS.join(", ")}.`);
+  if (type.dimension && type.id !== "histogram" && !dimension) return skip(`A ${type.id} chart needs a dimension field.`);
+  if (aggregation !== "count" && !measureField) return skip(`aggregation "${aggregation}" needs a measure field.`);
+  if (type.id === "histogram" && !measureField) return skip("A histogram needs a numeric measure field.");
+  const chart = { type: type.id };
+  if (raw.title !== undefined) chart.title = text(raw.title, 160);
+  chart.layer = layer;
+  if (dimension) chart.dimension = dimension;
+  chart.measure = { field: measureField, aggregation };
+  if (raw.scope !== undefined) {
+    if (CHART_SCOPES.includes(raw.scope)) chart.scope = raw.scope;
+    else issue("warning", "INVALID_SPEC", `${path}.scope`, `scope must be one of ${CHART_SCOPES.join(", ")}; "filtered" is used.`);
+  }
+  if (raw.placement !== undefined && raw.placement !== "right" && raw.placement !== "bottom") issue("warning", "INVALID_SPEC", `${path}.placement`, 'placement must be "right" or "bottom"; "right" is used.');
+  chart.placement = raw.placement === "bottom" ? "bottom" : "right";
+  if (raw.size !== undefined) {
+    if (CHART_SIZES.includes(raw.size)) chart.size = raw.size;
+    else issue("warning", "INVALID_SPEC", `${path}.size`, `size must be one of ${CHART_SIZES.join(", ")}.`);
+  }
+  if (raw.style !== undefined && raw.style !== null) {
+    if (typeof raw.style !== "object" || Array.isArray(raw.style)) issue("warning", "INVALID_SPEC", `${path}.style`, "style must be an object; the chart defaults are used.");
+    else {
+      for (const key of Object.keys(raw.style)) if (!CHART_STYLE_KEYS.includes(key)) issue("warning", "INVALID_SPEC", `${path}.style.${key}`, `Unknown chart style "${key}" was ignored.`);
+      const style = compactChartStyle(raw.style);
+      if (style) chart.style = style;
+    }
+  }
+  return chart;
+}
+
+/** The createChartSpec input for a map-v1 chart, bound to the loaded layer's id. */
+export function chartSpecFromMapChart(chart, layerId) {
+  return {
+    title: chart.title || chartTitle(chart),
+    type: chart.type,
+    source: { layerId, scope: chart.scope || "filtered" },
+    dimension: chart.dimension || null,
+    measure: chart.measure,
+    presentation: { target: "panel", targets: ["panel", "dashboard"], placement: chart.placement || "right", size: chart.size || "regular" },
+    interaction: { mapHighlight: true, crossFilter: true },
+    style: chart.style || {},
+  };
+}
+
+/** A saved chart panel (createChartSpec) as a map-v1 chart; `layer` is its position in the spec's layers. */
+export function mapChartFromChartSpec(chart, layer) {
+  const style = compactChartStyle(chart.style);
+  const placement = chart.presentation?.placement === "bottom" ? "bottom" : "right";
+  return {
+    type: chart.type,
+    ...(chart.title ? { title: chart.title } : {}),
+    layer,
+    ...(chart.dimension?.field ? { dimension: chart.dimension.field } : {}),
+    measure: { field: chart.measure?.field || null, aggregation: chart.measure?.aggregation || "count" },
+    ...(CHART_SCOPES.includes(chart.source?.scope) && chart.source.scope !== "filtered" ? { scope: chart.source.scope } : {}),
+    placement,
+    ...(chart.presentation?.size && chart.presentation.size !== "regular" ? { size: chart.presentation.size } : {}),
+    ...(style ? { style } : {}),
+  };
+}
+
+// The chart style choices that differ from the defaults, or null.
+function compactChartStyle(input) {
+  const style = normalizeChartStyle(input);
+  const defaults = normalizeChartStyle({});
+  const changed = CHART_STYLE_KEYS.filter((key) => JSON.stringify(style[key]) !== JSON.stringify(defaults[key]));
+  return changed.length ? Object.fromEntries(changed.map((key) => [key, style[key]])) : null;
+}
+
+function chartTitle(chart) {
+  const measure = chart.measure.aggregation === "count" ? "Count" : `${chart.measure.aggregation[0].toUpperCase()}${chart.measure.aggregation.slice(1)} of ${chart.measure.field}`;
+  return chart.dimension ? `${measure} by ${chart.dimension}` : measure;
 }
 
 /** The `#map=` payload for a spec: compressed (`z…`) by default, or readable (`json:…`). */
