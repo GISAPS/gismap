@@ -286,6 +286,9 @@ const wrap = (value, maxChars) => String(value ?? "").split(/\n/).flatMap((parag
   return lines;
 });
 
+/** Where every PDF links back to: the header band and the "gismap.online" footer link. */
+export const SITE_URL = "https://gismap.online/";
+
 export const PDF_COLORS = Object.freeze({ ink: "0.09 0.16 0.14", muted: "0.36 0.44 0.41", accent: "0.08 0.36 0.30", link: "0.05 0.40 0.55" });
 
 export class PdfDocument {
@@ -293,7 +296,7 @@ export class PdfDocument {
    * Letter portrait by default; pass pageWidth 792 / pageHeight 612 for
    * landscape. `palette` (see printPalette) colours the header and headings.
    */
-  constructor({ heading, logo = null, homeUrl = "https://gismap.online/", pageWidth = 612, pageHeight = 792, margin = 48, palette = PRINT_PALETTES.gismap, header = true }) {
+  constructor({ heading, logo = null, homeUrl = SITE_URL, pageWidth = 612, pageHeight = 792, margin = 48, palette = PRINT_PALETTES.gismap, header = true }) {
     Object.assign(this, { heading, logo, homeUrl, pageWidth, pageHeight, margin, palette, header });
     this.colors = { ...PDF_COLORS, accent: pdfColor(palette.accent), soft: pdfColor(palette.soft) };
     this.pages = [];
@@ -334,6 +337,12 @@ export class PdfDocument {
     if (this.homeUrl) this.addLink([left, band, left + 212, band + 44], this.homeUrl);
     this.pages.push(this.page);
     this.y = this.top;
+  }
+
+  /** A bold "gismap.online" that opens the site, right-aligned at y (in the bottom margin by default) on the current page. */
+  addSiteLink(y = 22, { size = 8, color = this.colors.accent } = {}) {
+    const width = 60;
+    return this.addTextAt("gismap.online", { x: this.pageWidth - this.margin - width, y, width, size, color, bold: true, link: SITE_URL, bottom: 0 });
   }
 
   /** Makes a rectangle [x1, y1, x2, y2] on the current page open a URL. */

@@ -1,7 +1,7 @@
 // A briefing as a landscape PDF handout: a cover with the QR code back to the
 // live briefing, then one page per slide laid out like the 16:9 stage (content
 // column beside a map snapshot), in the colours of the briefing's skin.
-import { PDF_COLORS, PdfDocument, brandedQrImage, imageToJpeg, loadBrandLogo, pdfColor, printPalette } from "./pdf-document.js?v=0.44.2";
+import { PDF_COLORS, PdfDocument, brandedQrImage, imageToJpeg, loadBrandLogo, pdfColor, printPalette } from "./pdf-document.js?v=0.69.1-pdflinks";
 
 const PAGE = { width: 792, height: 612, margin: 48 };
 
@@ -28,14 +28,14 @@ export const briefingFileStem = (title) => String(title || "briefing").toLowerCa
 export async function briefingPdf({ title = "Briefing", skin = null, slides = [], link = null, qr = true, date = new Date() }) {
   const palette = printPalette(skin);
   const logo = await loadBrandLogo(palette);
-  const pdf = new PdfDocument({ heading: title.toUpperCase(), logo, palette, homeUrl: link || undefined, pageWidth: PAGE.width, pageHeight: PAGE.height, margin: PAGE.margin });
+  const pdf = new PdfDocument({ heading: title.toUpperCase(), logo, palette, pageWidth: PAGE.width, pageHeight: PAGE.height, margin: PAGE.margin });
   const accent = pdf.colors.accent;
   const muted = PDF_COLORS.muted;
   const inner = PAGE.width - PAGE.margin * 2;
   const footer = (label) => {
     pdf.page.commands.push(`${pdfColor(palette.edge)} rg ${PAGE.margin} 34 ${inner} 1.2 re f`);
-    pdf.addTextAt(label, { x: PAGE.margin, y: 22, width: inner, size: 8, color: muted });
-    pdf.addTextAt("gismap.online", { x: PAGE.width - PAGE.margin - 60, y: 22, width: 60, size: 8, color: accent, bold: true, link: "https://gismap.online/" });
+    pdf.addTextAt(label, { x: PAGE.margin, y: 22, width: inner, size: 8, color: muted, bottom: 0 });
+    pdf.addSiteLink(22);
   };
 
   // Cover: title, date, slide count and the way back to the live briefing.

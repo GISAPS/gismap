@@ -33,11 +33,11 @@ import { isDateField, previewDateTimeline } from "./briefing-timeline-dates.js?v
 import { generateFilterSeries, seriesWhere } from "./briefing-data-series.js?v=0.60.0-media1";
 import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.60.0-media1";
 import { previewFilterSeries, formatSeriesTitle } from "./briefing-series-preview.js?v=0.60.0-media1";
-import { briefingLayerRef } from "./briefing-api.js?v=0.69.0-linkcharts1";
+import { briefingLayerRef } from "./briefing-api.js?v=0.69.1-pdflinks";
 import { renderMarkdown } from "./markdown.js?v=0.18.2";
 import { BriefingPlayer, slideHasMap } from "./briefing-player.js?v=0.62.3-briefing-slide-engines";
 import { expandTimelinePdfSlides } from "./briefing-timeline-pdf.js?v=0.1.0";
-import { briefingFileStem, briefingPdf, markdownToText } from "./briefing-pdf.js?v=0.44.2";
+import { briefingFileStem, briefingPdf, markdownToText } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { featureId } from "./presentation-query.js?v=0.30.0";
 import { startWorkspaceWalkthrough } from "./workspace-walkthrough.js?v=0.57.0-slides1";
 
