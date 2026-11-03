@@ -4628,12 +4628,31 @@ export class UIController {
     });
   }
 
+  /** GISMap SI account ({ session, open }), present only where sign-in is enabled. */
+  attachSiAccount(account) {
+    this.siAccount = account;
+  }
+
   #connectionsDialog() {
+    const si = this.siAccount?.session.snapshot();
+    const siCard = si?.signedIn
+      ? `<article class="connection-card" data-si-connection>
+            <div class="connection-card__head">
+              <div><strong>GISMap SI</strong><small>GISMap SI account</small></div>
+              <span class="connection-badge is-connected">${escapeHtml(si.user?.email || si.user?.name || "Connected")}</span>
+            </div>
+            <code>gismap.si</code>
+            <div class="connection-card__actions">
+              <a class="button" href="https://gismap.si/" target="_blank" rel="noopener">Open GISMap SI</a>
+              <button type="button" class="button--quiet" data-si-sign-out>Sign out</button>
+            </div>
+          </article>`
+      : "";
     const callbackUrl = this.authController.getCallbackUrl();
     const redirectUrl = this.authController.getRedirectUrl();
     const connections = this.authController.list();
-    const connectionCards = connections.length
-      ? connections.map((connection) => {
+    const connectionCards = connections.length || siCard
+      ? siCard + connections.map((connection) => {
           const url = connection.type === "portal" ? connection.portalUrl : connection.serverUrl;
           return `<article class="connection-card" data-connection-id="${escapeHtml(connection.id)}">
             <div class="connection-card__head">
@@ -4656,7 +4675,18 @@ export class UIController {
       content: `<section class="connection-manager">
           <div id="connection-list" class="connection-list">${connectionCards}</div>
 
-          <label class="field"><span>Server configuration</span><select id="connection-kind"><option value="">Choose a configuration…</option><option value="portal">ArcGIS Portal or ArcGIS Online</option><option value="standalone">Standalone server</option></select></label>
+          <label class="field"><span>Server configuration</span><select id="connection-kind"><option value="">Choose a configuration…</option>${si && !si.signedIn ? '<option value="gismap-si">GISMap SI</option>' : ""}<option value="portal">ArcGIS Portal or ArcGIS Online</option><option value="standalone">Standalone server</option></select></label>
+
+          ${si && !si.signedIn ? `<section class="connection-setup" data-connection-config="gismap-si" hidden>
+            <h3>GISMap SI</h3>
+            <div class="connection-setup__body" id="si-connection-form">
+              <label class="field"><span>Email</span><input id="si-connection-email" type="email" autocomplete="email" required /></label>
+              <label class="field"><span>Password</span><input id="si-connection-password" type="password" autocomplete="current-password" required /></label>
+              <p class="form-note" data-si-connection-error role="alert" hidden></p>
+              <button type="button" id="si-connection-sign-in" class="inline-primary">Sign in</button>
+              <p class="form-note">Store and share maps and data in your GISMap SI workspace. No account yet? <button type="button" class="text-button" data-si-sign-up>Create one</button> · <a href="https://gismap.si/reset-password" target="_blank" rel="noopener">Forgot your password?</a></p>
+            </div>
+          </section>` : ""}
 
           <section class="connection-setup" data-connection-config="portal" hidden>
             <h3>ArcGIS Portal or ArcGIS Online</h3>
@@ -4815,6 +4845,36 @@ export class UIController {
         this.authController.remove(button.dataset.removeConnection);
         this.#connectionsDialog();
       });
+    });
+    const siForm = this.dialog.querySelector("#si-connection-form");
+    const siSignIn = async () => {
+      const email = siForm.querySelector("#si-connection-email");
+      const password = siForm.querySelector("#si-connection-password");
+      if (!email.reportValidity() || !password.reportValidity()) return;
+      const button = siForm.querySelector("#si-connection-sign-in");
+      const note = siForm.querySelector("[data-si-connection-error]");
+      setBusy(button, true, "Sign in");
+      try {
+        await this.siAccount.session.signIn({ email: email.value, password: password.value });
+        this.#connectionsDialog();
+        this.toast("Signed in to GISMap SI.");
+      } catch (error) {
+        setBusy(button, false, "Sign in");
+        note.textContent = error.message;
+        note.hidden = false;
+      }
+    };
+    siForm?.querySelector("#si-connection-sign-in").addEventListener("click", siSignIn);
+    siForm?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && event.target.matches("input")) { event.preventDefault(); siSignIn(); }
+    });
+    this.dialog.querySelector("[data-si-sign-up]")?.addEventListener("click", () => {
+      this.dialog.close();
+      this.siAccount.open("signup");
+    });
+    this.dialog.querySelector("[data-si-sign-out]")?.addEventListener("click", () => {
+      this.siAccount.session.signOut();
+      this.#connectionsDialog();
     });
     this.authController.getStatuses().then((items) => {
       for (const { connection, status } of items) {

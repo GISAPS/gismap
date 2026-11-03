@@ -2,7 +2,7 @@
 // invited testers (`/beta?code=...`) or users SI has given the `accounts` flag;
 // everyone else sees no change and no request goes to SI. Opening the dialog
 // never touches the map: the current map is kept as a recovery draft first.
-import { betaInviteCode, createSiSession } from "./si-session.js?v=0.68.0-si-accounts";
+import { betaInviteCode, createSiSession } from "./si-session.js?v=0.68.1-si-servers";
 
 const SI_RESET_URL = "https://gismap.si/reset-password";
 const SI_HOME_URL = "https://gismap.si/";

@@ -3210,3 +3210,4 @@ body.briefing-v2 .briefing-data-dock :is(.briefing-select__add-slides, .briefing
 .si-account-form__link { justify-self: start; color: var(--green-2); }
 .si-account-form__error { margin: 0; color: var(--danger); }
 .si-account-recovery { position: fixed; z-index: 40; left: 50%; bottom: 16px; display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 8px 8px 8px 14px; transform: translateX(-50%); border: var(--ui-border-width, 1px) solid var(--line); border-radius: var(--ui-radius, 12px); color: var(--ink); background: var(--surface); box-shadow: var(--shadow); }
+.form-note[data-si-connection-error] { color: var(--danger); }
