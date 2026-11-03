@@ -260,6 +260,13 @@ test("a chart added to the ordinary workspace leaves the sidebar panels as they 
   assert.match(runtime, /config\.layout\?\.sidebar !== "workspace"/);
 });
 
+test("a queryable layer's card opens the Chart Builder on that layer", () => {
+  const ui = fs.readFileSync(new URL("../js/ui.js", import.meta.url), "utf8");
+  assert.match(ui, /\$\{layer\.queryable \? '<button data-layer-action="chart"[^>]*>Chart<\/button>' : ""\}/);
+  assert.match(ui, /case "chart":\s*void this\.#openChartsAnalytics\(\{ layerUid: uid \}\);/);
+  assert.match(ui, /\(layerUid && this\.mapController\.getLayer\(layerUid\)\) \|\|/);
+});
+
 test("hovering a chart mark lights up its group and a click frames it", () => {
   const runtime = fs.readFileSync(new URL("../js/application-runtime.js", import.meta.url), "utf8");
   const maplibre = fs.readFileSync(new URL("../js/engines/maplibre/maplibre-engine.js", import.meta.url), "utf8");

@@ -3,7 +3,7 @@ name: gismap
 description: Make an interactive, shareable map or add one to a website — no API key. Use when a user asks to map, plot or pin places, a trip or a spreadsheet; colour countries, states or counties by a value; show public data (ArcGIS, GeoJSON, WMS, WFS, KML) on a map; embed a map in a site; or build a map briefing, guided tour, 3D or LiDAR view. Returns a link, QR code and iframe.
 metadata:
   author: GISMap Online
-version: "0.3.1"
+version: "0.3.2"
 ---
 
 # GISMap Online

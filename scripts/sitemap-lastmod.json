@@ -248,8 +248,8 @@
     "lastmod": "2026-11-02"
   },
   "/skills/": {
-    "hash": "16dcc44ac2766701",
-    "lastmod": "2026-11-02"
+    "hash": "aaf28a3d01cc88f3",
+    "lastmod": "2026-11-03"
   },
   "/api/explorer/": {
     "hash": "7f24cad94b444c70",
@@ -260,11 +260,11 @@
     "lastmod": "2026-11-02"
   },
   "/llms.txt": {
-    "hash": "ac0f4f8bb31a69ff",
+    "hash": "291b75cdfa1c37b8",
     "lastmod": "2026-11-03"
   },
   "/llms-full.txt": {
-    "hash": "0801b299ed95849b",
+    "hash": "07db5d7a24f1484b",
     "lastmod": "2026-11-03"
   },
   "/api/catalog.json": {
