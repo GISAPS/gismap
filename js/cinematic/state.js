@@ -3,7 +3,7 @@ import { PROVENANCE_STATUSES, normalizeTiming } from "./clock.js?v=0.1.0";
 // null and "" are "not set", not 0: a saved spec re-normalized must keep an unset opacity unset.
 const finite = (value, fallback = null) => value !== null && value !== "" && Number.isFinite(Number(value)) ? Number(value) : fallback;
 const string = (value, fallback = "") => typeof value === "string" ? value : fallback;
-const EFFECTS = Object.freeze(["auto", "none", "glow", "fire", "pulse", "wind", "snow", "rain", "fog", "lightning", "tornado", "hurricane", "storm", "lava", "water", "water-flow", "flow", "electricity", "traffic", "trains", "sailboats", "ships", "walkers", "birds", "drones", "airplanes", "helicopters", "extrude", "reveal"]);
+const EFFECTS = Object.freeze(["auto", "none", "glow", "fire", "pulse", "wind", "snow", "rain", "fog", "lightning", "tornado", "hurricane", "storm", "lava", "water", "water-flow", "flow", "electricity", "traffic", "trains", "sailboats", "ships", "walkers", "birds", "drones", "airplanes", "helicopters", "extrude", "reveal", "strata"]);
 
 export const CINEMATIC_SCHEMA_VERSION = "0.1";
 export const CINEMATIC_TEMPLATES = Object.freeze(["step-perimeter", "moving-track"]);

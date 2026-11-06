@@ -136,7 +136,7 @@ test("large scenes keep the newest observation, trim sub-pixel detail and pick a
 
 test("Rise and Reveal read a value field, keep values as data and grow on the track's time", async () => {
   const { nativeEffectData, valueField, riseAmount, revealAmount, NATIVE_EFFECTS, suggestEffect: suggest } = await import("../js/cinematic/cinematic-effects.js");
-  assert.deepEqual(NATIVE_EFFECTS, ["extrude", "reveal"]);
+  assert.deepEqual(NATIVE_EFFECTS, ["extrude", "reveal", "strata"]);
   const fields = [{ name: "OBJECTID", type: "esriFieldTypeOID" }, { name: "GEOID", type: "esriFieldTypeInteger" }, { name: "NAME", type: "esriFieldTypeString" }, { name: "POP2020", type: "esriFieldTypeInteger" }];
   assert.equal(valueField(fields), "POP2020", "IDs and codes are not values");
   const square = (x) => ({ type: "Polygon", coordinates: [[[x, 0], [x + 1, 0], [x + 1, 1], [x, 0]]] });
@@ -155,6 +155,26 @@ test("Rise and Reveal read a value field, keep values as data and grow on the tr
   assert.equal(revealAmount({ seconds: 4 }), 0.5);
   assert.equal(suggest({ title: "County population 2020", geometryType: "polygon", fields }), "extrude");
   assert.equal(suggest({ title: "Parcels", geometryType: "polygon", fields }), "glow", "only statistical areas rise by default");
+});
+
+test("Strata timeline stacks records in the layer's chart slots, or one slot per step, earliest lowest", async () => {
+  const { strataData, strataLanding, CINEMATIC_EFFECTS: catalog } = await import("../js/cinematic/cinematic-effects.js");
+  assert.equal(catalog.strata.cinematicOnly, true, "needs a timeline, so it is not a Style-panel effect");
+  assert.match(catalog.strata.note, /not altitude/);
+  const square = (x) => ({ type: "Polygon", coordinates: [[[x, 0], [x + 1, 0], [x + 1, 1], [x, 0]]] });
+  const observations = [["1980s", 1985, 10], ["1990s", 1994, 20], ["1980s", 1988, 30]].map(([decade, year, time], index) => ({ index, time, feature: { attributes: { DECADES: decade, YEAR_: year }, geometry: square(index) } }));
+  const chart = { mode: "temporal-strata", groupBy: "DECADES", groups: ["1980s", "1990s"], height: { field: "YEAR_", slotMeters: 400, gapMeters: 100, thicknessMeters: 250, scale: 1 }, color: { strategy: "sequential" } };
+  const charted = strataData(observations, { chart, ticks: [10, 20, 30] });
+  assert.deepEqual(charted.data.features.map((feature) => [feature.id, feature.properties.base, feature.properties.top]), [[0, 0, 400], [1, 500, 900], [2, 0, 400]], "the chart's slots and capped thickness");
+  assert.deepEqual(charted.data.features[1].geometry, square(1), "geometry is passed through exactly");
+  assert.notEqual(charted.data.features[0].properties.color, charted.data.features[1].properties.color, "each slot keeps its chart colour");
+  const bySteps = strataData(observations, { ticks: [10, 20, 30] });
+  assert.deepEqual(bySteps.data.features.map((feature) => feature.properties.base), [0, 500, 1000], "without a chart, each step is a slot");
+  assert.equal(strataData(observations, { ticks: Array.from({ length: 400 }, (_, index) => index) }).stats.slots, 40, "many steps are binned");
+  assert.equal(strataData(observations, { chart, ticks: [], color: "#123456" }).data.features[0].properties.color, "#123456", "a track's own colour wins");
+  assert.equal(strataData([{ index: 0, time: 0, feature: { geometry: { type: "Point", coordinates: [0, 0] } } }]).stats.count, 0, "only polygons stack");
+  assert.equal(strataLanding(0), 0);
+  assert.equal(strataLanding(1.2), 1, "a new step lands in 1.2 s");
 });
 
 test("skins recolour effects without a colour of their own, and nothing else", async () => {

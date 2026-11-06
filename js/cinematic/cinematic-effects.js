@@ -3,6 +3,7 @@
 // buffers, simplifies or interpolates observed geometry; widths, heights and
 // motion are applied on the GPU in screen pixels and are visual annotation only.
 import { localFrame } from "../geo-frame.js?v=0.1.0";
+import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.1.1";
 
 export const CINEMATIC_EFFECTS = Object.freeze({
   none: { label: "None", note: "" },
@@ -34,6 +35,8 @@ export const CINEMATIC_EFFECTS = Object.freeze({
   // Native primitives (MapLibre style layers, no custom GL), for statistics and planning.
   extrude: { label: "Rise (extrude)", category: "Data transformation", color: "#4c7fd9", native: true, note: "Areas rise to their value of the chosen field; the rise is animation, the heights are the data." },
   reveal: { label: "Reveal", category: "Data transformation", color: "#f2a93b", native: true, note: "Features appear one after another in the order of a field (or their stored order); the order is not a date unless the field is one." },
+  // Needs a timeline (or a stacked 3D chart), so it is offered in Cinematic mode only.
+  strata: { label: "Strata timeline", category: "Data transformation", color: "#a46bff", native: true, cinematicOnly: true, note: "Each step's records drop onto the top of a 3D stack, earliest at the bottom. Vertical position is display order, not altitude; footprints are the source geometry." },
 });
 /**
  * Skins choose effect palettes, never data: a skin only recolours effects that
@@ -161,6 +164,45 @@ function scaled(value, min, max) {
   if (!Number.isFinite(value)) return 0;
   if (min >= 0) return max > 0 ? value / max : 0;
   return max > min ? (value - min) / (max - min) : 1;
+}
+
+const STRATA_STACK_METERS = 12_000;
+
+/**
+ * GeoJSON for the Strata timeline: every observation once, keyed by its
+ * `index`, with the display `base`/`top` (metres) and `color` of its slab.
+ * A layer's own stacked 3D chart decides the slots, colours and thickness, so
+ * the playback matches the Style panel. `color` (the track's own) overrides
+ * the slot colours; `fallbackColor` paints a chart drawn in its original colour. Without one, each playback step gets a
+ * slot (binned to at most 40, earliest lowest). Geometry is never changed.
+ */
+export function strataData(observations = [], { chart = null, ticks = [], color = null, fallbackColor = "#a46bff" } = {}) {
+  const stacked = chart && chart.mode !== "attribute-extrusion" && chart.groupBy && chart.groups?.length;
+  const tickIndex = new Map(ticks.map((tick, index) => [tick, index]));
+  const slots = stacked ? chart.groups.length : Math.max(1, Math.min(MAX_SPATIAL_CHART_GROUPS, ticks.length));
+  const stride = stacked ? chart.height.slotMeters + chart.height.gapMeters : Math.min(500, STRATA_STACK_METERS / slots);
+  const groupSlot = stacked ? new Map(chart.groups.map((value, index) => [String(value), index])) : null;
+  const features = [];
+  let unplaced = 0;
+  for (const observation of observations) {
+    const feature = observation?.feature;
+    const geometry = feature?.geometry;
+    if (!/Polygon$/.test(geometry?.type || "") || !geometry.coordinates) continue;
+    const attributes = feature.attributes || feature.properties || {};
+    const slot = stacked ? groupSlot.get(String(attributes[chart.groupBy] ?? "")) : Math.floor((tickIndex.get(observation.time) ?? 0) * slots / Math.max(1, ticks.length));
+    if (slot === undefined) { unplaced += 1; continue; }
+    const base = slot * stride;
+    const value = stacked && chart.height.field ? Number(attributes[chart.height.field]) : NaN;
+    const thickness = !stacked ? stride * 0.6 : chart.height.field ? Math.min(chart.height.slotMeters, Math.max(chart.height.thicknessMeters, Math.max(0, Number.isFinite(value) ? value : 0) * chart.height.scale)) : chart.height.thicknessMeters;
+    const slabColor = color || (stacked && chart.color?.strategy === "original" ? null : spatialChartColor(slot, slots)) || fallbackColor;
+    features.push({ type: "Feature", id: observation.index, geometry, properties: { base, top: base + thickness, color: slabColor } });
+  }
+  return { data: { type: "FeatureCollection", features }, stats: { count: features.length, unplaced, slots, stride, stacked: Boolean(stacked) } };
+}
+
+/** How far a fresh slab has fallen into place (0 = just appeared above the stack, 1 = landed). */
+export function strataLanding(secondsSinceStep = 0, { speed = 1 } = {}) {
+  return smooth(secondsSinceStep * Math.max(0.1, speed) / 1.2);
 }
 
 const smooth = (x) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };

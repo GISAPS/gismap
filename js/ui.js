@@ -49,8 +49,8 @@ import { CartographyLab } from "./cartography-lab.js?v=0.60.0-media1";
 import { CONTEXT_ACTIONS, createSuggestionPreferences, deriveWorkspace, executeContextAction, suggestionKey, summarizeFeature } from "./contextual-workspace.js?v=6";
 import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.62.3-briefing-slide-engines";
 import { HISTORICAL_QUAKES_SOURCE, HISTORICAL_QUAKES_WHERE, createHistoricalQuakesExampleBriefing } from "./example-hazards-briefing.js?v=0.62.3-briefing-slide-engines";
-import { CinematicModeController } from "./cinematic/mode.js?v=0.3.15-clip-ref";
-import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.2.8";
+import { CinematicModeController } from "./cinematic/mode.js?v=0.3.16-strata";
+import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.2.9-strata";
 import { PROVENANCE_STATUSES } from "./cinematic/clock.js?v=0.1.0";
 import { recommendAnimations } from "./cinematic/recommend.js?v=0.1.3";
 
@@ -63,7 +63,7 @@ const PROVENANCE_HELP = Object.freeze({
   illustrative: "Illustrative: decorative motion that does not measure anything.",
 });
 import { numericFieldCandidates, temporalFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.3.1";
-import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.9";
+import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.10-strata";
 import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.3.8-fire-points";
 import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
 import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
@@ -2210,10 +2210,11 @@ export class UIController {
         if (!layer || (kind !== "none" && !timeField)) throw new Error(kind === "number" ? "Choose a layer and a number field." : "Choose a layer and a timestamp field.");
         const groupField = kind === "none" ? "" : this.dialog.querySelector("[data-cinematic-group]").value;
         const steps = kind === "number" ? Number(this.dialog.querySelector("[data-cinematic-steps]").value) : 0;
-        const timeMode = kind === "none" ? "instant" : this.dialog.querySelector("[data-cinematic-time-mode]").value;
+        const effectType = this.dialog.querySelector("[data-cinematic-effect]")?.value || "none";
+        // A Strata timeline stacks each step on the last, so it always builds up.
+        const timeMode = kind === "none" ? "instant" : effectType === "strata" ? "cumulative" : this.dialog.querySelector("[data-cinematic-time-mode]").value;
         const durationSeconds = Number(this.dialog.querySelector("[data-cinematic-duration]").value);
         const rate = Number(this.dialog.querySelector("[data-cinematic-rate]").value);
-        const effectType = this.dialog.querySelector("[data-cinematic-effect]")?.value || "none";
         const spec = { cinematic: {
           id: `cinematic-${Date.now()}`,
           title: `${layer.title || "Map"} ${kind === "none" ? "animation" : kind === "number" ? `by ${timeField}` : "playback"}`,
@@ -2255,7 +2256,7 @@ export class UIController {
       groupInput.innerHTML = '<option value="">All observations together</option>' + (layer.fields || []).filter((field) => field.name !== layer.objectIdField).map((field) => `<option value="${escapeHtml(field.name)}">${escapeHtml(field.alias || field.name)}</option>`).join("");
       fillKind();
       const effectInput = this.dialog.querySelector("[data-cinematic-effect]");
-      if (effectInput) effectInput.innerHTML = this.#cinematicEffectOptions("auto", suggestEffect({ title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [] }));
+      if (effectInput) effectInput.innerHTML = this.#cinematicEffectOptions("auto", suggestEffect({ title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [] }), { cinematic: true });
     };
     layerInput.value = selected.uid;
     layerInput.addEventListener("change", fillFields);
@@ -5293,6 +5294,9 @@ export class UIController {
 
   async #syncExplorerMapFilter(layer, records) {
     if (!layer) return;
+    // A Cinematic track's filter belongs to its playback; records that finish loading after
+    // Cinematic starts would otherwise show the whole layer until the first step.
+    if (this.cinematicController?.layers?.has(layer.uid)) return;
     // Not every layer supports a client-side object ID filter; those keep drawing everything.
     await this.mapController.setFeatureFilter(layer.uid, featureFilterFor(records, this.presentationState.records.length, layer.objectIdField));
   }
@@ -5529,7 +5533,7 @@ export class UIController {
     const supportsGround = this.mapController.getCapabilities().includes("ground");
     const effectType = state.spec?.cinematic.layers?.[0]?.animation?.effect?.type || "none";
     const resolvedEffect = state.layers?.[0]?.effect || "none";
-    const effectOptions = this.#cinematicEffectOptions(effectType, effectType === "auto" ? resolvedEffect : suggestEffect({ title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [] }));
+    const effectOptions = this.#cinematicEffectOptions(effectType, effectType === "auto" ? resolvedEffect : suggestEffect({ title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [] }), { cinematic: true });
     const layerOpacity = state.spec?.cinematic.layers?.[0]?.animation?.opacity ?? layer.opacity ?? 1;
     const terrainOptions = supportsGround ? this.#groundOptionsMarkup() : "";
     const current = new Date(timeline.observationTime);
@@ -5821,7 +5825,7 @@ export class UIController {
     const kindLabel = (item) => item.ambient || item.kind === "none" ? "Ambient · loops beside the timeline" : item.kind === "number" ? `Scenario · ${item.timeField}` : `Timeline · ${item.timeField}`;
     const inScene = new Set(state.layers.map((item) => item.uid));
     const candidates = this.mapController.getLayers().filter((layer) => layer.queryable && layer.objectIdField && !inScene.has(layer.uid));
-    const rows = state.layers.map((item) => `<li><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(kindLabel(item))} · <span data-cinematic-track-count="${escapeHtml(item.uid)}">${item.observedCount.toLocaleString()}</span> shown</small></span>${supportsEffects ? `<select data-cinematic-track-effect="${escapeHtml(item.uid)}" aria-label="Effect for ${escapeHtml(item.title)}">${this.#cinematicEffectOptions(item.effectType, item.effect)}</select>` : ""}${state.layers.length > 1 ? `<button type="button" class="cinematic-track-remove" data-cinematic-track-remove="${escapeHtml(item.uid)}" aria-label="Remove ${escapeHtml(item.title)} from the scene">Remove</button>` : ""}${supportsEffects ? this.#cinematicTrackMotion(item) : ""}</li>`).join("");
+    const rows = state.layers.map((item) => `<li><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(kindLabel(item))} · <span data-cinematic-track-count="${escapeHtml(item.uid)}">${item.observedCount.toLocaleString()}</span> shown</small></span>${supportsEffects ? `<select data-cinematic-track-effect="${escapeHtml(item.uid)}" aria-label="Effect for ${escapeHtml(item.title)}">${this.#cinematicEffectOptions(item.effectType, item.effect, { cinematic: true })}</select>` : ""}${state.layers.length > 1 ? `<button type="button" class="cinematic-track-remove" data-cinematic-track-remove="${escapeHtml(item.uid)}" aria-label="Remove ${escapeHtml(item.title)} from the scene">Remove</button>` : ""}${supportsEffects ? this.#cinematicTrackMotion(item) : ""}</li>`).join("");
     const add = candidates.length ? `<div class="cinematic-track-add"><label>Add layer <select data-cinematic-track-layer>${candidates.map((layer) => `<option value="${escapeHtml(layer.uid)}">${escapeHtml(layer.title || "Untitled layer")}</option>`).join("")}</select></label><label>As <select data-cinematic-track-kind></select></label><button type="button" data-cinematic-track-add>Add track</button></div>` : '<p class="form-note">Add another queryable layer to the map to animate it here too.</p>';
     const open = this.cinematicDisclosureState?.tracks === true;
     return `<details class="cinematic-disclosure cinematic-disclosure--tracks"${open ? " open" : ""}><summary>Tracks (${state.layers.length})</summary><ul class="cinematic-tracks">${rows}</ul>${add}<p class="form-note">Ambient tracks show every feature with a looping effect beside the timeline. Timeline tracks step with it under the same clock.</p></details>`;
@@ -5889,11 +5893,12 @@ export class UIController {
     });
   }
 
-  #cinematicEffectOptions(selected, suggested) {
+  /** Effect menu options. `cinematic` adds the effects that need a timeline (Strata timeline). */
+  #cinematicEffectOptions(selected, suggested, { cinematic = false } = {}) {
     const one = (type, label) => `<option value="${type}"${type === selected ? " selected" : ""}>${escapeHtml(label)}</option>`;
     return one("auto", `Auto · ${CINEMATIC_EFFECTS[suggested]?.label || "Glow"}`)
       + one("none", "None")
-      + CINEMATIC_EFFECT_CATEGORIES.map((category) => `<optgroup label="${escapeHtml(category)}">${Object.entries(CINEMATIC_EFFECTS).filter(([type, effect]) => type !== "none" && effect.category === category).map(([type, effect]) => one(type, effect.label)).join("")}</optgroup>`).join("");
+      + CINEMATIC_EFFECT_CATEGORIES.map((category) => `<optgroup label="${escapeHtml(category)}">${Object.entries(CINEMATIC_EFFECTS).filter(([type, effect]) => type !== "none" && effect.category === category && (cinematic || !effect.cinematicOnly)).map(([type, effect]) => one(type, effect.label)).join("")}</optgroup>`).join("");
   }
 
   #rememberCinematicDisclosureState(root = document) {

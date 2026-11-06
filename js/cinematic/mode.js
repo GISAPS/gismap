@@ -1,9 +1,9 @@
 import { createCinematicTimeline } from "./timeline-controller.js?v=0.1.0";
 import { normalizeTemporalFeatures, observedFeaturesAt, parsePlaybackValue, temporalModelInExtent } from "./temporal-adapter.js?v=0.3.1";
-import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.6";
-import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.2.8";
+import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
+import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.2.9-strata";
 import { PROVENANCE_STATUSES, createEffectsClock, normalizeTiming } from "./clock.js?v=0.1.0";
-import { setEffectClock } from "./effects-three.js?v=0.2.9-fire-points";
+import { setEffectClock } from "./effects-three.js?v=0.2.10-strata";
 
 // In a build-up, outlines older than the newest few are "settled": drawn as a
 // cheap edge and rebuilt only now and then, while the recent ones (full
@@ -317,6 +317,8 @@ export class CinematicModeController {
   setEffect(type, layerUid = null) {
     if (!this.spec) return;
     const only = layerUid ? this.layers.get(layerUid)?.config : null;
+    // A Strata timeline is a build-up: earlier records stay below as later ones land on top.
+    if (type === "strata") this.spec.cinematic.clock.timeMode = "cumulative";
     for (const layer of this.spec.cinematic.layers) {
       if (only && layer !== only) continue;
       layer.animation.effect = { ...layer.animation.effect, type: type === "auto" || CINEMATIC_EFFECTS[type] ? type : "none" };
@@ -469,6 +471,14 @@ export class CinematicModeController {
     const quality = this.#quality(observations.length);
     const base = { type: "observed-effect", effect, color: config.animation.effect?.color || null, intensity: config.animation.effect?.intensity ?? 1, opacity: config.animation.effect?.opacity ?? 1, style: config.animation.effect?.style || "balanced", speed: config.animation.effect?.speed ?? 1, density: config.animation.effect?.density ?? 1, field: config.animation.effect?.field || null, fields: layer.fields || [], ranges: effectRange, timing: config.animation.timing };
     const asItems = (list) => list.map((observation) => ({ feature: observation.feature, fresh: observation.time === observationTime }));
+    if (effect === "strata") {
+      // Every record is sent once (`stack`, its slots fixed by the whole timeline); each step only says which show.
+      entry.settled = null;
+      await attempt(() => this.mapController.clearCinematicEffect?.(`${effectUid}:settled`), false);
+      await attempt(() => this.mapController.setCinematicEffect(effectUid, { ...base, layerUid: layer.uid, chart: layer.spatialChart || null, ticks: entry.model.ticks, stack: entry.model.observations,
+        items: observations.map((observation) => ({ index: observation.index, fresh: observation.time === observationTime })) }), false);
+      return;
+    }
     // Native effects (Rise, Reveal) are style layers, cheap at any size: no settled/recent split.
     const split = !NATIVE_EFFECTS.includes(effect) && timeMode === "cumulative" && observations.length > RECENT_MIN * 2;
     if (!split) {
