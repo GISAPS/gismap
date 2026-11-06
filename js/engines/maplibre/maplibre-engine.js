@@ -745,11 +745,17 @@ export class MaplibreEngine {
     this.map.once?.("style.load", () => { if (token === this.#styleToken) { void this.#applyGround({ styleReady: true }); this.three?.attach(); } });
     this.map.setStyle(style, {
       diff: true,
-      transformStyle: (_previous, incoming) => ({
-        ...incoming,
-        sources: { ...incoming.sources, [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])) },
-        layers: [...incoming.layers, ...[...this.#records.values()].filter((record) => record.kind !== "three").flatMap((record) => this.#layerSpecs(record)), ...this.#drawingSpecs(), ...(this.measurement ? this.#measureSpecs() : []), ...this.#highlightSpecs()],
-      }),
+      transformStyle: (previous, incoming) => {
+        // Native cinematic effects (Rise, Reveal, Strata, settled edges) carry over as they are drawn now: filters and paint included.
+        const effectSource = (id) => [NATIVE_EFFECT_PREFIX, SETTLED_EDGES_PREFIX].some((prefix) => String(id || "").startsWith(prefix));
+        const effectSources = Object.entries(previous?.sources || {}).filter(([id]) => effectSource(id));
+        const effectLayers = (previous?.layers || []).filter((layer) => effectSource(layer.source));
+        return {
+          ...incoming,
+          sources: { ...incoming.sources, [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])), ...Object.fromEntries(effectSources) },
+          layers: [...incoming.layers, ...[...this.#records.values()].filter((record) => record.kind !== "three").flatMap((record) => this.#layerSpecs(record)), ...effectLayers, ...this.#drawingSpecs(), ...(this.measurement ? this.#measureSpecs() : []), ...this.#highlightSpecs()],
+        };
+      },
     });
   }
 
