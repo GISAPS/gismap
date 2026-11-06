@@ -1,4 +1,4 @@
-import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.6";
+import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
 import { PROVENANCE_STATUSES, normalizeTiming } from "./clock.js?v=0.1.0";
 
 export const CINEMATIC_CLIP_SCHEMA = "gismap.cinematicClip";
