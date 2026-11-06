@@ -3,11 +3,11 @@ import { isDateField } from "./briefing-timeline-dates.js?v=0.60.0-media1";
 import { generateTimeline } from "./briefing-timeline.js?v=0.60.0-media1";
 import { extentToBounds, generateGridAtlas } from "./briefing-grid-atlas.js?v=0.60.0-media1";
 import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.60.0-media1";
-import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.54.0-print";
+import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.69.1-pdflinks";
 import { createShareLink } from "./map-share.js?v=0.65.0-paths";
 import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { featureLayerUrl } from "./field-task-share.js?v=0.41.0";
-import { brandedQrFile, printPalette } from "./pdf-document.js?v=0.44.2";
+import { brandedQrFile, printPalette } from "./pdf-document.js?v=0.69.1-pdflinks";
 
 const clone = (value) => structuredClone(value);
 const trimUrl = (value) => String(value || "").replace(/\/+$/, "").toLowerCase();

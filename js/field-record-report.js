@@ -1,7 +1,7 @@
 // Offline PDFs for Field Mode. They never require a map image: a coordinate
 // link lets the desktop map rebuild a richer report later without changing the
 // stable record ID or revision.
-import { PDF_COLORS, PdfDocument, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.60.0-field2";
+import { PDF_COLORS, PdfDocument, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.69.1-pdflinks";
 
 const when = (value) => value ? new Date(value).toLocaleString() : "";
 const location = (record) => record.geometry?.type === "Point" ? `${record.geometry.coordinates[1].toFixed(6)}, ${record.geometry.coordinates[0].toFixed(6)}` : "No location captured";

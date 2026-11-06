@@ -8,6 +8,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 - The product name now reads GISMap Online everywhere people, search engines and agents see it, including PDF and QR wordmarks and PDF metadata. Renamed installations keep their own name.
 - Attribute table stripes, hover states, the insights overlay and connection panels now derive from each skin's colours, so text stays readable in every skin and theme. A contract test blocks hard-coded surfaces and low-contrast skins.
+- Map links (map-v1) can open linked chart panels: a top-level `charts` list names each chart's type, fields, layer (by position or URL), style and placement, and opening the link adds them beside the map without changing the sidebar. `mapSpec.fromCurrent()` writes open chart panels back into `charts`. New worked example: [wildfires by state](https://gismap.online/examples/ai/wildfires-by-state-chart/).
 - Cinematic mode has a **Strata timeline** effect: each step's polygons drop onto the top of a 3D stack, earliest at the bottom. A layer styled as a stacked 3D chart (for example Temporal strata) keeps its slots, colours and thickness; otherwise each playback step gets a slot. Choosing it turns on Build up.
 - Cinematic mode no longer shows every record for a moment after it starts, before the first step.
 - Added the `si-console` embed for the GISMap SI Query Console: results, query geometry, selection and map gestures over a versioned message channel pinned to GISMap SI origins.
