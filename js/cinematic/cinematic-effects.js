@@ -3,7 +3,7 @@
 // buffers, simplifies or interpolates observed geometry; widths, heights and
 // motion are applied on the GPU in screen pixels and are visual annotation only.
 import { localFrame } from "../geo-frame.js?v=0.1.0";
-import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.69.9-order";
+import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.70.0-ground";
 
 export const CINEMATIC_EFFECTS = Object.freeze({
   none: { label: "None", note: "" },
@@ -89,7 +89,9 @@ export function effectRanges(features = [], found = {}) {
 }
 
 /** The effect that suits a layer, from its title, geometry and fields. Deterministic; never "none". */
-export function suggestEffect({ title = "", geometryType = "", fields = [], sample = {} } = {}) {
+export function suggestEffect({ title = "", geometryType = "", fields = [], sample = {}, spatialChart = null } = {}) {
+  // A layer already stacked as a 3D chart plays back as that stack, not as outlines on the ground.
+  if (spatialChart?.mode && spatialChart.mode !== "attribute-extrusion" && spatialChart.groups?.length) return "strata";
   const name = String(title).toLowerCase();
   const found = effectFields(fields, sample);
   const points = /point/i.test(geometryType);

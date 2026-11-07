@@ -6,14 +6,14 @@
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { tourChapterPoint, tourMarkerDataUrl } from "../tour-markers.js?v=0.65.9-tourpins";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
-import { arcgisMetadata } from "../../source-inspector.js?v=0.53.0";
+import { arcgisMetadata } from "../../source-inspector.js?v=0.70.0-ground";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
 import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
 import { ENGINE_CAPABILITIES, unsupported } from "../engine-interface.js?v=0.52.0";
 import { loadArcGISRuntime } from "./arcgis-loader.js?v=0.38.0";
 import { basemapOnEngine, basemapsForEngine } from "../../basemap-catalog.js?v=0.53.0-gallery1";
-import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.69.9-order";
-import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.69.9-order";
+import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.70.0-ground";
+import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.70.0-ground";
 import { legendForLayer } from "../maplibre/legend.js?v=0.52.4";
 
 // GISMap Online's own symbols are stored as "/assets/…" so projects move between hosts;

@@ -1,9 +1,9 @@
 import { createCinematicTimeline } from "./timeline-controller.js?v=0.1.0";
 import { normalizeTemporalFeatures, observedFeaturesAt, parsePlaybackValue, temporalModelInExtent } from "./temporal-adapter.js?v=0.3.1";
 import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
-import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.69.9-order";
+import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.70.0-ground";
 import { PROVENANCE_STATUSES, createEffectsClock, normalizeTiming } from "./clock.js?v=0.1.0";
-import { setEffectClock } from "./effects-three.js?v=0.69.9-order";
+import { setEffectClock } from "./effects-three.js?v=0.70.0-ground";
 
 // In a build-up, outlines older than the newest few are "settled": drawn as a
 // cheap edge and rebuilt only now and then, while the recent ones (full
@@ -82,6 +82,8 @@ export class CinematicModeController {
     if (config.animation.opacity != null) await attempt(() => this.mapController.setOpacity(layer.uid, config.animation.opacity), false);
     // The layer's own Advanced Style effect would double the cinematic one; it returns on exit.
     await attempt(() => this.mapController.suspendLayerEffect?.(layer.uid, true), false);
+    // Auto plays a stacked 3D chart as a Strata build-up.
+    if (this.#effectFor(layer, config) === "strata") this.spec.cinematic.clock.timeMode = "cumulative";
   }
 
   /**
@@ -324,6 +326,7 @@ export class CinematicModeController {
       layer.animation.effect = { ...layer.animation.effect, type: type === "auto" || CINEMATIC_EFFECTS[type] ? type : "none" };
       layer.animation.outline = { color: layer.animation.outline?.color || "#ff8136", glow: layer.animation.effect.type !== "none" };
     }
+    if (type === "auto" && [...this.layers.values()].some((entry) => this.#effectFor(entry.layer, entry.config) === "strata")) this.spec.cinematic.clock.timeMode = "cumulative";
     // Effects use the same observation snapshot, so deliberately invalidate the
     // render cache when their setting changes at a paused observation.
     this.renderedObservationTime = null;
@@ -537,7 +540,7 @@ export class CinematicModeController {
   #effectFor(layer, config) {
     const type = config.animation?.effect?.type || "none";
     if (type === "none" || config.animation?.visible === false) return "none";
-    return resolveEffect(type, { title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [] });
+    return resolveEffect(type, { title: layer.title, geometryType: layer.geometryType, fields: layer.fields || [], spatialChart: layer.spatialChart });
   }
 
   #resetTimeline(explicitTicks = null) {
