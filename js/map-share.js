@@ -2,7 +2,7 @@
 // rebuild the view travels in the URL fragment (never sent to a server):
 // layers with their styles and filters, basemap, skin, camera and, for a
 // briefing, its slides. Small enough links also fit in a QR code.
-import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.2.9-strata";
+import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.69.9-order";
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
 import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.69.9-order";

@@ -30,7 +30,7 @@ import { rendererToPaint } from "./arcgis-renderer.js?v=0.42.0";
 import { legendForLayer } from "./legend.js?v=0.52.4";
 import { inspectExternalTiles } from "./external-tiles.js?v=0.54.0";
 import { hostCredit, joinCredits, legendSwatch, plainAttribution } from "../map-credits.js?v=0.1.0";
-import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.2.9-strata";
+import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.69.9-order";
 
 // A layer effect draws over at most this many features; more would cost frame rate for no visible gain.
 const LAYER_EFFECT_MAX_FEATURES = 20000;
@@ -44,7 +44,7 @@ import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetc
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
 import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.1.1";
+import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.69.9-order";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
 import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.4";
 
@@ -318,7 +318,7 @@ export class MaplibreEngine {
     // A track switched from a native effect (Rise, Reveal, Strata) leaves no layers behind.
     this.#removeNativeEffect(id);
     this.three ??= new ThreeHost({ map: this.map, THREE, notify: (message) => this.events.publish("app:error", { message }) });
-    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.2.10-strata"), import("../../cinematic/cinematic-effects.js?v=0.2.9-strata")]);
+    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.69.9-order"), import("../../cinematic/cinematic-effects.js?v=0.69.9-order")]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     // Decoration is simplified to half a screen pixel at the current zoom; the map draws the exact outline.
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));
@@ -371,7 +371,7 @@ export class MaplibreEngine {
    */
   async #drawNativeEffect(id, name, effect, revision) {
     const [{ effectColor, nativeEffectData, valueField, riseAmount, revealAmount }, { effectSeconds, effectClockRunning }, { trackTime, normalizeTiming }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.2.9-strata"), import("../../cinematic/effects-three.js?v=0.2.10-strata"), import("../../cinematic/clock.js?v=0.1.0"),
+      import("../../cinematic/cinematic-effects.js?v=0.69.9-order"), import("../../cinematic/effects-three.js?v=0.69.9-order"), import("../../cinematic/clock.js?v=0.1.0"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -432,7 +432,7 @@ export class MaplibreEngine {
    */
   async #drawStrataEffect(id, effect, revision) {
     const [{ effectColor, strataData, strataLanding }, { effectSeconds, effectClockRunning }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.2.9-strata"), import("../../cinematic/effects-three.js?v=0.2.10-strata"),
+      import("../../cinematic/cinematic-effects.js?v=0.69.9-order"), import("../../cinematic/effects-three.js?v=0.69.9-order"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision) || !this.map) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -518,7 +518,7 @@ export class MaplibreEngine {
    * and far cheaper than shader ribbons for thousands of outlines.
    */
   async #drawSettledEdges(id, name, effect, revision) {
-    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.2.9-strata");
+    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.69.9-order");
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.three?.remove(id);
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));
@@ -853,13 +853,15 @@ export class MaplibreEngine {
     const field = variable?.field || (match ? JSON.parse(match[1]) : null);
     const height = field ? ["max", 0, ["*", ["to-number", ["get", field], 0], match ? Number(match[2]) : 1]] : Math.max(0, Number(extrusion?.size) || 0);
     const chart = record.spatialChart;
-    // A Strata timeline draws this layer's slabs itself; its footprint outlines stay.
+    // A Strata timeline draws this layer's slabs itself. Footprint outlines on the
+    // ground under a chart or Strata stack show only when the chart asks for them.
     const stacked = Boolean(record.strataEffect);
     const fillVisibility = extrusion || chart || stacked ? "none" : visibility;
+    const outlineVisibility = (chart || stacked) && !chart?.groundOutlines ? "none" : visibility;
     const specs = [
       { id: `${source}-fill`, type: "fill", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: fillVisibility }, paint: fill },
       { id: `${source}-extrusion`, type: "fill-extrusion", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: extrusion && !chart && !stacked ? visibility : "none" }, paint: { "fill-extrusion-color": fill["fill-color"], "fill-extrusion-height": height, "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity } },
-      { id: `${source}-outline`, type: "line", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility }, paint: outline },
+      { id: `${source}-outline`, type: "line", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: outlineVisibility }, paint: outline },
       { id: `${source}-line`, type: "line", source, ...range, filter: filtered(["LineString", "MultiLineString"]), layout: { visibility, "line-cap": "round", "line-join": "round" }, paint: line },
       { id: `${source}-circle`, type: "circle", source, ...range, filter: filtered(["Point", "MultiPoint"]), layout: { visibility }, paint: circle },
     ];

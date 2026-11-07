@@ -3,7 +3,7 @@
 // buffers, simplifies or interpolates observed geometry; widths, heights and
 // motion are applied on the GPU in screen pixels and are visual annotation only.
 import { localFrame } from "../geo-frame.js?v=0.1.0";
-import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.1.1";
+import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.69.9-order";
 
 export const CINEMATIC_EFFECTS = Object.freeze({
   none: { label: "None", note: "" },

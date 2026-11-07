@@ -9,7 +9,7 @@
 // Frames are composed on a dedicated canvas (map + title, captions and
 // attribution), never by recording the engine canvas, and a cross-origin
 // ("tainted") map frame stops the export before anything is encoded.
-import { setEffectClock } from "./effects-three.js?v=0.2.10-strata";
+import { setEffectClock } from "./effects-three.js?v=0.69.9-order";
 
 /** Mediabunny (MPL-2.0), pinned and loaded only when a movie is exported. */
 export const MEDIABUNNY_URL = "https://cdn.jsdelivr.net/npm/mediabunny@1.61.3/dist/bundles/mediabunny.min.mjs";

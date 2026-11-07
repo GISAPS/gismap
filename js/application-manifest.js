@@ -2,7 +2,7 @@
 // This is not a project serializer: feature data, URLs and free text are excluded.
 import { APPLICATION_PRESETS } from './application-config.js?v=0.68.0-charts1';
 import { INTERFACE_SKINS } from './skin-catalog.js?v=0.57.0-skins2';
-import { listEngines } from './engines/engine-registry.js?v=0.69.2-strata';
+import { listEngines } from './engines/engine-registry.js?v=0.69.9-order';
 import { LAYER_TOOL_DEFINITIONS } from './layer-tools.js?v=0.29.0';
 import { AUTHORING_TOOL_DEFINITIONS } from './agent-authoring-tools.js?v=0.53.0';
 

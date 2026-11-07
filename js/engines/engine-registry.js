@@ -20,7 +20,7 @@ registerEngine({
   label: "ArcGIS",
   capabilities: ENGINE_CAPABILITIES.filter((name) => !["view-2d", "three-3d", "basemap-themes", "buildings-3d"].includes(name)),
   load: async ({ events, authController }) => {
-    const { ArcGISEngine } = await import("./arcgis/arcgis-engine.js?v=0.68.0-charts1");
+    const { ArcGISEngine } = await import("./arcgis/arcgis-engine.js?v=0.69.9-order");
     return new ArcGISEngine(events, authController);
   },
 });
@@ -31,7 +31,7 @@ registerEngine({
   // Kept in step with MAPLIBRE_CAPABILITIES in maplibre-engine.js (a test checks).
   capabilities: ["view-2d", "view-3d", "spatial-chart-3d", "three-3d", "basemaps", "basemap-themes", "ground", "layers-arcgis", "layers-files", "query", "feature-filter", "renderer-spec", "renderer-native", "identify", "highlight", "capture", "geocode", "buildings-3d", "draw", "measurement", "legend", "tour-markers", "native"],
   load: async ({ events }) => {
-    const { MaplibreEngine } = await import("./maplibre/maplibre-engine.js?v=0.69.2-strata");
+    const { MaplibreEngine } = await import("./maplibre/maplibre-engine.js?v=0.69.9-order");
     return new MaplibreEngine(events);
   },
 });

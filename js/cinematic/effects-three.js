@@ -4,7 +4,7 @@
 // zoom 16, and whose motion reads one continuous clock, so stepping to the next
 // observation never restarts a flame or a ripple. Newly observed features
 // (`fresh`) flare when they appear; older ones in a build-up settle down.
-import { CINEMATIC_EFFECTS, EFFECT_QUALITY, effectFields, effectFrame, effectParts, particleSeeds, partsBounds, quadBuffers, ribbonBuffers } from "./cinematic-effects.js?v=0.2.9-strata";
+import { CINEMATIC_EFFECTS, EFFECT_QUALITY, effectFields, effectFrame, effectParts, particleSeeds, partsBounds, quadBuffers, ribbonBuffers } from "./cinematic-effects.js?v=0.69.9-order";
 import { trackTime } from "./clock.js?v=0.1.0";
 
 const EPOCH = globalThis.performance?.now?.() ?? 0;

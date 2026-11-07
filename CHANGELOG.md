@@ -6,7 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
-- Stacked 3D charts can reverse their order: **Reverse stacking order** in the Style panel's 3D visualization (or `order: "descending"` on a `spatialChart`) puts the highest group at the bottom, such as the newest decade of fires, and the slab colours, legend and Cinematic Strata playback follow. A year height field reads as 2025, not 2,025, in the legend.
+- Stacked 3D charts can reverse their order: **Reverse stacking order** in the Style panel's 3D visualization (or `order: "descending"` on a `spatialChart`) puts the highest group at the bottom, such as the newest decade of fires, and the slab colours, legend and Cinematic Strata playback follow. The flat outlines on the ground under a 3D chart or Strata stack are now off by default; **Show outlines on the ground** (`groundOutlines: true`) brings them back. A year height field reads as 2025, not 2,025, in the legend.
 - The Cinematic map timeline follows the Instant Dashboard skin: its font, heading, corners, border, shadow and accent colour now match the rest of the skin.
 - The Cinematic timeline shows a year field as a year (1989), not a grouped number with its field name ("YEAR_ 1,989").
 - California Historic Fire Perimeters is a plain data source in Popular data services (`?example=california-fire-perimeters`), and the 3D strata view of it, fires stacked by decade, is a map link on the [Discover examples page](https://gismap.online/discover/examples/). The two PM2.5 3D column examples are gone; the PM2.5 data entry stays.

@@ -58,6 +58,8 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     ...(groupBy ? { groupBy } : {}),
     ...(groups.length ? { groups } : {}),
     ...(order === "descending" ? { order } : {}),
+    // The flat source outlines under the slabs are off unless asked for: they make a stack busy.
+    ...(input.groundOutlines === true ? { groundOutlines: true } : {}),
     height: {
       mode: heightMode,
       ...(heightField ? { field: heightField } : {}),

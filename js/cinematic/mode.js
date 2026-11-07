@@ -1,9 +1,9 @@
 import { createCinematicTimeline } from "./timeline-controller.js?v=0.1.0";
 import { normalizeTemporalFeatures, observedFeaturesAt, parsePlaybackValue, temporalModelInExtent } from "./temporal-adapter.js?v=0.3.1";
 import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
-import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.2.9-strata";
+import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.69.9-order";
 import { PROVENANCE_STATUSES, createEffectsClock, normalizeTiming } from "./clock.js?v=0.1.0";
-import { setEffectClock } from "./effects-three.js?v=0.2.10-strata";
+import { setEffectClock } from "./effects-three.js?v=0.69.9-order";
 
 // In a build-up, outlines older than the newest few are "settled": drawn as a
 // cheap edge and rebuilt only now and then, while the recent ones (full

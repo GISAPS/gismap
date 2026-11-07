@@ -4,7 +4,7 @@
 // Cartography Lab saves them per layer, and they become map-v1 layers,
 // briefings and tours.
 import { validateRendererSpec } from "./renderer-spec.js?v=0.29.1";
-import { SPATIAL_CHART_MODES, SPATIAL_CHART_TYPE } from "./spatial-chart.js?v=0.1.1";
+import { SPATIAL_CHART_MODES, SPATIAL_CHART_TYPE } from "./spatial-chart.js?v=0.69.9-order";
 import { createSlide, normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 
 export const LAYER_STYLE_TYPE = "gismap-layer-style";

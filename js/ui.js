@@ -16,7 +16,7 @@ import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
 import { createShareUrl } from "./share.js?v=0.69.9-order";
-import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
+import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.69.9-order";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
 import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.9-order";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
@@ -36,7 +36,7 @@ import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.54.0-uni
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.69.2-strata";
+import { BriefingSlides } from "./briefing-slides.js?v=0.69.9-order";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -46,14 +46,14 @@ import { briefingFileStem } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { RAMPS, rampColors, compileRenderer } from "./renderer-spec.js?v=0.29.1";
 import { saveEngine } from "./engine-preference.js?v=0.52.1";
 import { BASEMAPS } from "./basemap-catalog.js?v=0.53.0-gallery1";
-import { CartographyLab } from "./cartography-lab.js?v=0.60.0-media1";
+import { CartographyLab } from "./cartography-lab.js?v=0.69.9-order";
 import { CONTEXT_ACTIONS, createSuggestionPreferences, deriveWorkspace, executeContextAction, suggestionKey, summarizeFeature } from "./contextual-workspace.js?v=6";
 import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.62.3-briefing-slide-engines";
 import { HISTORICAL_QUAKES_SOURCE, HISTORICAL_QUAKES_WHERE, createHistoricalQuakesExampleBriefing } from "./example-hazards-briefing.js?v=0.62.3-briefing-slide-engines";
-import { CinematicModeController } from "./cinematic/mode.js?v=0.3.16-strata";
-import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.2.9-strata";
+import { CinematicModeController } from "./cinematic/mode.js?v=0.69.9-order";
+import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.69.9-order";
 import { PROVENANCE_STATUSES } from "./cinematic/clock.js?v=0.1.0";
-import { recommendAnimations } from "./cinematic/recommend.js?v=0.1.3";
+import { recommendAnimations } from "./cinematic/recommend.js?v=0.69.9-order";
 
 // What each provenance label tells a viewer about a track's displayed progression.
 const PROVENANCE_HELP = Object.freeze({
@@ -65,7 +65,7 @@ const PROVENANCE_HELP = Object.freeze({
 });
 import { numericFieldCandidates, temporalFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.3.1";
 import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.10-strata";
-import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.3.8-fire-points";
+import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.69.9-order";
 import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
 import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
 import { readTextBoxEditor, textBoxEditorMarkup, textBoxRunMarkup, textBoxSummary } from "./text-box-editor.js?v=0.65.0-paths";
@@ -9318,7 +9318,7 @@ export class UIController {
       : "";
     const extrudable = this.mapController.getEngineId() === "maplibre" ? layer.geometryType === "polygon" : ["polygon", "point", "multipoint"].includes(layer.geometryType);
     const extrusionControls = extrudable
-      ? `<fieldset class="feedback-settings"><legend>3D visualization</legend><label class="display-checkbox"><input data-extrusion-enabled type="checkbox"${extrusionEnabledByRenderer ? " checked" : ""} /><span>Show as a 3D chart</span></label><div data-extrusion-options hidden><div class="field-grid"><label class="field"><span>Visualization type</span><select data-spatial-chart-mode><option value="attribute-extrusion">Attribute extrusion</option><option value="temporal-strata">Temporal strata</option><option value="stacked-footprints">Stacked footprints</option><option value="exploded-timeline">Exploded timeline</option></select></label><label class="field" data-spatial-group-control hidden><span>Vertical group field</span><select data-spatial-group-field>${fieldOptions(fields, "No fields available", chartGroupField)}</select></label><label class="field"><span>Height source</span><select data-extrusion-source><option value="fixed"${initialExtrusionSource === "fixed" ? " selected" : ""}>Fixed slab</option><option value="field"${initialExtrusionSource === "field" ? " selected" : ""}>Numeric field</option></select></label><label class="field" data-extrusion-value-control><span>Slab thickness <small>display meters</small></span><input data-extrusion-value type="number" min="1" step="1" value="${savedChart?.height?.thicknessMeters || Number(objectSymbol?.height ?? objectSymbol?.size) || 250}" /></label><label class="field" data-extrusion-field-control hidden><span>Height / thickness field</span><select data-extrusion-field>${fieldOptions(numericFields, "No numeric fields available", extrusionField)}</select></label><label class="field" data-extrusion-multiplier-control hidden><span>Height multiplier</span><input data-extrusion-multiplier type="number" min="0" step="0.01" value="${savedChart?.height?.scale ?? (Number.isFinite(expressionMultiplier) ? expressionMultiplier : 1)}" /></label><label class="field" data-spatial-slot-control hidden><span>Slot separation <small>display meters</small></span><input data-spatial-slot type="number" min="1" step="50" value="${savedChart?.height?.slotMeters || 400}" /></label><label class="field" data-spatial-gap-control hidden><span>Gap <small>display meters</small></span><input data-spatial-gap type="number" min="0" step="25" value="${savedChart?.height?.gapMeters ?? 100}" /></label><label class="display-checkbox" data-spatial-order-control hidden><input data-spatial-order type="checkbox"${savedChart?.order === "descending" ? " checked" : ""} /><span>Reverse stacking order <small>highest value at the bottom; colours follow</small></span></label>${layer.geometryType === "polygon" ? "" : `<label class="field"><span>Column width <small>meters</small></span><input data-extrusion-width type="number" min="1" step="50" value="${Number(objectSymbol?.width) || 650}" /></label>`}</div><p class="form-note" data-spatial-chart-note>Virtual Z is separate from terrain elevation. The legend labels what height and vertical position mean.</p></div></fieldset>`
+      ? `<fieldset class="feedback-settings"><legend>3D visualization</legend><label class="display-checkbox"><input data-extrusion-enabled type="checkbox"${extrusionEnabledByRenderer ? " checked" : ""} /><span>Show as a 3D chart</span></label><div data-extrusion-options hidden><div class="field-grid"><label class="field"><span>Visualization type</span><select data-spatial-chart-mode><option value="attribute-extrusion">Attribute extrusion</option><option value="temporal-strata">Temporal strata</option><option value="stacked-footprints">Stacked footprints</option><option value="exploded-timeline">Exploded timeline</option></select></label><label class="field" data-spatial-group-control hidden><span>Vertical group field</span><select data-spatial-group-field>${fieldOptions(fields, "No fields available", chartGroupField)}</select></label><label class="field"><span>Height source</span><select data-extrusion-source><option value="fixed"${initialExtrusionSource === "fixed" ? " selected" : ""}>Fixed slab</option><option value="field"${initialExtrusionSource === "field" ? " selected" : ""}>Numeric field</option></select></label><label class="field" data-extrusion-value-control><span>Slab thickness <small>display meters</small></span><input data-extrusion-value type="number" min="1" step="1" value="${savedChart?.height?.thicknessMeters || Number(objectSymbol?.height ?? objectSymbol?.size) || 250}" /></label><label class="field" data-extrusion-field-control hidden><span>Height / thickness field</span><select data-extrusion-field>${fieldOptions(numericFields, "No numeric fields available", extrusionField)}</select></label><label class="field" data-extrusion-multiplier-control hidden><span>Height multiplier</span><input data-extrusion-multiplier type="number" min="0" step="0.01" value="${savedChart?.height?.scale ?? (Number.isFinite(expressionMultiplier) ? expressionMultiplier : 1)}" /></label><label class="field" data-spatial-slot-control hidden><span>Slot separation <small>display meters</small></span><input data-spatial-slot type="number" min="1" step="50" value="${savedChart?.height?.slotMeters || 400}" /></label><label class="field" data-spatial-gap-control hidden><span>Gap <small>display meters</small></span><input data-spatial-gap type="number" min="0" step="25" value="${savedChart?.height?.gapMeters ?? 100}" /></label><label class="display-checkbox"><input data-spatial-ground-outlines type="checkbox"${savedChart?.groundOutlines ? " checked" : ""} /><span>Show outlines on the ground <small>the flat perimeters under the 3D shapes</small></span></label><label class="display-checkbox" data-spatial-order-control hidden><input data-spatial-order type="checkbox"${savedChart?.order === "descending" ? " checked" : ""} /><span>Reverse stacking order <small>highest value at the bottom; colours follow</small></span></label>${layer.geometryType === "polygon" ? "" : `<label class="field"><span>Column width <small>meters</small></span><input data-extrusion-width type="number" min="1" step="50" value="${Number(objectSymbol?.width) || 650}" /></label>`}</div><p class="form-note" data-spatial-chart-note>Virtual Z is separate from terrain elevation. The legend labels what height and vertical position mean.</p></div></fieldset>`
       : `<fieldset class="feedback-settings"><legend>3D extrusion</legend><p class="form-note">${this.mapController.getEngineId() === "maplibre" && /point/i.test(layer.geometryType || "") ? "MapLibre point columns are not yet supported. Switch to ArcGIS for 3D columns." : "3D extrusion is not available for this layer’s geometry in the current engine."}</p></fieldset>`;
     // Animated effect: Cinematic mode's decorative effects on an ordinary layer (MapLibre draws them with three.js).
     const effectsAvailable = this.mapController.getCapabilities().includes("three-3d") && Boolean(layer.geometryType);
@@ -9562,6 +9562,7 @@ export class UIController {
               mode: spatialChartMode.value,
               ...(grouped ? { groupBy: pane.querySelector("[data-spatial-group-field]").value } : {}),
               ...(grouped && pane.querySelector("[data-spatial-order]")?.checked ? { order: "descending" } : {}),
+              ...(pane.querySelector("[data-spatial-ground-outlines]")?.checked ? { groundOutlines: true } : {}),
               height: {
                 ...(extrusionSource.value === "field" ? { field: pane.querySelector("[data-extrusion-field]").value } : {}),
                 scale: Number(pane.querySelector("[data-extrusion-multiplier]")?.value) || 1,

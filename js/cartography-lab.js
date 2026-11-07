@@ -4,10 +4,10 @@ import { initializeStudioTabs } from "./studio-tabs.js?v=0.55.0-fieldwork1";
 // combination as a reusable layer style (js/layer-style.js), and makes an
 // interactive map link, briefing slides or a tour from it.
 import { RAMPS } from "./renderer-spec.js?v=0.29.1";
-import { SPATIAL_CHART_TYPE } from "./spatial-chart.js?v=0.1.1";
+import { SPATIAL_CHART_TYPE } from "./spatial-chart.js?v=0.69.9-order";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
 import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
-import { describeLayerStyle, layerStyleFileName, layerStyleRankField } from "./layer-style.js?v=0.60.0-media1";
+import { describeLayerStyle, layerStyleFileName, layerStyleRankField } from "./layer-style.js?v=0.69.9-order";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const NUMERIC = /^(?:small-integer|integer|single|double|long|esriFieldTypeSmallInteger|esriFieldTypeInteger|esriFieldTypeSingle|esriFieldTypeDouble|number)$/i;
@@ -129,6 +129,7 @@ export class CartographyLab {
           <label class="field" data-lab-when-chart="grouped"><span>Gap <small>m</small></span><input type="number" min="0" step="25" data-lab-gap value="${escapeHtml(chart?.height?.gapMeters ?? 100)}"></label>
           <label class="field" data-lab-when-chart="grouped"><span>Slab thickness <small>m</small></span><input type="number" min="1" step="10" data-lab-thickness value="${escapeHtml(chart?.height?.thicknessMeters ?? 120)}"></label>
           <label class="field" data-lab-when-chart="grouped"><span>Stacking order</span><select data-lab-order>${option("ascending", "Lowest at the bottom", chart?.order || "ascending")}${option("descending", "Highest at the bottom", chart?.order || "ascending")}</select></label>
+          <label class="display-checkbox"><input type="checkbox" data-lab-ground-outlines${chart?.groundOutlines ? " checked" : ""}><span>Show outlines on the ground</span></label>
           <label class="field" data-lab-when-chart="grouped"><span>Slab colours</span><select data-lab-chart-color>${option("sequential", "One colour per group", chart?.color?.strategy || "sequential")}${option("original", "Keep the layer colors", chart?.color?.strategy || "sequential")}</select></label>
         </div>
         <p class="form-note" data-lab-height-note></p>
@@ -299,6 +300,7 @@ export class CartographyLab {
         mode: chartMode,
         ...(grouped ? { groupBy } : {}),
         ...(grouped && value("[data-lab-order]") === "descending" ? { order: "descending" } : {}),
+        ...(this.#el("[data-lab-ground-outlines]")?.checked ? { groundOutlines: true } : {}),
         height: {
           ...(heightField ? { field: heightField } : {}),
           scale: Number(value("[data-lab-scale]")) || 1,
