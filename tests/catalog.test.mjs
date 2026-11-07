@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { EXAMPLE_CATEGORIES, POPULAR_SERVICES } from "../js/catalog.js";
-import { mapSpecFromShareParameters } from "../js/map-spec.js";
+import { readFileSync } from "node:fs";
+import { mapSpecFromShareParameters, validateMapSpec } from "../js/map-spec.js";
 import { parseShareParameters } from "../js/share.js";
+import { FIRE_SOURCE, FIRE_STRATA, FIRE_STRATA_LINK } from "../scripts/fire-refinement.mjs";
 
 test("catalog entries have stable, complete discovery metadata", () => {
   const ids = new Set();
@@ -30,21 +32,23 @@ test("catalog includes the documented service families", () => {
   assert.ok(POPULAR_SERVICES.some((item) => item.featured), "at least one example must be featured");
 });
 
-test("the 3D example stacks California fire perimeters by decade and opens at an angle", () => {
+test("California fire perimeters are a plain data source; the 3D strata view is a Discover map link", () => {
   assert.equal(POPULAR_SERVICES.some((item) => item.slug.startsWith("air-quality-pm25-3d-")), false, "PM2.5 points do not suit 3D; only the PM2.5 data entry stays");
   assert.ok(POPULAR_SERVICES.find((item) => item.slug === "air-quality-pm25"));
-  const shared = parseShareParameters("?example=california-fire-perimeters-strata", POPULAR_SERVICES);
-  const spec = mapSpecFromShareParameters(shared);
+  const source = POPULAR_SERVICES.find((item) => item.slug === "california-fire-perimeters");
+  assert.equal(source.title, "California Historic Fire Perimeters");
+  assert.equal(POPULAR_SERVICES.some((item) => item.spatialChart || item.where), false, "Add from the catalog loads the layer alone, so an entry must not depend on a chart or filter");
+  const { valid, issues, spec } = validateMapSpec(FIRE_STRATA);
+  assert.ok(valid, JSON.stringify(issues));
   const [layer] = spec.layers;
-  assert.equal(layer.title, "California Historic Fire Perimeters");
+  assert.equal(layer.url, FIRE_SOURCE);
   assert.equal(layer.where, "GIS_ACRES >= 1000 AND DECADES IS NOT NULL");
   assert.equal(layer.spatialChart.mode, "temporal-strata");
-  assert.equal(layer.spatialChart.groupBy, "DECADES");
   assert.deepEqual([layer.spatialChart.groups[0], layer.spatialChart.groups.at(-1)], ["1950-1959", "2020-2025"], "earliest decade at the bottom");
   assert.deepEqual(layer.spatialChart.height, { slotMeters: 4000, gapMeters: 500, thicknessMeters: 2500, scale: 1 }, "slabs tall enough to read at regional zoom");
   assert.equal(spec.camera.tilt, 55, "a stack reads best from an angle");
-  assert.equal(spec.basemap, "open-dark");
-  assert.deepEqual(mapSpecFromShareParameters(parseShareParameters("?example=california-fire-perimeters-strata&zoom=layers", POPULAR_SERVICES)).camera, { fit: "layers" }, "the link's own camera wins");
+  const discover = readFileSync(new URL("../discover/examples/index.html", import.meta.url), "utf8");
+  assert.ok(discover.includes(`href="${FIRE_STRATA_LINK.replace("https://gismap.online/", "../../")}"`), "the Discover card opens the same spec");
 });
 
 test("featured discovery examples carry a deliberate portable visual", () => {

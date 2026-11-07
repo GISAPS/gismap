@@ -3,7 +3,7 @@
 // scripts/capture-prompt-examples.mjs, which also takes each screenshot; `checked`
 // is the date of that run. Live services change, so a status is a dated observation.
 import { CORN_LINK } from "./agent-docs.mjs";
-import { FIRE_YEAR, fireLink } from "./fire-refinement.mjs";
+import { FIRE_STRATA_LINK, FIRE_YEAR, fireLink } from "./fire-refinement.mjs";
 
 const SITE = "https://gismap.online";
 const STATES = "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0";
@@ -44,7 +44,7 @@ export const PROMPT_EXAMPLES = Object.freeze([
     link: map({ basemap: "streets-vector", camera: { center: [-71.0972, 42.3467], zoom: 15 }, layers: [{ url: BALLPARKS, where: "TEAM = 'Boston Red Sox'", title: "Fenway Park" }] }, "?embed=1&embedKind=map"),
     reply: "Paste the link into an iframe src. I have not tested it on your site." },
   { slug: "3d-extrusion", title: "A 3D map", prompt: "Show California's big wildfires stacked in 3D by decade.",
-    link: `${SITE}/?example=california-fire-perimeters-strata`, checked: "2026-11-06",
+    link: FIRE_STRATA_LINK, checked: "2026-11-07",
     reply: "Each decade is a layer, the 1950s at the bottom; height is display order, not altitude. Fires before 1950 have no decade, so they are left out." },
   { slug: "vibe-map", title: "A themed map", prompt: "Make a moody, late-night map of US state populations.",
     link: map({ basemap: "open-dark", skin: "velvet-orbit", layers: [{ url: STATES, opacity: 0.85, renderer: { type: "choropleth", field: "POPULATION", method: "auto", ramp: "magma" } }] }),
