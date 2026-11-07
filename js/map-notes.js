@@ -1,4 +1,4 @@
-import { sanitizeSharedResourceUrl } from './share.js?v=0.70.0-ground';
+import { sanitizeSharedResourceUrl } from './share.js?v=0.70.1-colours';
 // Map Notes are project-owned records, independent of map engines and source features.
 // Do not put these records in the public application state or send them to an AI.
 export const NOTE_VERSION = '1.0';

@@ -1,4 +1,4 @@
-import { sanitizeSharedResourceUrl } from './share.js?v=0.70.0-ground';
+import { sanitizeSharedResourceUrl } from './share.js?v=0.70.1-colours';
 
 // A generated renderer object ID is not a durable feature identity. Preserve
 // only an advertised ID field and never copy a credential-bearing service URL.

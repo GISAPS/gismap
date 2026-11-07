@@ -27,7 +27,8 @@ export type SpatialChart = {
   /** Also draw the flat source outlines on the ground under the 3D shapes. Default false. */
   groundOutlines?: boolean;
   height: { mode?: "field" | "fixed-slot" | "magnitude"; field?: string; slotMeters?: number; gapMeters?: number; thicknessMeters?: number; scale?: number };
-  color?: { field?: string | null; strategy?: "original" | "sequential" };
+  /** `colors` sets a slab colour per group value ("#rrggbb"); groups without one use the default palette. */
+  color?: { field?: string | null; strategy?: "original" | "sequential"; colors?: Record<string, string> };
   geometry?: { strategy: "source-footprints"; aggregation: "none" };
   interaction?: { hover?: boolean; select?: boolean; explode?: boolean; scrubTimeline?: boolean };
 };
