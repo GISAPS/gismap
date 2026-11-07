@@ -15,10 +15,11 @@ import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpre
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.69.3-fire";
+import { createShareUrl, parseShareParameters } from "./share.js?v=0.69.3-fire";
+import { mapSpecFromShareParameters } from "./map-spec.js?v=0.69.3-fire";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.3-fire";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.4-share";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -4419,7 +4420,7 @@ export class UIController {
         const service = POPULAR_SERVICES.find((item) => item.id === button.dataset.catalogId);
         button.disabled = true;
         try {
-          const layer = await this.#addServiceOrBrowse(service);
+          const layer = await this.#addCatalogService(service);
           if (layer) {
             button.textContent = "Added";
             this.toast(`${service.title} added.`);
@@ -4432,6 +4433,19 @@ export class UIController {
         }
       }),
     );
+  }
+
+  /**
+   * A catalog example with its own filter, 3D chart, basemap or view loads the
+   * same way as its ?example= link, so both open the same map.
+   */
+  async #addCatalogService(service) {
+    const slug = service.slug || service.id;
+    if (!this.mapSpec || !slug || !["where", "spatialChart", "basemap", "camera"].some((key) => service[key])) return this.#addServiceOrBrowse(service);
+    const before = new Set(this.mapController.getLayers().map((layer) => layer.uid));
+    const shared = parseShareParameters(`?example=${encodeURIComponent(slug)}`, POPULAR_SERVICES);
+    await this.mapSpec.load(mapSpecFromShareParameters(shared), { replace: false }).ready;
+    return this.mapController.getLayers().find((layer) => !before.has(layer.uid)) || null;
   }
 
   async #addServiceOrBrowse(config) {

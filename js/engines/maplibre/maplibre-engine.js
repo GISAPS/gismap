@@ -158,6 +158,7 @@ export class MaplibreEngine {
   #loaded = null;
   #styleJson = new Map();
   #styleToken = 0;
+  #styleSwap = Promise.resolve();
 
   constructor(events) {
     this.id = "maplibre";
@@ -735,8 +736,21 @@ export class MaplibreEngine {
     }
   }
 
+  /** Swaps in the current basemap's style; layers added meanwhile wait for it (#styleSettled). */
+  #applyStyle() {
+    const swap = this.#swapStyle();
+    this.#styleSwap = swap.catch(() => {});
+    return swap;
+  }
+
+  /** Resolves once any basemap swap in progress has finished and the style can take new sources. */
+  async #styleSettled() {
+    await this.#styleSwap;
+    if (this.map && !this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 3000); });
+  }
+
   /** Swaps in the current basemap's style, carrying the data layers over (only what changed is redrawn). */
-  async #applyStyle() {
+  async #swapStyle() {
     const token = ++this.#styleToken;
     const style = await this.#styleFor(this.basemapId);
     // A style still loading cannot be diffed (MapLibre would rebuild from scratch); wait for it.
@@ -757,6 +771,7 @@ export class MaplibreEngine {
         };
       },
     });
+    if (!this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 10000); });
   }
 
   async whenBasemapLoaded(timeout = 15000) {
@@ -1087,6 +1102,8 @@ export class MaplibreEngine {
   async addService(config = {}) {
     const url = String(config.url || "").trim().replace(/\/$/, "");
     if (!url) throw new Error("A service URL is required.");
+    // A basemap chosen just before (a map spec or example) may still be swapping in.
+    await this.#styleSettled();
     const type = config.serviceType || "arcgis-auto";
     const scene3dType = SCENE3D_TYPES.includes(type) ? type : type === "arcgis-auto" ? scene3dTypeFor(url) : null;
     if (scene3dType) return this.#addScene3d({ ...config, url }, scene3dType);
