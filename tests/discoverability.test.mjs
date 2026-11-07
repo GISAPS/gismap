@@ -46,6 +46,17 @@ test('explicit search crawler policies preserve public access', async () => {
   assert.match(robots, /Sitemap: https:\/\/gismap\.online\/sitemap\.xml/);
 });
 
+// docs/crawler-policy.md: AI crawlers, training ones included, may read the whole site.
+test('AI training and answer crawlers are not disallowed and content signals grant AI use', async () => {
+  const robots = await read('robots.txt');
+  for (const part of robots.split(/\n\s*\n/)) {
+    const agents = [...part.matchAll(/^User-agent:\s*(\S+)/gim)].map(m => m[1]);
+    if (agents.length) assert.doesNotMatch(part, /^Disallow:\s*\/\s*$/im, `${agents.join(', ')} is disallowed site-wide`);
+  }
+  for (const agent of ['GPTBot', 'ClaudeBot', 'Google-Extended', 'CCBot', 'Claude-User', 'ChatGPT-User', 'PerplexityBot']) assert.doesNotMatch(robots, new RegExp(`^User-agent:\\s*${agent}\\s*$`, 'im'), `${agent} needs no group of its own; * allows it`);
+  assert.match(robots, /^Content-Signal:\s*search=yes,ai-input=yes,ai-train=yes$/m);
+});
+
 test('sitemap HTML pages have no missing local link targets', async () => {
   const xml = await read('sitemap.xml');
   for (const [, url] of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
