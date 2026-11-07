@@ -7,7 +7,7 @@
 // decode to map-v1 too. Pure functions only, so headless callers can build links.
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
 import { MAP_SPEC_JSON_LIMIT, QR_SAFE_LENGTH, readShare } from "./map-share.js?v=0.60.18-trains1";
-import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.54.0-unified4";
+import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.69.3-fire";
 import { validateRendererSpec } from "./renderer-spec.js?v=0.29.0";
 import { normalizeBriefing, validateBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
@@ -404,7 +404,7 @@ export function mapSpecFromShareParameters(shared) {
   if (shared.basemap) spec.basemap = shared.basemap;
   const camera = shared.camera || {};
   spec.camera = camera.center
-    ? { center: camera.center, ...(camera.scale ? { scale: camera.scale } : { zoom: camera.level ?? 10 }), heading: 0, tilt: 0 }
+    ? { center: camera.center, ...(camera.scale ? { scale: camera.scale } : { zoom: camera.level ?? 10 }), heading: camera.heading ?? 0, tilt: camera.tilt ?? 0 }
     : camera.zoom === "none" ? { fit: "none" } : { fit: "layers" };
   for (const layer of shared.layers) {
     const entry = { url: layer.url, type: layer.serviceType || "arcgis-auto" };
@@ -415,6 +415,7 @@ export function mapSpecFromShareParameters(shared) {
     if (layer.style) entry.renderer = rendererSpecFromParameters(layer.style);
     else if (layer.renderer) entry.renderer = { type: "arcgis", json: layer.renderer };
     if (layer.animatedEffect) entry.animatedEffect = layer.animatedEffect;
+    if (layer.spatialChart) entry.spatialChart = layer.spatialChart;
     spec.layers.push(entry);
   }
   return spec;

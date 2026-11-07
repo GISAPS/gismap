@@ -6,7 +6,7 @@
 // with the provider. Pure functions apart from the tool handlers, which call the
 // in-page API (globalThis.gisMapOnline) and a few app hooks passed in as `host`.
 
-import { describeArcgisLayer, describeFields, isArcgisLayerUrl, summarizeArcgisField } from "./layer-insight.js?v=0.50.0";
+import { describeArcgisLayer, describeFields, isArcgisLayerUrl, summarizeArcgisField } from "./layer-insight.js?v=0.50.1";
 import { INTERFACE_SKINS } from "./skin-catalog.js?v=0.57.0-skins2";
 import { DISPLAY_SETTINGS, guideOutline, searchGuide, validateDisplaySetting } from "./app-guide.js?v=0.65.0-paths";
 

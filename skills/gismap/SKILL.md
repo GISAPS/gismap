@@ -31,8 +31,7 @@ Curated datasets (the link needs no field names):
 - `https://gismap.online/?example=active-hurricanes`: Current tropical cyclone tracks, forecasts, and related observations. Key fields: STORMNAME, MAXWIND.
 - `https://gismap.online/?example=recent-hurricanes`: Recent tropical cyclone tracks and observations published for hurricane analysis. Key fields: STORMNAME, INTENSITY.
 - `https://gismap.online/?example=air-quality-pm25`: Latest particulate matter air-quality observations and results. Key fields: city, country, value.
-- `https://gismap.online/?example=air-quality-pm25-3d-columns`: PM2.5 monitoring stations rendered as 3D columns whose height represents particulate-matter concentration. Key fields: city, country, value.
-- `https://gismap.online/?example=air-quality-pm25-3d-graduated`: PM2.5 monitoring stations rendered as colored 3D columns by particulate-matter concentration. Key fields: city, country, value.
+- `https://gismap.online/?example=california-fire-perimeters-strata`: California's historic fire perimeters of 1,000 acres or more, stacked in 3D by decade: the 1950s at the bottom, the 2020s on top. Key fields: FIRE_NAME, YEAR_, DECADES, GIS_ACRES.
 - `https://gismap.online/?example=usgs-seismic-activity`: Recent earthquake and seismic activity reported by the USGS. Key fields: mag, place, eventTime.
 - `https://gismap.online/?example=usgs-recent-earthquakes-map-service`: A USGS ArcGIS MapServer presenting recent earthquake activity. Key fields: mag, place, depth.
 - `https://gismap.online/?example=ndfd-wind-gusts`: Forecast wind-gust conditions from the National Digital Forecast Database. Key fields: label, fromdate.

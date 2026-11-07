@@ -15,8 +15,7 @@ Curated datasets (the link needs no field names):
 - `https://gismap.online/?example=active-hurricanes`: Current tropical cyclone tracks, forecasts, and related observations. Key fields: STORMNAME, MAXWIND.
 - `https://gismap.online/?example=recent-hurricanes`: Recent tropical cyclone tracks and observations published for hurricane analysis. Key fields: STORMNAME, INTENSITY.
 - `https://gismap.online/?example=air-quality-pm25`: Latest particulate matter air-quality observations and results. Key fields: city, country, value.
-- `https://gismap.online/?example=air-quality-pm25-3d-columns`: PM2.5 monitoring stations rendered as 3D columns whose height represents particulate-matter concentration. Key fields: city, country, value.
-- `https://gismap.online/?example=air-quality-pm25-3d-graduated`: PM2.5 monitoring stations rendered as colored 3D columns by particulate-matter concentration. Key fields: city, country, value.
+- `https://gismap.online/?example=california-fire-perimeters-strata`: California's historic fire perimeters of 1,000 acres or more, stacked in 3D by decade: the 1950s at the bottom, the 2020s on top. Key fields: FIRE_NAME, YEAR_, DECADES, GIS_ACRES.
 - `https://gismap.online/?example=usgs-seismic-activity`: Recent earthquake and seismic activity reported by the USGS. Key fields: mag, place, eventTime.
 - `https://gismap.online/?example=usgs-recent-earthquakes-map-service`: A USGS ArcGIS MapServer presenting recent earthquake activity. Key fields: mag, place, depth.
 - `https://gismap.online/?example=ndfd-wind-gusts`: Forecast wind-gust conditions from the National Digital Forecast Database. Key fields: label, fromdate.
@@ -133,7 +132,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [A two-layer map](https://gismap.online/examples/ai/two-layer-map/): Prompt: "Show state populations with the Major League ballparks on top." Status reached: loaded.
 - [A briefing](https://gismap.online/examples/ai/state-briefing/): Prompt: "Turn US state population density into a short presentation." Status reached: loaded.
 - [A contact-page embed](https://gismap.online/examples/ai/contact-page-embed/): Prompt: "Add a map of Fenway Park to my contact page." Status reached: loaded.
-- [A 3D extrusion](https://gismap.online/examples/ai/3d-extrusion/): Prompt: "Show air quality around the world as 3D columns." Status reached: loaded.
+- [A 3D map](https://gismap.online/examples/ai/3d-extrusion/): Prompt: "Show California's big wildfires stacked in 3D by decade." Status reached: loaded.
 - [A themed map](https://gismap.online/examples/ai/vibe-map/): Prompt: "Make a moody, late-night map of US state populations." Status reached: loaded.
 - [A LiDAR view](https://gismap.online/examples/ai/lidar-view/): Prompt: "Show this LiDAR file in 3D: autzen_trim.las from the PDAL samples." Status reached: loaded.
 - [A field task](https://gismap.online/examples/ai/field-task/): Prompt: "Send a colleague to check the signs at Oracle Park's main gate." Status reached: loaded.
@@ -141,7 +140,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [A failure: CORS_BLOCKED](https://gismap.online/examples/ai/cors-blocked/): Prompt: "Put https://example.com/ on a map as GeoJSON." Status reached: prepared.
 
 ## Data
-- [Curated public datasets (JSON)](https://gismap.online/api/catalog.json): 15 services with ready links
+- [Curated public datasets (JSON)](https://gismap.online/api/catalog.json): 14 services with ready links
 
 ## Limits
 - At most 10 layers per map; HTTPS only; URLs containing tokens or keys are refused; sources must allow browser (CORS) access.
@@ -404,7 +403,7 @@ Query (after ?):
 - `center`: View centre in degrees; use with scale or level. Example: `-93.6,42`.
 - `scale`: Map scale denominator, with center. Example: `500000`.
 - `level`: Zoom level, with center. Example: `7`.
-- `example`: A curated dataset (see /api/catalog.json). Values: usa-wildfires, modis-active-fires, active-hurricanes, recent-hurricanes, air-quality-pm25, air-quality-pm25-3d-columns, air-quality-pm25-3d-graduated, usgs-seismic-activity, usgs-recent-earthquakes-map-service, ndfd-wind-gusts, ndfd-precipitation, ndfd-daily-temperature, historical-quakes, usgs-earthquakes, world-countries-generalized. Example: `usa-wildfires`.
+- `example`: A curated dataset (see /api/catalog.json). Values: usa-wildfires, modis-active-fires, active-hurricanes, recent-hurricanes, air-quality-pm25, california-fire-perimeters-strata, usgs-seismic-activity, usgs-recent-earthquakes-map-service, ndfd-wind-gusts, ndfd-precipitation, ndfd-daily-temperature, historical-quakes, usgs-earthquakes, world-countries-generalized. Example: `usa-wildfires`.
 - `briefingExample`: Launch a finished, editable briefing example. historical-quakes loads the bounded Historical Quakes layer, source style, slides, and observed cinematic clip. Values: historical-quakes. Example: `historical-quakes`.
 - `tutorial`: With briefingExample=historical-quakes, begin its step-by-step walkthrough after the finished briefing loads. Values: 1. Example: `1`.
 - `spec`: HTTPS URL of a CORS-enabled map-v1 JSON file. Example: `https://example.org/corn.map.json`.
@@ -799,8 +798,7 @@ Caveats:
 - Active Hurricanes (feature, Esri Disaster Response): https://gismap.online/?example=active-hurricanes
 - Recent Hurricanes (feature, Esri Disaster Response): https://gismap.online/?example=recent-hurricanes
 - PM2.5 Data (feature, Esri Disaster Response): https://gismap.online/?example=air-quality-pm25
-- PM2.5 3D columns (feature, Esri Disaster Response): https://gismap.online/?example=air-quality-pm25-3d-columns
-- PM2.5 3D graduated columns (feature, Esri Disaster Response): https://gismap.online/?example=air-quality-pm25-3d-graduated
+- California fire perimeters — 3D strata by decade (feature, CAL FIRE): https://gismap.online/?example=california-fire-perimeters-strata
 - USGS Seismic Activity (feature, USGS / Esri): https://gismap.online/?example=usgs-seismic-activity
 - USGS Recent Earthquakes Map Service (map-image, USGS): https://gismap.online/?example=usgs-recent-earthquakes-map-service
 - NDFD Wind Gusts (feature, NWS / Esri): https://gismap.online/?example=ndfd-wind-gusts

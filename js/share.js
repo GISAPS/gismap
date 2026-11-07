@@ -76,13 +76,23 @@ export function parseShareParameters(search, catalog = [], options = {}) {
       };
       if (item.renderer || entry.renderer) layer.renderer = structuredClone(item.renderer || entry.renderer);
       if (item.animatedEffect || entry.animatedEffect) layer.animatedEffect = structuredClone(item.animatedEffect || entry.animatedEffect);
+      if (item.where || entry.where) layer.where = item.where || entry.where;
+      if (Number.isFinite(item.opacity ?? entry.opacity)) layer.opacity = item.opacity ?? entry.opacity;
+      if (item.spatialChart || entry.spatialChart) layer.spatialChart = structuredClone(item.spatialChart || entry.spatialChart);
       layers.push(layer);
     }
   }
   if (layers.length > MAX_LAYERS) throw new Error(`A shared map can load at most ${MAX_LAYERS} layers.`);
-  const basemap = params.get("basemap")?.trim() || null;
+  // A link's own basemap wins over the one an example suggests.
+  const exampleBasemap = example ? catalog.find((item) => (item.slug || item.id) === example)?.basemap : null;
+  const basemap = params.get("basemap")?.trim() || exampleBasemap || null;
   if (basemap && !SUPPORTED_BASEMAPS.has(basemap)) throw new Error(`Unsupported shared basemap: ${basemap}.`);
-  return { layers, basemap, example, camera: parseCameraParameters(params) };
+  const camera = parseCameraParameters(params);
+  // An example with its own view (a 3D chart seen at an angle) opens there unless the link says otherwise.
+  const entry = example ? catalog.find((item) => (item.slug || item.id) === example) : null;
+  const linkCamera = ["zoom", "center", "scale", "level"].some((key) => params.has(key));
+  if (entry?.camera?.center && !linkCamera) return { layers, basemap, example, camera: { zoom: "none", center: [...entry.camera.center], scale: null, level: entry.camera.zoom ?? 10, heading: entry.camera.heading ?? 0, tilt: entry.camera.tilt ?? 0 } };
+  return { layers, basemap, example, camera };
 }
 
 /**

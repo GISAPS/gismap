@@ -44,7 +44,7 @@ Do not stop at instructions if the requested style is supported. From a simple U
 
 ## 3d-extrusion — 3D extruded map
 
-**Prompt:** “Make the county heights represent acreage.” **Inputs:** polygon source, verified numeric field or fixed height, height scaling and units, colors, engine and 3D camera. Inspect geometry, field type, nulls, sentinels, negatives and outliers. Use only the actual engine's supported renderer and 3D settings; do not invent a portable field or assume source units are meters. Verify visible heights and camera in the selected engine, and test whether the shared artifact restores them. Clearly report unsupported settings or dropped height configuration. See [styling and 3D](map-styling.md) and the [3D examples](https://gismap.online/examples/air-quality-pm25-3d-columns/).
+**Prompt:** “Make the county heights represent acreage.” **Inputs:** polygon source, verified numeric field or fixed height, height scaling and units, colors, engine and 3D camera. Inspect geometry, field type, nulls, sentinels, negatives and outliers. Use only the actual engine's supported renderer and 3D settings; do not invent a portable field or assume source units are meters. Verify visible heights and camera in the selected engine, and test whether the shared artifact restores them. Clearly report unsupported settings or dropped height configuration. See [styling and 3D](map-styling.md) and the [3D strata example](https://gismap.online/examples/california-fire-perimeters-strata/).
 
 <a id="spatial-3d-chart"></a>
 

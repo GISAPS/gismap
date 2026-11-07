@@ -30,16 +30,20 @@ test("catalog includes the documented service families", () => {
   assert.ok(POPULAR_SERVICES.some((item) => item.featured), "at least one example must be featured");
 });
 
-test("PM2.5 3D examples provide field-driven column renderers", () => {
-  const examples = POPULAR_SERVICES.filter((item) => item.slug.startsWith("air-quality-pm25-3d-"));
-  assert.equal(examples.length, 2);
-  for (const item of examples) {
-    assert.equal(item.renderer?.visualVariables?.[0]?.type, "size");
-    assert.equal(item.renderer?.visualVariables?.[0]?.valueExpression, "Min(12000, Max(0, $feature[\"value\"] * 25))");
-    assert.equal(item.renderer?.visualVariables?.[0]?.axis, "height");
-    const symbol = item.renderer?.symbol ?? item.renderer?.classBreakInfos?.[0]?.symbol;
-    assert.equal(symbol?.symbolLayers?.[0]?.width, 650);
-  }
+test("the 3D example stacks California fire perimeters by decade and opens at an angle", () => {
+  assert.equal(POPULAR_SERVICES.some((item) => item.slug.startsWith("air-quality-pm25-3d-")), false, "PM2.5 points do not suit 3D; only the PM2.5 data entry stays");
+  assert.ok(POPULAR_SERVICES.find((item) => item.slug === "air-quality-pm25"));
+  const shared = parseShareParameters("?example=california-fire-perimeters-strata", POPULAR_SERVICES);
+  const spec = mapSpecFromShareParameters(shared);
+  const [layer] = spec.layers;
+  assert.equal(layer.title, "California Historic Fire Perimeters");
+  assert.equal(layer.where, "GIS_ACRES >= 1000 AND DECADES IS NOT NULL");
+  assert.equal(layer.spatialChart.mode, "temporal-strata");
+  assert.equal(layer.spatialChart.groupBy, "DECADES");
+  assert.deepEqual([layer.spatialChart.groups[0], layer.spatialChart.groups.at(-1)], ["1950-1959", "2020-2025"], "earliest decade at the bottom");
+  assert.equal(spec.camera.tilt, 55, "a stack reads best from an angle");
+  assert.equal(spec.basemap, "open-dark");
+  assert.deepEqual(mapSpecFromShareParameters(parseShareParameters("?example=california-fire-perimeters-strata&zoom=layers", POPULAR_SERVICES)).camera, { fit: "layers" }, "the link's own camera wins");
 });
 
 test("featured discovery examples carry a deliberate portable visual", () => {

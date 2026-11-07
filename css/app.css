@@ -413,7 +413,7 @@ body:has(.application-dock--bottom.is-collapsed).application-bottom-open #viewDi
 .workspace-tool__actions button { border: 1px solid var(--green); border-radius: 6px; padding: 9px 12px; color: white; background: var(--green); cursor: pointer; }
 .layer-source { display: grid; align-content: start; gap: 14px; }
 .layer-source h3 { margin: 0; font: 600 24px/1.15 "Newsreader", Georgia, serif; }
-.layer-source__description { margin: -5px 0 0; color: var(--muted); line-height: 1.45; }
+.layer-source__description { margin: -5px 0 0; color: var(--muted); line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
 .layer-source__details { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line); }
 .layer-source__details > div { display: grid; grid-template-columns: minmax(105px, 36%) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .layer-source__details dt { color: var(--muted); font-size: 12px; font-weight: 700; }

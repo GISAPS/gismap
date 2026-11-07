@@ -9,15 +9,16 @@ import { noteFeatureReference } from './map-note-feature.js?v=0.1.0';
 import { openMapNotesPanel } from "./map-notes-panel.js?v=0.69.1-pdflinks";
 import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
-import { POPULAR_SERVICES } from "./catalog.js?v=0.18.2";
+import { POPULAR_SERVICES } from "./catalog.js?v=0.18.3-fire-strata";
+import { plainText } from "./layer-insight.js?v=0.50.1";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.54.0-unified4";
+import { createShareUrl } from "./share.js?v=0.69.3-fire";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.2-strata";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.3-fire";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -9196,9 +9197,11 @@ export class UIController {
       ["Features", Number.isFinite(metadata.featureCount) ? metadata.featureCount.toLocaleString() : ""],
       ["Local asset", localLabel],
     ].filter(([, value]) => value);
+    // Publisher descriptions are HTML (sometimes entity-escaped); show their text, not their markup.
+    const description = plainText(metadata.description, 4000);
     const pane = document.querySelector("#utility-source-content");
     if (!pane) return;
-    pane.innerHTML = `<section class="layer-source"><span class="eyebrow">Data source</span><h3>${escapeHtml(layer.title || config.title || "Layer source")}</h3>${metadata.description ? `<p class="layer-source__description">${escapeHtml(metadata.description)}</p>` : `<p class="form-note">This panel keeps the source details for the layer currently on your map.</p>`}<dl class="layer-source__details">${details.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${sourceUrl ? `<div class="layer-source__endpoint"><span>Publisher endpoint</span><code>${escapeHtml(sourceUrl)}</code></div><a class="button--primary layer-source__open" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source in a new tab ↗</a>` : `<p class="form-note">This source is stored locally, so it does not have a publisher page to open.</p>`}</section>`;
+    pane.innerHTML = `<section class="layer-source"><span class="eyebrow">Data source</span><h3>${escapeHtml(layer.title || config.title || "Layer source")}</h3>${description ? `<p class="layer-source__description">${escapeHtml(description)}</p>` : `<p class="form-note">This panel keeps the source details for the layer currently on your map.</p>`}<dl class="layer-source__details">${details.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${sourceUrl ? `<div class="layer-source__endpoint"><span>Publisher endpoint</span><code>${escapeHtml(sourceUrl)}</code></div><a class="button--primary layer-source__open" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source in a new tab ↗</a>` : `<p class="form-note">This source is stored locally, so it does not have a publisher page to open.</p>`}</section>`;
     this.utilitySourceLayerUid = uid;
     this.#syncUtilityPanel("source");
   }

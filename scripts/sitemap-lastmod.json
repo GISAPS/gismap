@@ -44,8 +44,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/": {
-    "hash": "3c2453245438d734",
-    "lastmod": "2026-11-03"
+    "hash": "7a6cc1a13bbee3ad",
+    "lastmod": "2026-11-06"
   },
   "/examples/data-connections/local-postgis/": {
     "hash": "5e88d704404ad446",
@@ -92,8 +92,8 @@
     "lastmod": "2026-11-01"
   },
   "/examples/ai/3d-extrusion/": {
-    "hash": "145ea5c2e4e0b1c2",
-    "lastmod": "2026-11-01"
+    "hash": "4a15986ab06d7ddc",
+    "lastmod": "2026-11-06"
   },
   "/examples/ai/vibe-map/": {
     "hash": "31ccfc0175cc8ed1",
@@ -127,13 +127,9 @@
     "hash": "a3d4b07684fd1410",
     "lastmod": "2026-11-02"
   },
-  "/examples/air-quality-pm25-3d-columns/": {
-    "hash": "f93135df0a33edbe",
-    "lastmod": "2026-11-02"
-  },
-  "/examples/air-quality-pm25-3d-graduated/": {
-    "hash": "6e2990b6bf498d66",
-    "lastmod": "2026-11-02"
+  "/examples/california-fire-perimeters-strata/": {
+    "hash": "04d564173f60cd04",
+    "lastmod": "2026-11-06"
   },
   "/examples/historical-quakes/": {
     "hash": "a8144b391f0d051e",
@@ -176,8 +172,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/ai/": {
-    "hash": "d1b3750b690dcbb7",
-    "lastmod": "2026-11-03"
+    "hash": "cefa8eb2877f5847",
+    "lastmod": "2026-11-06"
   },
   "/examples/ai/philadelphia-police-divisions/": {
     "hash": "78e4e05045a5248c",
@@ -260,15 +256,15 @@
     "lastmod": "2026-11-02"
   },
   "/llms.txt": {
-    "hash": "291b75cdfa1c37b8",
-    "lastmod": "2026-11-03"
+    "hash": "4f06a81a48d00f2f",
+    "lastmod": "2026-11-06"
   },
   "/llms-full.txt": {
-    "hash": "07db5d7a24f1484b",
-    "lastmod": "2026-11-03"
+    "hash": "5f34f86bb9d1f7e9",
+    "lastmod": "2026-11-06"
   },
   "/api/catalog.json": {
-    "hash": "c85799049c08d432",
-    "lastmod": "2026-10-28"
+    "hash": "9af899308f069209",
+    "lastmod": "2026-11-06"
   }
 }
