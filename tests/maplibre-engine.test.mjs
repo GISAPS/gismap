@@ -442,9 +442,13 @@ test("MapLibre spatial charts rebuild derived strata and persist the portable co
   assert.equal(engine.map.layers.get(`gismap-${layer.uid}-fill`).layout.visibility, "none");
   assert.equal(engine.map.layers.get(`gismap-${layer.uid}-spatial-chart-1`).paint["fill-extrusion-base"], 500);
   assert.deepEqual(engine.getLayerConfig(layer).spatialChart, chart);
+  assert.equal(engine.map.layers.get(`gismap-${layer.uid}-outline`).layout.visibility, "none", "ground outlines are off under a chart by default");
+  await engine.setSpatialChart(layer.uid, { ...chart, groundOutlines: true });
+  assert.equal(engine.map.layers.get(`gismap-${layer.uid}-outline`).layout.visibility, "visible");
   await engine.setSpatialChart(layer.uid, null);
   assert.equal(engine.map.layers.has(`gismap-${layer.uid}-spatial-chart-0`), false);
   assert.equal(engine.map.layers.get(`gismap-${layer.uid}-fill`).layout.visibility, "visible");
+  assert.equal(engine.map.layers.get(`gismap-${layer.uid}-outline`).layout.visibility, "visible");
 });
 
 test("views persist in GIS Map zoom levels (one above MapLibre's)", async () => {
