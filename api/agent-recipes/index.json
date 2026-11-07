@@ -84,11 +84,11 @@
       "screenshot": "https://gismap.online/examples/ai/contact-page-embed/screenshot.png"
     },
     {
-      "title": "A 3D extrusion",
-      "prompt": "Show air quality around the world as 3D columns.",
-      "link": "https://gismap.online/?example=air-quality-pm25-3d-columns",
+      "title": "A 3D map",
+      "prompt": "Show California's big wildfires stacked in 3D by decade.",
+      "link": "https://gismap.online/?example=california-fire-perimeters-strata",
       "status": "loaded",
-      "checked": "2026-11-01",
+      "checked": "2026-11-06",
       "page": "https://gismap.online/examples/ai/3d-extrusion/",
       "screenshot": "https://gismap.online/examples/ai/3d-extrusion/screenshot.png"
     },

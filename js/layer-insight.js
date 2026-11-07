@@ -12,11 +12,17 @@ export const isArcgisLayerUrl = (url) => ARCGIS_LAYER.test(String(url || "").spl
 
 /** Plain text from the HTML ArcGIS descriptions often hold, shortened. */
 export function plainText(html, limit = TEXT_LIMIT) {
-  const text = String(html || "")
-    .replace(/<(br|\/p|\/div|\/li)\b[^>]*>/gi, "\n").replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'")
-    .replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim();
+  let source = String(html || "");
+  // Some services store their HTML entity-escaped (&lt;p&gt;…); read it as the markup it is.
+  if (!/<[a-z!/]/i.test(source) && /&lt;\/?[a-z]/i.test(source)) source = decodeEntities(source);
+  const text = decodeEntities(source
+    .replace(/<(br|\/p|\/div|\/li|\/h\d)\b[^>]*>/gi, "\n").replace(/<[^>]+>/g, " "))
+    .replace(/[ \t\u00a0]+/g, " ").replace(/\s*\n\s*/g, "\n").trim();
   return text.length > limit ? `${text.slice(0, limit).replace(/\s+\S*$/, "")}…` : text;
+}
+
+function decodeEntities(text) {
+  return text.replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
 }
 
 const fieldType = (type) => String(type || "").replace(/^esriFieldType/, "").toLowerCase();

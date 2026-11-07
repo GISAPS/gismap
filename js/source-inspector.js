@@ -1,4 +1,4 @@
-import { sanitizeSharedResourceUrl } from "./share.js?v=0.41.0";
+import { sanitizeSharedResourceUrl } from "./share.js?v=0.69.3-fire";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 
 const MAX_FIELDS = 500;

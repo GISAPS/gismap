@@ -1,27 +1,3 @@
-const PM25_COLUMN_SYMBOL = (color) => ({
-  type: "point-3d",
-  symbolLayers: [{
-    type: "object",
-    resource: { primitive: "cylinder" },
-    // A station footprint, not a regional bubble. Keep columns legible without
-    // obscuring the map when the view is zoomed out.
-    width: 650,
-    depth: 650,
-    height: 1,
-    anchor: "bottom",
-    material: { color },
-  }],
-});
-
-const PM25_HEIGHT_VARIABLE = {
-  type: "size",
-  // `value` is the OpenAQ mass-concentration field (µg/m³). Cap rare
-  // outliers so one station cannot dominate the scene.
-  valueExpression: "Min(12000, Max(0, $feature[\"value\"] * 25))",
-  valueUnit: "meters",
-  axis: "height",
-};
-
 // Compact, portable renderer JSON for the examples.  Keep the primary visual
 // readable in both adapters; ArcGIS can add the optional cinematic effect,
 // while MapLibre retains the same data symbols without requiring an SDK-only
@@ -117,44 +93,29 @@ export const POPULAR_SERVICES = [
     lastChecked: "2026-10-06", featured: true,
   },
   {
-    id: "esri-air-quality-pm25-3d-columns", slug: "air-quality-pm25-3d-columns", provider: "Esri Disaster Response",
-    title: "PM2.5 3D columns", category: "Environment", serviceType: "feature",
-    description: "PM2.5 monitoring stations rendered as 3D columns whose height represents particulate-matter concentration.",
-    whyUseful: "Use this ready-made renderer example to compare air-quality readings spatially: each cylinder uses the mass-concentration value field for height, with realistic scaling and an outlier cap for a readable 3D view.",
-    url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Air_Quality_PM25_Latest_Results/FeatureServer/0",
-    sourceOrganization: "Esri Disaster Response Program / OpenAQ",
-    sourcePage: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Air_Quality_PM25_Latest_Results/FeatureServer/0",
-    licenseOrTerms: "Review individual provider fields, service metadata, and publisher terms before reuse.",
-    tags: ["PM2.5", "air quality", "3D", "extrusion", "columns", "FeatureServer"],
-    renderer: {
-      type: "simple",
-      symbol: PM25_COLUMN_SYMBOL("#26b6d5"),
-      visualVariables: [PM25_HEIGHT_VARIABLE],
+    id: "calfire-historic-fire-perimeters-strata", slug: "california-fire-perimeters-strata", provider: "CAL FIRE",
+    title: "California fire perimeters — 3D strata by decade", category: "Wildfires", serviceType: "feature",
+    description: "California's historic fire perimeters of 1,000 acres or more, stacked in 3D by decade: the 1950s at the bottom, the 2020s on top.",
+    whyUseful: "See where fires have returned decade after decade. Each fire keeps its real footprint, so places that burned again and again build up into tall stacks. Play it in Cinematic mode with the Strata timeline effect to watch each decade land on the last.",
+    url: "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Historic_Fire_Perimeters/FeatureServer/0",
+    layers: [{ url: "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Historic_Fire_Perimeters/FeatureServer/0", title: "California Historic Fire Perimeters", serviceType: "feature" }],
+    // Fires before 1950 have no DECADES value, so they have no slot in the stack.
+    where: "GIS_ACRES >= 1000 AND DECADES IS NOT NULL",
+    renderer: { type: "simple", symbol: { type: "esriSFS", style: "esriSFSSolid", color: [255, 235, 190, 0], outline: { type: "esriSLS", style: "esriSLSSolid", color: [255, 72, 48, 255], width: 1 } } },
+    spatialChart: {
+      type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "DECADES",
+      groups: ["1950-1959", "1960-1969", "1970-1979", "1980-1989", "1990-1999", "2000-2009", "2010-2019", "2020-2025"],
+      height: { slotMeters: 400, gapMeters: 100, thicknessMeters: 250, scale: 1 },
+      color: { field: "DECADES", strategy: "sequential" },
     },
-    lastChecked: "2026-10-06", featured: true,
-  },
-  {
-    id: "esri-air-quality-pm25-3d-graduated", slug: "air-quality-pm25-3d-graduated", provider: "Esri Disaster Response",
-    title: "PM2.5 3D graduated columns", category: "Environment", serviceType: "feature",
-    description: "PM2.5 monitoring stations rendered as colored 3D columns by particulate-matter concentration.",
-    whyUseful: "This example combines a graduated field renderer with 3D column height, making concentration bands and local peaks legible at a glance.",
-    url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Air_Quality_PM25_Latest_Results/FeatureServer/0",
-    sourceOrganization: "Esri Disaster Response Program / OpenAQ",
-    sourcePage: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Air_Quality_PM25_Latest_Results/FeatureServer/0",
-    licenseOrTerms: "Review individual provider fields, service metadata, and publisher terms before reuse.",
-    tags: ["PM2.5", "air quality", "3D", "extrusion", "graduated", "FeatureServer"],
-    renderer: {
-      type: "class-breaks",
-      field: "value",
-      classBreakInfos: [
-        { minValue: 0, maxValue: 12, label: "0–12 µg/m³", symbol: PM25_COLUMN_SYMBOL("#57b66d") },
-        { minValue: 12, maxValue: 35, label: "12–35 µg/m³", symbol: PM25_COLUMN_SYMBOL("#d7bd47") },
-        { minValue: 35, maxValue: 55, label: "35–55 µg/m³", symbol: PM25_COLUMN_SYMBOL("#e78a3b") },
-        { minValue: 55, maxValue: 1000, label: "55+ µg/m³", symbol: PM25_COLUMN_SYMBOL("#ca4c52") },
-      ],
-      visualVariables: [PM25_HEIGHT_VARIABLE],
-    },
-    lastChecked: "2026-10-06", featured: true,
+    opacity: 0.9,
+    basemap: "open-dark",
+    camera: { center: [-122.25, 40.55], zoom: 9.6, heading: 0, tilt: 55 },
+    sourceOrganization: "CAL FIRE Fire and Resource Assessment Program (FRAP)",
+    sourcePage: "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Historic_Fire_Perimeters/FeatureServer/0",
+    licenseOrTerms: "Review the CAL FIRE fire perimeter data limitations before analysis: some historical fires are missing or generalized.",
+    tags: ["wildfire", "fire perimeter", "California", "CAL FIRE", "3D", "strata", "history", "FeatureServer"],
+    lastChecked: "2026-11-06", featured: true,
   },
   {
     id: "esri-usgs-seismic-activity", slug: "usgs-seismic-activity", provider: "USGS / Esri",
