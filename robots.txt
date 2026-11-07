@@ -1,8 +1,10 @@
 User-agent: *
+Content-Signal: search=yes,ai-input=yes,ai-train=yes
 Allow: /
 
 # A crawler that matches a named group ignores *, so repeat any Disallow in every group.
 # Explicit search crawler groups retain the same public access as the default.
+# AI training crawlers are welcome too; see docs/crawler-policy.md before adding any Disallow.
 User-agent: meta-webindexer
 Allow: /
 
