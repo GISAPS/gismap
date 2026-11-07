@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { rootLinksHtml } from "../scripts/relative-links.mjs";
 import { readFile, stat } from 'node:fs/promises';
 
-const routes = ['/', '/examples/', '/engines/', '/learn/', '/ai/', '/data/', '/demos/', '/embed/', '/about/', '/get-involved/'];
+const routes = ['/', '/examples/', '/examples/3d-strata/', '/engines/', '/learn/', '/ai/', '/data/', '/demos/', '/embed/', '/about/', '/get-involved/'];
 
 test('Discover is a standalone static application with all public routes', async () => {
   const root = new URL('../discover/', import.meta.url);
