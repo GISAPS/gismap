@@ -2171,14 +2171,12 @@ export class UIController {
     }
   }
 
+  /** Copies the same full map link as Share map: layers, styles, filters, view, basemap and skin. */
   async #copyShareLink() {
-    const href = createShareUrl({
-      baseUrl: location.href,
-      layers: this.mapController.getAllLayerConfigs(),
-      basemap: this.mapController.getBasemapId(),
-    });
-    await navigator.clipboard.writeText(href);
-    this.toast("Share link copied. Local files and credentials were not included.");
+    const link = await this.#mapShareLink();
+    await navigator.clipboard.writeText(link.url);
+    const local = link.layers.filter((config) => config.local || !config.url).length;
+    this.toast(`Share link copied.${local ? ` ${local === 1 ? "One layer" : `${local} layers`} from this device ${local === 1 ? "was" : "were"} left out.` : ""} Credentials are never included.`);
   }
 
   /**
@@ -2433,6 +2431,8 @@ export class UIController {
       skin: document.documentElement.dataset.skin || this.projectManager.current.presentation?.skin,
       basemap: this.mapController.getBasemapId(),
       camera: this.mapController.getViewState(),
+      engine: this.mapController.getEngineId(),
+      ground: this.mapController.getGroundId(),
       layers,
       textBoxes: this.mapController.getTextBoxes?.() ?? [],
     });
