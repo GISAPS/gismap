@@ -86,9 +86,9 @@
     {
       "title": "A 3D map",
       "prompt": "Show California's big wildfires stacked in 3D by decade.",
-      "link": "https://gismap.online/?example=california-fire-perimeters-strata",
+      "link": "https://gismap.online/#map=json:%7B%22version%22%3A1%2C%22title%22%3A%22California%20fire%20perimeters%20in%203D%20by%20decade%22%2C%22basemap%22%3A%22open-dark%22%2C%22camera%22%3A%7B%22center%22%3A%5B-122.2%2C38.8%5D%2C%22zoom%22%3A9.4%2C%22heading%22%3A0%2C%22tilt%22%3A55%7D%2C%22layers%22%3A%5B%7B%22url%22%3A%22https%3A%2F%2Fservices1.arcgis.com%2FjUJYIo9tSA7EHvfZ%2FArcGIS%2Frest%2Fservices%2FCalifornia_Historic_Fire_Perimeters%2FFeatureServer%2F0%22%2C%22type%22%3A%22feature%22%2C%22title%22%3A%22California%20fire%20perimeters%20by%20decade%22%2C%22where%22%3A%22GIS_ACRES%20%3E%3D%201000%20AND%20DECADES%20IS%20NOT%20NULL%22%2C%22opacity%22%3A0.9%2C%22spatialChart%22%3A%7B%22type%22%3A%22spatial-3d-chart%22%2C%22mode%22%3A%22temporal-strata%22%2C%22groupBy%22%3A%22DECADES%22%2C%22groups%22%3A%5B%221950-1959%22%2C%221960-1969%22%2C%221970-1979%22%2C%221980-1989%22%2C%221990-1999%22%2C%222000-2009%22%2C%222010-2019%22%2C%222020-2025%22%5D%2C%22height%22%3A%7B%22slotMeters%22%3A4000%2C%22gapMeters%22%3A500%2C%22thicknessMeters%22%3A2500%2C%22scale%22%3A1%7D%2C%22color%22%3A%7B%22field%22%3A%22DECADES%22%2C%22strategy%22%3A%22sequential%22%7D%7D%7D%5D%7D",
       "status": "loaded",
-      "checked": "2026-11-06",
+      "checked": "2026-11-07",
       "page": "https://gismap.online/examples/ai/3d-extrusion/",
       "screenshot": "https://gismap.online/examples/ai/3d-extrusion/screenshot.png"
     },
