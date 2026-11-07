@@ -46,7 +46,10 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
   if (mode !== "attribute-extrusion" && (!groupBy || !byName.has(groupBy))) throw new Error("Choose a valid field for the chart's vertical groups.");
   if (mode === "attribute-extrusion" && (!heightField || !numericType(byName.get(heightField)?.type))) throw new Error("Choose a numeric height field for attribute extrusion.");
   if (heightField && (!byName.has(heightField) || !numericType(byName.get(heightField)?.type))) throw new Error("The chart height field must be numeric.");
-  const groups = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy);
+  // Groups stack from the bottom up, lowest value first; "descending" puts the highest at the bottom.
+  const order = mode !== "attribute-extrusion" && input.order === "descending" ? "descending" : "ascending";
+  const sorted = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy);
+  const groups = order === "descending" ? sorted.reverse() : sorted;
   if (mode !== "attribute-extrusion" && !groups.length) throw new Error(`No values were found in ${groupBy}.`);
   const heightMode = mode === "attribute-extrusion" ? "field" : heightField ? "magnitude" : "fixed-slot";
   return {
@@ -54,6 +57,7 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     mode,
     ...(groupBy ? { groupBy } : {}),
     ...(groups.length ? { groups } : {}),
+    ...(order === "descending" ? { order } : {}),
     height: {
       mode: heightMode,
       ...(heightField ? { field: heightField } : {}),
@@ -128,7 +132,8 @@ export function spatialChartLegend(chart, values = []) {
   const meters = (value) => (chart.mode === "attribute-extrusion" ? value * chart.height.scale : Math.min(chart.height.slotMeters, Math.max(chart.height.thicknessMeters, value * chart.height.scale)));
   const picks = numbers.length ? [...new Set([numbers.at(-1), numbers[Math.floor((numbers.length - 1) / 2)], numbers[0]])] : [];
   const top = picks.length ? meters(picks[0]) || 1 : 1;
-  const valueText = (value) => value.toLocaleString(undefined, { maximumFractionDigits: Math.abs(value) >= 100 ? 0 : Math.abs(value) >= 1 ? 2 : 4 });
+  // A year (YEAR_, FIRE_YEAR) reads as 1989, not 1,989.
+  const valueText = (value) => /year/i.test(chart.height.field || "") && Number.isInteger(value) ? String(value) : value.toLocaleString(undefined, { maximumFractionDigits: Math.abs(value) >= 100 ? 0 : Math.abs(value) >= 1 ? 2 : 4 });
   const heights = chart.height.field ? picks.map((value) => ({ value, label: `${valueText(value)} → ${displayHeight(meters(value))}`, ratio: Math.max(0.08, meters(value) / top) })) : [];
   const usesRendererColors = chart.mode === "attribute-extrusion" || chart.color.strategy === "original";
   // The highest slot is drawn on top, so the list reads top-down like the stack.
