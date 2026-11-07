@@ -349,7 +349,7 @@ export async function buildSiteOutputs({ readText: readRepositoryText }) {
     markdown: `${aiExamplesMarkdown(aiLinks)}\n\n${workflowExamplesMarkdown(workflowLinks)}`,
   };
   for (const [path, contents] of Object.entries(await buildAgentOutputs({ readText, examples }))) outputs.set(path, contents);
-  const discoverPaths = ["/discover/", "/discover/examples/", "/discover/engines/", "/discover/learn/", "/discover/ai/", "/discover/data/", "/discover/demos/", "/discover/embed/", "/discover/about/", "/discover/get-involved/"];
+  const discoverPaths = ["/discover/", "/discover/examples/", "/discover/examples/3d-strata/", "/discover/engines/", "/discover/learn/", "/discover/ai/", "/discover/data/", "/discover/demos/", "/discover/embed/", "/discover/about/", "/discover/get-involved/"];
   const urls = ["/", ...discoverPaths, "/examples/", "/examples/data-connections/local-postgis/", "/guides/", ...PROMPT_EXAMPLES.map(promptExamplePath), ...POPULAR_SERVICES.filter((item) => item.featured).map((item) => `/examples/${item.slug}/`), ...GUIDES.map(guidePath), "/examples/ai/", ...AI_EXAMPLES.map(aiExamplePath), "/examples/ai/california-fire-refinement/", ...WORKFLOW_EXAMPLES.map(workflowExamplePath), "/agent-recipes/", ...recipes.map(agentRecipePath), "/skills/", "/api/explorer/", "/field/", "/llms.txt", "/llms-full.txt", "/api/catalog.json"];
   const dates = await sitemapDates(urls, outputs, readText);
   outputs.set("scripts/sitemap-lastmod.json", `${JSON.stringify(dates, null, 2)}\n`);
