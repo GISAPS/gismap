@@ -23,14 +23,14 @@ import { mountBasemapGallery } from "./basemap-gallery.js?v=0.53.0-gallery1";
 import { basemapOnEngine, basemapsForEngine } from "../../basemap-catalog.js?v=0.53.0-gallery1";
 import { applyBasemapTheme, withBuildings3d } from "./basemap-theme.js?v=0.52.0";
 import { compileWhere } from "./where.js?v=0.40.0-timeline";
-import { arcgisMetadata } from "../../source-inspector.js?v=0.70.0-ground";
+import { arcgisMetadata } from "../../source-inspector.js?v=0.70.1-colours";
 import { OpenGeocoder } from "./geocoder.js?v=0.47.0";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
 import { rendererToPaint } from "./arcgis-renderer.js?v=0.42.0";
 import { legendForLayer } from "./legend.js?v=0.52.4";
-import { inspectExternalTiles } from "./external-tiles.js?v=0.70.0-ground";
+import { inspectExternalTiles } from "./external-tiles.js?v=0.70.1-colours";
 import { hostCredit, joinCredits, legendSwatch, plainAttribution } from "../map-credits.js?v=0.1.0";
-import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.70.0-ground";
+import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.70.1-colours";
 
 // A layer effect draws over at most this many features; more would cost frame rate for no visible gain.
 const LAYER_EFFECT_MAX_FEATURES = 20000;
@@ -44,7 +44,7 @@ import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetc
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
 import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.70.0-ground";
+import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.70.1-colours";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
 import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.4";
 
@@ -319,7 +319,7 @@ export class MaplibreEngine {
     // A track switched from a native effect (Rise, Reveal, Strata) leaves no layers behind.
     this.#removeNativeEffect(id);
     this.three ??= new ThreeHost({ map: this.map, THREE, notify: (message) => this.events.publish("app:error", { message }) });
-    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.70.0-ground"), import("../../cinematic/cinematic-effects.js?v=0.70.0-ground")]);
+    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.70.1-colours"), import("../../cinematic/cinematic-effects.js?v=0.70.1-colours")]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     // Decoration is simplified to half a screen pixel at the current zoom; the map draws the exact outline.
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));
@@ -372,7 +372,7 @@ export class MaplibreEngine {
    */
   async #drawNativeEffect(id, name, effect, revision) {
     const [{ effectColor, nativeEffectData, valueField, riseAmount, revealAmount }, { effectSeconds, effectClockRunning }, { trackTime, normalizeTiming }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.70.0-ground"), import("../../cinematic/effects-three.js?v=0.70.0-ground"), import("../../cinematic/clock.js?v=0.1.0"),
+      import("../../cinematic/cinematic-effects.js?v=0.70.1-colours"), import("../../cinematic/effects-three.js?v=0.70.1-colours"), import("../../cinematic/clock.js?v=0.1.0"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -433,7 +433,7 @@ export class MaplibreEngine {
    */
   async #drawStrataEffect(id, effect, revision) {
     const [{ effectColor, strataData, strataLanding }, { effectSeconds, effectClockRunning }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.70.0-ground"), import("../../cinematic/effects-three.js?v=0.70.0-ground"),
+      import("../../cinematic/cinematic-effects.js?v=0.70.1-colours"), import("../../cinematic/effects-three.js?v=0.70.1-colours"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision) || !this.map) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -519,7 +519,7 @@ export class MaplibreEngine {
    * and far cheaper than shader ribbons for thousands of outlines.
    */
   async #drawSettledEdges(id, name, effect, revision) {
-    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.70.0-ground");
+    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.70.1-colours");
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.three?.remove(id);
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));

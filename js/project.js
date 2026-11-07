@@ -1,9 +1,9 @@
 import { BRAND } from "./brand.js";
 import { APP_VERSION } from "./version.js?v=0.54.0-print";
-import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.70.0-ground";
+import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.70.1-colours";
 import { NoteRelationshipsRegistry, normalizeNoteRelationships } from "./note-relationships.js?v=0.2.0";
 import { previewMapNoteTasks, prepareMapNoteTasks } from "./map-note-task-planner.js?v=0.1.0";
-import { MapNotesRegistry, normalizeNotes } from "./map-notes.js?v=0.70.0-ground";
+import { MapNotesRegistry, normalizeNotes } from "./map-notes.js?v=0.70.1-colours";
 import { applicationToLegacyPresentation, normalizeApplicationConfig } from "./application-config.js?v=0.68.0-charts1";
 import { normalizeDataCatalog } from "./data-catalog.js?v=0.18.2";
 import { normalizeSkin, normalizeSkinColors } from "./skin-catalog.js?v=0.57.0-skins2";
@@ -12,7 +12,7 @@ import { normalizeMobileWorkflow } from "./mobile-feed-store.js?v=0.18.7";
 import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { importCinematicSpec } from "./cinematic/state.js?v=0.2.9-strata";
 import { normalizeCinematicClips } from "./cinematic/clip-model.js?v=0.3.10-strata";
-import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.70.0-ground";
+import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.70.1-colours";
 import { normalizeCharts } from "./charting-tools.js?v=0.68.0-charts1";
 import { stripProjectCredentials } from "./project-privacy.js?v=0.62.7-save-all";
 

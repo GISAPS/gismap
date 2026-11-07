@@ -1,6 +1,6 @@
 // Browser-only external tile discovery. This module does not fetch or execute
 // remote styles; providers' tiles and metadata remain subject to CORS.
-import { sanitizeSharedResourceUrl } from "../../share.js?v=0.70.0-ground";
+import { sanitizeSharedResourceUrl } from "../../share.js?v=0.70.1-colours";
 
 export const PMTILES_SCRIPT = "https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js";
 const TYPES = new Set(["auto", "pmtiles", "vector-xyz", "raster-xyz", "vector-tilejson", "raster-tilejson"]);

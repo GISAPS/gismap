@@ -1,8 +1,8 @@
 import { refreshNoteRelationships } from './note-relationships-ui.js?v=0.1.0';
-import { FieldSessionController } from './field-session-store.js?v=0.70.0-ground';
-import { makeFieldBundle, normalizeFieldBundle } from './field-session-bundle.js?v=0.70.0-ground';
+import { FieldSessionController } from './field-session-store.js?v=0.70.1-colours';
+import { makeFieldBundle, normalizeFieldBundle } from './field-session-bundle.js?v=0.70.1-colours';
 import { APP_ROOT } from './app-root.js?v=0.65.0-paths';
-import { createFieldNoteUrl } from './field-note-link.js?v=0.70.0-ground';
+import { createFieldNoteUrl } from './field-note-link.js?v=0.70.1-colours';
 // A deliberately small first UI for project-owned location notes. The shared
 // workspace supplies docking and mobile behavior. All note text is escaped.
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -46,7 +46,7 @@ export function openMapNotesPanel(ui, { point = null, editId = null, locationSou
       saveButton.disabled = true;
       if (!field.session || (field.session.projectId !== ui.projectManager.current.id && field.session.resumedIntoProjectId !== ui.projectManager.current.id)) field.session = null;
       if (!field.session && registry.list().some((item) => item.fieldSessionId)) throw new Error('Resume the saved field session before adding or editing its observations. If it is unavailable, export a JSON backup first.');
-      if (!field.session) { const { newFieldSession } = await import('./field-session-store.js?v=0.70.0-ground'); field.session = newFieldSession(ui.projectManager.current); }
+      if (!field.session) { const { newFieldSession } = await import('./field-session-store.js?v=0.70.1-colours'); field.session = newFieldSession(ui.projectManager.current); }
       field.session.title = host.querySelector('[data-session-title]').value.trim().slice(0, 240) || 'Field notes';
       field.session.description = host.querySelector('[data-session-description]').value;
       field.session.collector = host.querySelector('[data-session-collector]').value;
@@ -152,7 +152,7 @@ export function openMapNotesPanel(ui, { point = null, editId = null, locationSou
         const button = event.currentTarget; button.disabled = true;
         const progress = ui.dialog.querySelector('[data-report-progress]');
         try {
-          const { createMapNotesReport } = await import('./map-notes-report.js?v=0.70.0-ground');
+          const { createMapNotesReport } = await import('./map-notes-report.js?v=0.70.1-colours');
           const blob = await createMapNotesReport(APP_ROOT, field.session, registry.list(), { onProgress: (current, total) => { if (progress?.isConnected) progress.textContent = `Preparing observation ${current} of ${total}…`; } });
           const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'gismap-field-report.pdf'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 5000);
           if (progress?.isConnected) ui.dialog.close(); ui.toast('Field report created locally. Keep a JSON backup.');

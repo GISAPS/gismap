@@ -5,8 +5,8 @@ import { renderNotesHub } from "./notes-hub.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteFilters } from './map-note-filters.js?v=0.4.1';
 import { openDataMapNotesPanel } from "./data-map-notes-panel.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteWorkflow } from "./map-note-workflow-ui.js?v=0.1.0";
-import { noteFeatureReference } from './map-note-feature.js?v=0.70.0-ground';
-import { openMapNotesPanel } from "./map-notes-panel.js?v=0.70.0-ground";
+import { noteFeatureReference } from './map-note-feature.js?v=0.70.1-colours';
+import { openMapNotesPanel } from "./map-notes-panel.js?v=0.70.1-colours";
 import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
 import { POPULAR_SERVICES } from "./catalog.js?v=0.18.6-fire-source";
@@ -15,11 +15,11 @@ import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpre
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl, parseShareParameters } from "./share.js?v=0.70.0-ground";
-import { mapSpecFromShareParameters } from "./map-spec.js?v=0.70.0-ground";
-import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.0-ground";
+import { createShareUrl, parseShareParameters } from "./share.js?v=0.70.1-colours";
+import { mapSpecFromShareParameters } from "./map-spec.js?v=0.70.1-colours";
+import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.1-colours";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.1-share";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.2-share";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -33,11 +33,11 @@ import { bindMobileSheetResize } from "./mobile-sheet-resize.js?v=0.52.7";
 import { BRAND } from "./brand.js";
 import { BRAND_LOGO, PdfDocument, brandedMapImage, brandedQrCanvas, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.69.1-pdflinks";
 import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.54.0-print";
-import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.0-ground";
+import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.1-colours";
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.70.1-share";
+import { BriefingSlides } from "./briefing-slides.js?v=0.70.2-share";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -45,16 +45,17 @@ import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
 import { aiDescriptionPrompt, applyAiDescriptions, describeWhere, generateBriefing, readAiDescriptions, rendererTheme } from "./briefing-generator.js?v=0.60.0-media1";
 import { briefingFileStem } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { RAMPS, rampColors, compileRenderer } from "./renderer-spec.js?v=0.29.1";
+import { spatialChartColor, spatialChartGroupColor, spreadColors } from "./spatial-chart.js?v=0.70.1-colours";
 import { saveEngine } from "./engine-preference.js?v=0.52.1";
 import { BASEMAPS } from "./basemap-catalog.js?v=0.53.0-gallery1";
-import { CartographyLab } from "./cartography-lab.js?v=0.70.0-ground";
+import { CartographyLab } from "./cartography-lab.js?v=0.70.1-colours";
 import { CONTEXT_ACTIONS, createSuggestionPreferences, deriveWorkspace, executeContextAction, suggestionKey, summarizeFeature } from "./contextual-workspace.js?v=6";
 import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.62.3-briefing-slide-engines";
 import { HISTORICAL_QUAKES_SOURCE, HISTORICAL_QUAKES_WHERE, createHistoricalQuakesExampleBriefing } from "./example-hazards-briefing.js?v=0.62.3-briefing-slide-engines";
-import { CinematicModeController } from "./cinematic/mode.js?v=0.70.0-ground";
-import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.70.0-ground";
+import { CinematicModeController } from "./cinematic/mode.js?v=0.70.1-colours";
+import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.70.1-colours";
 import { PROVENANCE_STATUSES } from "./cinematic/clock.js?v=0.1.0";
-import { recommendAnimations } from "./cinematic/recommend.js?v=0.70.0-ground";
+import { recommendAnimations } from "./cinematic/recommend.js?v=0.70.1-colours";
 
 // What each provenance label tells a viewer about a track's displayed progression.
 const PROVENANCE_HELP = Object.freeze({
@@ -66,7 +67,7 @@ const PROVENANCE_HELP = Object.freeze({
 });
 import { numericFieldCandidates, temporalFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.3.1";
 import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.10-strata";
-import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.70.0-ground";
+import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.70.1-colours";
 import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
 import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
 import { readTextBoxEditor, textBoxEditorMarkup, textBoxRunMarkup, textBoxSummary } from "./text-box-editor.js?v=0.65.0-paths";
@@ -9332,7 +9333,7 @@ export class UIController {
       : "";
     const extrudable = this.mapController.getEngineId() === "maplibre" ? layer.geometryType === "polygon" : ["polygon", "point", "multipoint"].includes(layer.geometryType);
     const extrusionControls = extrudable
-      ? `<fieldset class="feedback-settings"><legend>3D visualization</legend><label class="display-checkbox"><input data-extrusion-enabled type="checkbox"${extrusionEnabledByRenderer ? " checked" : ""} /><span>Show as a 3D chart</span></label><div data-extrusion-options hidden><div class="field-grid"><label class="field"><span>Visualization type</span><select data-spatial-chart-mode><option value="attribute-extrusion">Attribute extrusion</option><option value="temporal-strata">Temporal strata</option><option value="stacked-footprints">Stacked footprints</option><option value="exploded-timeline">Exploded timeline</option></select></label><label class="field" data-spatial-group-control hidden><span>Vertical group field</span><select data-spatial-group-field>${fieldOptions(fields, "No fields available", chartGroupField)}</select></label><label class="field"><span>Height source</span><select data-extrusion-source><option value="fixed"${initialExtrusionSource === "fixed" ? " selected" : ""}>Fixed slab</option><option value="field"${initialExtrusionSource === "field" ? " selected" : ""}>Numeric field</option></select></label><label class="field" data-extrusion-value-control><span>Slab thickness <small>display meters</small></span><input data-extrusion-value type="number" min="1" step="1" value="${savedChart?.height?.thicknessMeters || Number(objectSymbol?.height ?? objectSymbol?.size) || 250}" /></label><label class="field" data-extrusion-field-control hidden><span>Height / thickness field</span><select data-extrusion-field>${fieldOptions(numericFields, "No numeric fields available", extrusionField)}</select></label><label class="field" data-extrusion-multiplier-control hidden><span>Height multiplier</span><input data-extrusion-multiplier type="number" min="0" step="0.01" value="${savedChart?.height?.scale ?? (Number.isFinite(expressionMultiplier) ? expressionMultiplier : 1)}" /></label><label class="field" data-spatial-slot-control hidden><span>Slot separation <small>display meters</small></span><input data-spatial-slot type="number" min="1" step="50" value="${savedChart?.height?.slotMeters || 400}" /></label><label class="field" data-spatial-gap-control hidden><span>Gap <small>display meters</small></span><input data-spatial-gap type="number" min="0" step="25" value="${savedChart?.height?.gapMeters ?? 100}" /></label><label class="display-checkbox"><input data-spatial-ground-outlines type="checkbox"${savedChart?.groundOutlines ? " checked" : ""} /><span>Show outlines on the ground <small>the flat perimeters under the 3D shapes</small></span></label><label class="display-checkbox" data-spatial-order-control hidden><input data-spatial-order type="checkbox"${savedChart?.order === "descending" ? " checked" : ""} /><span>Reverse stacking order <small>highest value at the bottom; colours follow</small></span></label>${layer.geometryType === "polygon" ? "" : `<label class="field"><span>Column width <small>meters</small></span><input data-extrusion-width type="number" min="1" step="50" value="${Number(objectSymbol?.width) || 650}" /></label>`}</div><p class="form-note" data-spatial-chart-note>Virtual Z is separate from terrain elevation. The legend labels what height and vertical position mean.</p></div></fieldset>`
+      ? `<fieldset class="feedback-settings"><legend>3D visualization</legend><label class="display-checkbox"><input data-extrusion-enabled type="checkbox"${extrusionEnabledByRenderer ? " checked" : ""} /><span>Show as a 3D chart</span></label><div data-extrusion-options hidden><div class="field-grid"><label class="field"><span>Visualization type</span><select data-spatial-chart-mode><option value="attribute-extrusion">Attribute extrusion</option><option value="temporal-strata">Temporal strata</option><option value="stacked-footprints">Stacked footprints</option><option value="exploded-timeline">Exploded timeline</option></select></label><label class="field" data-spatial-group-control hidden><span>Vertical group field</span><select data-spatial-group-field>${fieldOptions(fields, "No fields available", chartGroupField)}</select></label><label class="field"><span>Height source</span><select data-extrusion-source><option value="fixed"${initialExtrusionSource === "fixed" ? " selected" : ""}>Fixed slab</option><option value="field"${initialExtrusionSource === "field" ? " selected" : ""}>Numeric field</option></select></label><label class="field" data-extrusion-value-control><span>Slab thickness <small>display meters</small></span><input data-extrusion-value type="number" min="1" step="1" value="${savedChart?.height?.thicknessMeters || Number(objectSymbol?.height ?? objectSymbol?.size) || 250}" /></label><label class="field" data-extrusion-field-control hidden><span>Height / thickness field</span><select data-extrusion-field>${fieldOptions(numericFields, "No numeric fields available", extrusionField)}</select></label><label class="field" data-extrusion-multiplier-control hidden><span>Height multiplier</span><input data-extrusion-multiplier type="number" min="0" step="0.01" value="${savedChart?.height?.scale ?? (Number.isFinite(expressionMultiplier) ? expressionMultiplier : 1)}" /></label><label class="field" data-spatial-slot-control hidden><span>Slot separation <small>display meters</small></span><input data-spatial-slot type="number" min="1" step="50" value="${savedChart?.height?.slotMeters || 400}" /></label><label class="field" data-spatial-gap-control hidden><span>Gap <small>display meters</small></span><input data-spatial-gap type="number" min="0" step="25" value="${savedChart?.height?.gapMeters ?? 100}" /></label><label class="display-checkbox"><input data-spatial-ground-outlines type="checkbox"${savedChart?.groundOutlines ? " checked" : ""} /><span>Show outlines on the ground <small>the flat perimeters under the 3D shapes</small></span></label><label class="display-checkbox" data-spatial-order-control hidden><input data-spatial-order type="checkbox"${savedChart?.order === "descending" ? " checked" : ""} /><span>Reverse stacking order <small>highest value at the bottom; colours follow</small></span></label><div class="field" data-spatial-colors-control hidden><span>Slab colours</span><div class="style-class-palette"><select data-spatial-palette aria-label="Slab colour palette"><option value="">Default</option>${Object.keys(RAMPS).map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}</select><label class="display-checkbox"><input data-spatial-palette-reverse type="checkbox" /><span>Reverse palette</span></label></div><div data-spatial-colors></div><p class="form-note">These colour the 3D slabs. Classes and colors above style the flat map.</p></div>${layer.geometryType === "polygon" ? "" : `<label class="field"><span>Column width <small>meters</small></span><input data-extrusion-width type="number" min="1" step="50" value="${Number(objectSymbol?.width) || 650}" /></label>`}</div><p class="form-note" data-spatial-chart-note>Virtual Z is separate from terrain elevation. The legend labels what height and vertical position mean.</p></div></fieldset>`
       : `<fieldset class="feedback-settings"><legend>3D extrusion</legend><p class="form-note">${this.mapController.getEngineId() === "maplibre" && /point/i.test(layer.geometryType || "") ? "MapLibre point columns are not yet supported. Switch to ArcGIS for 3D columns." : "3D extrusion is not available for this layer’s geometry in the current engine."}</p></fieldset>`;
     // Animated effect: Cinematic mode's decorative effects on an ordinary layer (MapLibre draws them with three.js).
     const effectsAvailable = this.mapController.getCapabilities().includes("three-3d") && Boolean(layer.geometryType);
@@ -9480,6 +9481,29 @@ export class UIController {
     const spatialSlotControl = pane.querySelector("[data-spatial-slot-control]");
     const spatialGapControl = pane.querySelector("[data-spatial-gap-control]");
     const spatialOrderControl = pane.querySelector("[data-spatial-order-control]");
+    const spatialColorsControl = pane.querySelector("[data-spatial-colors-control]");
+    const spatialColors = pane.querySelector("[data-spatial-colors]");
+    const spatialPalette = pane.querySelector("[data-spatial-palette]");
+    const spatialPaletteReverse = pane.querySelector("[data-spatial-palette-reverse]");
+    // One swatch per group of the applied chart, top of the stack first like the legend.
+    const renderSpatialColors = (fromPalette = false) => {
+      if (!spatialColors) return;
+      const chart = this.mapController.getLayerConfig(layer)?.spatialChart || savedChart;
+      const sameField = chart?.groups?.length && chart.groupBy === pane.querySelector("[data-spatial-group-field]")?.value;
+      if (!sameField) { spatialColors.innerHTML = `<p class="form-note">Apply the 3D chart to list its groups, then pick their colours here.</p>`; return; }
+      const groups = chart.groups;
+      const ramp = spatialPalette?.value ? spreadColors(RAMPS[spatialPalette.value], groups.length) : groups.map((_, index) => spatialChartColor(index, groups.length));
+      if (spatialPaletteReverse?.checked) ramp.reverse();
+      const current = [...spatialColors.querySelectorAll("[data-spatial-color]")].reduce((all, input) => ({ ...all, [input.dataset.spatialColor]: input.value }), {});
+      spatialColors.innerHTML = groups.map((value, index) => ({ value, index })).reverse().map(({ value, index }) => {
+        const color = fromPalette ? ramp[index] : current[String(value)] || spatialChartGroupColor(chart, index);
+        return `<label class="style-class-row"><input type="color" data-spatial-color="${escapeHtml(String(value))}" data-spatial-default="${escapeHtml(spatialChartColor(index, groups.length))}" aria-label="Colour for ${escapeHtml(String(value))}" value="${escapeHtml(color)}"><span>${escapeHtml(String(value))}</span></label>`;
+      }).join("");
+    };
+    spatialPalette?.addEventListener("change", () => renderSpatialColors(true));
+    spatialPaletteReverse?.addEventListener("change", () => renderSpatialColors(true));
+    pane.querySelector("[data-spatial-group-field]")?.addEventListener("change", () => renderSpatialColors());
+    renderSpatialColors();
     if (spatialChartMode && savedChart?.mode) spatialChartMode.value = savedChart.mode;
     const syncExtrusion = () => {
       if (!extrusionEnabled || !extrusionOptions) return;
@@ -9489,6 +9513,7 @@ export class UIController {
       if (spatialSlotControl) spatialSlotControl.hidden = !grouped;
       if (spatialGapControl) spatialGapControl.hidden = !grouped;
       if (spatialOrderControl) spatialOrderControl.hidden = !grouped;
+      if (spatialColorsControl) spatialColorsControl.hidden = !grouped;
       if (extrusionSource && !grouped) extrusionSource.value = "field";
       const usingField = extrusionSource?.value === "field";
       if (extrusionValueControl) extrusionValueControl.hidden = usingField;
@@ -9584,10 +9609,20 @@ export class UIController {
                 slotMeters: Number(pane.querySelector("[data-spatial-slot]")?.value) || 400,
                 gapMeters: Number(pane.querySelector("[data-spatial-gap]")?.value) || 0,
               },
-              color: { field: grouped ? pane.querySelector("[data-spatial-group-field]").value : pane.querySelector("[data-extrusion-field]").value, strategy: grouped ? "sequential" : "original" },
+              color: {
+                field: grouped ? pane.querySelector("[data-spatial-group-field]").value : pane.querySelector("[data-extrusion-field]").value,
+                strategy: grouped ? "sequential" : "original",
+                // Only colours changed from the default palette are kept.
+                ...(() => {
+                  const chosen = grouped ? [...pane.querySelectorAll("[data-spatial-color]")].filter((input) => input.value.toLowerCase() !== input.dataset.spatialDefault.toLowerCase()) : [];
+                  return chosen.length ? { colors: Object.fromEntries(chosen.map((input) => [input.dataset.spatialColor, input.value])) } : {};
+                })(),
+              },
               geometry: { strategy: "source-footprints", aggregation: "none" },
               interaction: { hover:true, select:true, explode:spatialChartMode.value === "exploded-timeline", scrubTimeline:["temporal-strata","exploded-timeline"].includes(spatialChartMode.value) },
             });
+            // The applied chart's groups (new on a first apply or a new group field) get their swatches.
+            renderSpatialColors();
           } else await this.mapController.setLayerSymbology(uid, symbology);
         }
         const persisted = this.projectManager.persistCurrentIfSaved();
@@ -10160,7 +10195,7 @@ export class UIController {
         { label: "Import observation", primary: true, handler: async (event) => {
           const button = event.currentTarget; button.disabled = true;
           try {
-            const { FieldSessionController } = await import("./field-session-store.js?v=0.70.0-ground");
+            const { FieldSessionController } = await import("./field-session-store.js?v=0.70.1-colours");
             const field = this.fieldSessionController ||= new FieldSessionController(this.projectManager, this.events);
             await field.importBundle(bundle);
             this.dialog.close();

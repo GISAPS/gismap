@@ -1,7 +1,7 @@
 // The portable spatialChart (js/spatial-chart.js) as an ArcGIS SceneView
 // renderer (SDK autocast JSON) and layer elevationInfo. Heights are display
 // metres, as on MapLibre; source geometry and attributes are not changed.
-import { spatialChartColor } from "./spatial-chart.js?v=0.70.0-ground";
+import { spatialChartGroupColor } from "./spatial-chart.js?v=0.70.1-colours";
 
 const FIELD = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 const field = (name) => {
@@ -47,7 +47,7 @@ export function spatialChartArcgis(chart, palette = {}) {
     renderer = {
       type: "unique-value",
       field: chart.groupBy,
-      uniqueValueInfos: chart.groups.map((value, index) => ({ value, label: String(value), symbol: extrude(spatialChartColor(index, chart.groups.length), thickness) })),
+      uniqueValueInfos: chart.groups.map((value, index) => ({ value, label: String(value), symbol: extrude(spatialChartGroupColor(chart, index), thickness) })),
     };
   }
   const variables = [...(keepStyle ? palette.visualVariables || [] : []).filter((variable) => variable?.type !== "size"), ...(sizeVariable ? [sizeVariable] : [])];

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor } from "../js/spatial-chart.js";
+import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
+import { strataData } from "../js/cinematic/cinematic-effects.js";
 import { generateSpatialChartBrief } from "../js/briefing-spatial-chart.js";
 import { normalizeBriefing } from "../js/briefing-document.js";
 import { validateMapSpec } from "../js/map-spec.js";
@@ -134,4 +135,27 @@ test("descending order stacks the highest group at the bottom, and colours and l
   assert.deepEqual(legend.slots.map((slot) => slot.label), ["1950", "1990", "2025"], "the top of the stack is listed first");
   assert.equal(legend.heights[0].label.startsWith("2025 →"), true, "a year field reads without a thousands separator");
   assert.equal(normalizeSpatialChart({ ...input, order: undefined }, { fields, groupValues: [1950, 2025] }).order, undefined, "ascending is the default and is not written out");
+});
+
+test("slab colours are kept per group value, survive a reversed order and reach every renderer", () => {
+  const input = { type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "YEAR_", height: { slotMeters: 400 }, color: { colors: { 1950: "#FF0000", 2025: "#00ff00", 1999: "#123456", bogus: "red" } } };
+  const chart = normalizeSpatialChart(input, { fields, groupValues: [1950, 1990, 2025] });
+  assert.deepEqual(chart.color.colors, { 1950: "#ff0000", 2025: "#00ff00" }, "unknown groups and invalid colours are dropped");
+  assert.equal(spatialChartGroupColor(chart, 0), "#ff0000");
+  assert.equal(spatialChartGroupColor(chart, 1), spatialChartColor(1, 3), "an unset group keeps the default palette");
+  const reversed = normalizeSpatialChart({ ...input, order: "descending" }, { fields, groupValues: [1950, 1990, 2025] });
+  assert.equal(spatialChartGroupColor(reversed, 0), "#00ff00", "the colour follows the group, not the position");
+  const [bottom] = spatialChartLayerSpecs({ chart: reversed, idPrefix: "f", source: "f", polygonFilter: true });
+  assert.equal(bottom.paint["fill-extrusion-color"], "#00ff00");
+  assert.equal(spatialChartLegend(reversed).slots.at(-1).color, "#00ff00");
+  assert.equal(strataData([{ index: 0, time: 1, feature: { geometry: { type: "Polygon", coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] }, properties: { YEAR_: 1950 } } }], { chart }).data.features[0].properties.color, "#ff0000");
+  assert.equal(normalizeSpatialChart({ ...input, color: {} }, { fields, groupValues: [1950] }).color.colors, undefined);
+});
+
+test("a palette spread over more groups than it has stops gives every group its own colour", () => {
+  const ramp = ["#000000", "#ffffff"];
+  assert.deepEqual(spreadColors(ramp, 3), ["#000000", "#808080", "#ffffff"]);
+  const eight = spreadColors(["#fcfdbf", "#fec488", "#fc8961", "#e75263", "#b5367a", "#7e2482", "#3b0f70"], 8);
+  assert.equal(new Set(eight).size, 8);
+  assert.deepEqual([eight[0], eight.at(-1)], ["#fcfdbf", "#3b0f70"]);
 });
