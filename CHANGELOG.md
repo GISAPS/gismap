@@ -6,6 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
+- The Cinematic map timeline follows the Instant Dashboard skin: its font, heading, corners, border, shadow and accent colour now match the rest of the skin.
 - The Cinematic timeline shows a year field as a year (1989), not a grouped number with its field name ("YEAR_ 1,989").
 - California Historic Fire Perimeters is a plain data source in Popular data services (`?example=california-fire-perimeters`), and the 3D strata view of it, fires stacked by decade, is a map link on the [Discover examples page](https://gismap.online/discover/examples/). The two PM2.5 3D column examples are gone; the PM2.5 data entry stays.
 - The Source panel shows a publisher's description as readable text. HTML descriptions, including ones stored entity-escaped such as CAL FIRE's, no longer show their markup.
