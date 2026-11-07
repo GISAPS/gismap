@@ -2,10 +2,10 @@
 // They use the same loading path as "Add ArcGIS REST service" and `?layer=`
 // links (loadLayer), and change layers only through the map controller, so the
 // project, share links and Smart images all see the result.
-import { SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.70.0-ground";
+import { SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.70.1-colours";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
 import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
-import { featureLayerUrl } from "./field-task-share.js?v=0.70.0-ground";
+import { featureLayerUrl } from "./field-task-share.js?v=0.70.1-colours";
 
 const trimUrl = (value) => String(value || "").trim().replace(/\/+$/, "").replace(/\/query$/i, "").toLowerCase();
 const READ_ONLY_WHERE = /;|--|\/\*|\b(drop|delete|insert|update|alter|exec|execute|merge|truncate|create)\b/i;

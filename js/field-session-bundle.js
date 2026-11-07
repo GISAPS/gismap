@@ -1,6 +1,6 @@
 // Portable, versioned field-session representation. No browser storage details
 // or attachments are included. Validate every field before modifying a project.
-import { normalizeNotes } from './map-notes.js?v=0.70.0-ground';
+import { normalizeNotes } from './map-notes.js?v=0.70.1-colours';
 export const FIELD_BUNDLE_VERSION = '1.0';
 const SESSION_KEYS = ['id', 'title', 'description', 'collector', 'projectId', 'createdAt', 'updatedAt'];
 function string(value, name, max, required = false) {

@@ -6,6 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
+- Stacked 3D chart slabs can be recoloured: **Slab colours** in the Style panel's 3D visualization picks a palette (with reverse) or a colour per group. Colours are kept per group value (`spatialChart.color.colors`), so they stay with a decade when the stacking order is reversed, and the legend, ArcGIS rendering and Cinematic Strata playback use them.
 - Cinematic's **Auto** effect plays a layer that has a stacked 3D chart as a Strata build-up instead of a themed effect such as Fire, which drew glowing outlines on the ground under the stack. The flat layer outlines under a 3D chart or Strata stack are also off by default now; **Show outlines on the ground** (`groundOutlines: true`) in the Style panel or Cartography Lab brings them back.
 - Stacked 3D charts can reverse their order: **Reverse stacking order** in the Style panel's 3D visualization (or `order: "descending"` on a `spatialChart`) puts the highest group at the bottom, such as the newest decade of fires, and the slab colours, legend and Cinematic Strata playback follow. A year height field reads as 2025, not 2,025, in the legend.
 - The Cinematic map timeline follows the Instant Dashboard skin: its font, heading, corners, border, shadow and accent colour now match the rest of the skin.

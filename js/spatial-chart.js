@@ -34,6 +34,15 @@ const uniqueValues = (values = [], field = "") => {
 };
 const numericType = (type) => /integer|single|double|long|number|float|decimal/i.test(String(type || ""));
 
+const HEX = /^#[0-9a-f]{6}$/i;
+// A colour per group, keyed by the group's value so it survives a reversed order.
+const groupColors = (colors, groups) => {
+  if (!colors || typeof colors !== "object" || !groups.length) return {};
+  const known = new Set(groups.map(String));
+  const kept = Object.entries(colors).filter(([key, value]) => known.has(key) && HEX.test(String(value))).map(([key, value]) => [key, String(value).toLowerCase()]);
+  return kept.length ? { colors: Object.fromEntries(kept) } : {};
+};
+
 /** Validate and bound a chart configuration. Throws before anything is rendered. */
 export function normalizeSpatialChart(input, { fields = [], geometryType = "polygon", groupValues = [] } = {}) {
   if (input == null || input === false) return null;
@@ -71,6 +80,7 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     color: {
       field: fieldName(input.color?.field) || groupBy || heightField || null,
       strategy: input.color?.strategy === "original" ? "original" : "sequential",
+      ...groupColors(input.color?.colors, groups),
     },
     geometry: { strategy: "source-footprints", aggregation: "none" },
     interaction: {
@@ -85,6 +95,24 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
 export function spatialChartColor(index, total) {
   if (total <= 1) return PALETTE[0];
   return PALETTE[Math.round(index * (PALETTE.length - 1) / (total - 1))];
+}
+
+/** `count` colours spread over a ramp, blended between its stops so no two groups share one. */
+export function spreadColors(ramp = PALETTE, count = 1) {
+  const rgb = (hex) => [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
+  const hex = (parts) => `#${parts.map((part) => Math.round(part).toString(16).padStart(2, "0")).join("")}`;
+  if (count <= 1) return [ramp.at(-1)];
+  return Array.from({ length: count }, (_, index) => {
+    const position = index * (ramp.length - 1) / (count - 1);
+    const low = Math.floor(position), high = Math.min(ramp.length - 1, low + 1), mix = position - low;
+    const [a, b] = [rgb(ramp[low]), rgb(ramp[high])];
+    return hex(a.map((value, part) => value + (b[part] - value) * mix));
+  });
+}
+
+/** A group's slab colour: the chart's own choice for that group, else the default palette by position. */
+export function spatialChartGroupColor(chart, index) {
+  return chart?.color?.colors?.[String(chart.groups?.[index])] || spatialChartColor(index, chart?.groups?.length || 1);
 }
 
 /** Human-readable Z-axis semantics used by the legend, Briefs and agents. */
@@ -115,7 +143,7 @@ export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, vi
   return chart.groups.map((value, index) => {
     const base = index * stride;
     const height = chart.height.field ? fieldHeight(base) : base + chart.height.thicknessMeters;
-    const color = chart.color.strategy === "original" ? originalColor : spatialChartColor(index, chart.groups.length);
+    const color = chart.color.strategy === "original" ? originalColor : spatialChartGroupColor(chart, index);
     const groupFilter = ["==", ["get", chart.groupBy], value];
     return { id: `${idPrefix}-spatial-chart-${index}`, type: "fill-extrusion", source, ...range, filter: ["all", baseFilter, groupFilter], layout: { visibility }, paint: paint(base, height, color) };
   });
@@ -141,7 +169,7 @@ export function spatialChartLegend(chart, values = []) {
   // The highest slot is drawn on top, so the list reads top-down like the stack.
   const slots = chart.mode === "attribute-extrusion" ? [] : chart.groups.map((value, index) => ({
     label: `${value === "" ? "No value" : value}`,
-    color: usesRendererColors ? null : spatialChartColor(index, chart.groups.length),
+    color: usesRendererColors ? null : spatialChartGroupColor(chart, index),
     base: index * (chart.height.slotMeters + chart.height.gapMeters),
   })).reverse();
   return { heights, slots, usesRendererColors };

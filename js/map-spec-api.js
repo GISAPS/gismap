@@ -2,7 +2,7 @@
 // through the `layers` and `camera` APIs, and exports the current map as one.
 // Issues (from the schema, and from loading: a misspelled field, a service that
 // will not load) are collected so describe() and the issues panel can show them.
-import { MAP_SPEC_VERSION, chartSpecFromMapChart, createMapSpecLink, decodeMapSpec, encodeMapSpec, mapChartFromChartSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.70.0-ground";
+import { MAP_SPEC_VERSION, chartSpecFromMapChart, createMapSpecLink, decodeMapSpec, encodeMapSpec, mapChartFromChartSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.70.1-colours";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { basemapEntry, basemapLabel, basemapOnEngine } from "./basemap-catalog.js?v=0.53.0-gallery1";
 

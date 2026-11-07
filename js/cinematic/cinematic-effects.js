@@ -3,7 +3,7 @@
 // buffers, simplifies or interpolates observed geometry; widths, heights and
 // motion are applied on the GPU in screen pixels and are visual annotation only.
 import { localFrame } from "../geo-frame.js?v=0.1.0";
-import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor } from "../spatial-chart.js?v=0.70.0-ground";
+import { MAX_SPATIAL_CHART_GROUPS, spatialChartColor, spatialChartGroupColor } from "../spatial-chart.js?v=0.70.1-colours";
 
 export const CINEMATIC_EFFECTS = Object.freeze({
   none: { label: "None", note: "" },
@@ -196,7 +196,7 @@ export function strataData(observations = [], { chart = null, ticks = [], color 
     const base = slot * stride;
     const value = stacked && chart.height.field ? Number(attributes[chart.height.field]) : NaN;
     const thickness = !stacked ? stride * 0.6 : chart.height.field ? Math.min(chart.height.slotMeters, Math.max(chart.height.thicknessMeters, Math.max(0, Number.isFinite(value) ? value : 0) * chart.height.scale)) : chart.height.thicknessMeters;
-    const slabColor = color || (stacked && chart.color?.strategy === "original" ? null : spatialChartColor(slot, slots)) || fallbackColor;
+    const slabColor = color || (stacked ? (chart.color?.strategy === "original" ? null : spatialChartGroupColor(chart, slot)) : spatialChartColor(slot, slots)) || fallbackColor;
     features.push({ type: "Feature", id: observation.index, geometry, properties: { base, top: base + thickness, color: slabColor } });
   }
   return { data: { type: "FeatureCollection", features }, stats: { count: features.length, unplaced, slots, stride, stacked: Boolean(stacked) } };
