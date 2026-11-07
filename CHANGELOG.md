@@ -6,6 +6,9 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
+- Project → Copy share link copies the full `#map=` link, the same one Share map makes: layers with their styles, filters and 3D charts, the view, basemap, skin, engine and ground. Map links now also carry the engine and ground.
+- Adding an example from Popular data services opens it the same way as its `?example=` link, with its filter, 3D chart, basemap and camera. On MapLibre, layers added while a basemap is still swapping in wait for it instead of failing with "Style is not done loading".
+- On MapLibre, changing the basemap with 3D ground on no longer makes MapLibre rebuild the whole style, which could log a shader error mid-swap. The terrain carries over to the new basemap.
 - New Discover page, [3D strata](https://gismap.online/discover/examples/3d-strata/): how strata maps work and what they suit, such as glaciers, floods, shifting borders, census boundaries and real geologic layers, with a button to the California fires example. The California fires card on the examples page now opens this page.
 - Stacked 3D chart slabs can be recoloured: **Slab colours** in the Style panel's 3D visualization picks a palette (with reverse) or a colour per group. Colours are kept per group value (`spatialChart.color.colors`), so they stay with a decade when the stacking order is reversed, and the legend, ArcGIS rendering and Cinematic Strata playback use them.
 - Cinematic's **Auto** effect plays a layer that has a stacked 3D chart as a Strata build-up instead of a themed effect such as Fire, which drew glowing outlines on the ground under the stack. The flat layer outlines under a 3D chart or Strata stack are also off by default now; **Show outlines on the ground** (`groundOutlines: true`) in the Style panel or Cartography Lab brings them back.

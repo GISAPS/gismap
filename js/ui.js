@@ -15,10 +15,11 @@ import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpre
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.70.1-colours";
+import { createShareUrl, parseShareParameters } from "./share.js?v=0.70.1-colours";
+import { mapSpecFromShareParameters } from "./map-spec.js?v=0.70.1-colours";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.1-colours";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.1-colours";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.2-share";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -36,7 +37,7 @@ import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.1-col
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.70.1-colours";
+import { BriefingSlides } from "./briefing-slides.js?v=0.70.2-share";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -2172,14 +2173,12 @@ export class UIController {
     }
   }
 
+  /** Copies the same full map link as Share map: layers, styles, filters, view, basemap and skin. */
   async #copyShareLink() {
-    const href = createShareUrl({
-      baseUrl: location.href,
-      layers: this.mapController.getAllLayerConfigs(),
-      basemap: this.mapController.getBasemapId(),
-    });
-    await navigator.clipboard.writeText(href);
-    this.toast("Share link copied. Local files and credentials were not included.");
+    const link = await this.#mapShareLink();
+    await navigator.clipboard.writeText(link.url);
+    const local = link.layers.filter((config) => config.local || !config.url).length;
+    this.toast(`Share link copied.${local ? ` ${local === 1 ? "One layer" : `${local} layers`} from this device ${local === 1 ? "was" : "were"} left out.` : ""} Credentials are never included.`);
   }
 
   /**
@@ -2434,6 +2433,8 @@ export class UIController {
       skin: document.documentElement.dataset.skin || this.projectManager.current.presentation?.skin,
       basemap: this.mapController.getBasemapId(),
       camera: this.mapController.getViewState(),
+      engine: this.mapController.getEngineId(),
+      ground: this.mapController.getGroundId(),
       layers,
       textBoxes: this.mapController.getTextBoxes?.() ?? [],
     });
@@ -4420,7 +4421,7 @@ export class UIController {
         const service = POPULAR_SERVICES.find((item) => item.id === button.dataset.catalogId);
         button.disabled = true;
         try {
-          const layer = await this.#addServiceOrBrowse(service);
+          const layer = await this.#addCatalogService(service);
           if (layer) {
             button.textContent = "Added";
             this.toast(`${service.title} added.`);
@@ -4433,6 +4434,19 @@ export class UIController {
         }
       }),
     );
+  }
+
+  /**
+   * A catalog example with its own filter, 3D chart, basemap or view loads the
+   * same way as its ?example= link, so both open the same map.
+   */
+  async #addCatalogService(service) {
+    const slug = service.slug || service.id;
+    if (!this.mapSpec || !slug || !["where", "spatialChart", "basemap", "camera"].some((key) => service[key])) return this.#addServiceOrBrowse(service);
+    const before = new Set(this.mapController.getLayers().map((layer) => layer.uid));
+    const shared = parseShareParameters(`?example=${encodeURIComponent(slug)}`, POPULAR_SERVICES);
+    await this.mapSpec.load(mapSpecFromShareParameters(shared), { replace: false }).ready;
+    return this.mapController.getLayers().find((layer) => !before.has(layer.uid)) || null;
   }
 
   async #addServiceOrBrowse(config) {
