@@ -24,6 +24,8 @@ export type SpatialChart = {
   groups?: Array<string | number>;
   /** Stacking order from the bottom up; "descending" puts the highest group at the bottom, and colours follow. Default "ascending". */
   order?: "ascending" | "descending";
+  /** Also draw the flat source outlines on the ground under the 3D shapes. Default false. */
+  groundOutlines?: boolean;
   height: { mode?: "field" | "fixed-slot" | "magnitude"; field?: string; slotMeters?: number; gapMeters?: number; thicknessMeters?: number; scale?: number };
   color?: { field?: string | null; strategy?: "original" | "sequential" };
   geometry?: { strategy: "source-footprints"; aggregation: "none" };

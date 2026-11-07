@@ -227,3 +227,11 @@ test("rail and transit lines get Trains, labelled as not real positions", async 
   const first = recommendAnimations({ title: "Light rail lines", geometryType: "polyline", fields: [] })[0];
   assert.deepEqual([first.effect, first.kind, first.provenance], ["trains", "none", "illustrative"]);
 });
+
+test("Auto plays a layer with a stacked 3D chart as Strata, not as outlines on the ground", () => {
+  const strata = { type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "DECADES", groups: ["1950-1959", "1960-1969"] };
+  assert.equal(suggestEffect({ title: "California fire perimeters by decade", geometryType: "polygon", spatialChart: strata }), "strata");
+  assert.equal(resolveEffect("auto", { title: "California fire perimeters by decade", geometryType: "polygon", spatialChart: strata }), "strata");
+  assert.equal(suggestEffect({ title: "California fire perimeters", geometryType: "polygon", spatialChart: { type: "spatial-3d-chart", mode: "attribute-extrusion" } }), "fire", "a plain extrusion keeps the themed effect");
+  assert.equal(suggestEffect({ title: "California fire perimeters", geometryType: "polygon" }), "fire");
+});
