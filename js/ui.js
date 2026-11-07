@@ -15,10 +15,10 @@ import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpre
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.69.6-fire";
+import { createShareUrl } from "./share.js?v=0.69.7-year";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.6-fire";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.7-year";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -5662,7 +5662,13 @@ export class UIController {
   /** A playback position as people read it: a date, "field value", or nothing for ambient. */
   #cinematicValueText(value, state = this.cinematicState) {
     if (state?.valueKind === "none") return "Ambient";
-    if (state?.valueKind === "number") return `${state.layers?.[0]?.timeField || "Value"} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
+    if (state?.valueKind === "number") {
+      const field = state.layers?.[0]?.timeField || "Value";
+      const number = Number(value);
+      // A year field (YEAR_, FIRE_YEAR) reads as a year: 1989, not "YEAR_ 1,989".
+      if (/year/i.test(field) && Number.isInteger(number)) return String(number);
+      return `${field} ${number.toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
+    }
     return this.#formatExplorerTime(new Date(value));
   }
 
