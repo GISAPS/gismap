@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://gismap.online/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/discover/</loc><lastmod>2026-11-02</lastmod></url>
-  <url><loc>https://gismap.online/discover/examples/</loc><lastmod>2026-11-02</lastmod></url>
+  <url><loc>https://gismap.online/discover/examples/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://gismap.online/discover/engines/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/discover/learn/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/discover/ai/</loc><lastmod>2026-11-02</lastmod></url>
@@ -11,7 +11,7 @@
   <url><loc>https://gismap.online/discover/embed/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/discover/about/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/discover/get-involved/</loc><lastmod>2026-11-02</lastmod></url>
-  <url><loc>https://gismap.online/examples/</loc><lastmod>2026-11-06</lastmod></url>
+  <url><loc>https://gismap.online/examples/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://gismap.online/examples/data-connections/local-postgis/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/guides/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/trip-tour/</loc><lastmod>2026-11-01</lastmod></url>
@@ -23,7 +23,7 @@
   <url><loc>https://gismap.online/examples/ai/two-layer-map/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/state-briefing/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/contact-page-embed/</loc><lastmod>2026-11-01</lastmod></url>
-  <url><loc>https://gismap.online/examples/ai/3d-extrusion/</loc><lastmod>2026-11-06</lastmod></url>
+  <url><loc>https://gismap.online/examples/ai/3d-extrusion/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/vibe-map/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/lidar-view/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://gismap.online/examples/ai/field-task/</loc><lastmod>2026-11-01</lastmod></url>
@@ -32,7 +32,7 @@
   <url><loc>https://gismap.online/examples/usa-wildfires/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/examples/modis-active-fires/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/examples/air-quality-pm25/</loc><lastmod>2026-11-02</lastmod></url>
-  <url><loc>https://gismap.online/examples/california-fire-perimeters-strata/</loc><lastmod>2026-11-06</lastmod></url>
+  <url><loc>https://gismap.online/examples/california-fire-perimeters/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://gismap.online/examples/historical-quakes/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/examples/usgs-earthquakes/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/arcgis-rest-service-viewer/</loc><lastmod>2026-11-02</lastmod></url>
@@ -64,7 +64,7 @@
   <url><loc>https://gismap.online/skills/</loc><lastmod>2026-11-03</lastmod></url>
   <url><loc>https://gismap.online/api/explorer/</loc><lastmod>2026-11-02</lastmod></url>
   <url><loc>https://gismap.online/field/</loc><lastmod>2026-11-02</lastmod></url>
-  <url><loc>https://gismap.online/llms.txt</loc><lastmod>2026-11-06</lastmod></url>
-  <url><loc>https://gismap.online/llms-full.txt</loc><lastmod>2026-11-06</lastmod></url>
-  <url><loc>https://gismap.online/api/catalog.json</loc><lastmod>2026-11-06</lastmod></url>
+  <url><loc>https://gismap.online/llms.txt</loc><lastmod>2026-11-07</lastmod></url>
+  <url><loc>https://gismap.online/llms-full.txt</loc><lastmod>2026-11-07</lastmod></url>
+  <url><loc>https://gismap.online/api/catalog.json</loc><lastmod>2026-11-07</lastmod></url>
 </urlset>

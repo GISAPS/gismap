@@ -28,7 +28,7 @@ export const CORN_STYLED_LAYER_LINK = `${SITE}/?layer=${encodeURIComponent(CORN_
 const CURATED_KEY_FIELDS = Object.freeze({
   "usa-wildfires": ["IncidentName", "DailyAcres", "PercentContained"], "modis-active-fires": ["BRIGHTNESS", "FRP", "ACQ_DATE"],
   "active-hurricanes": ["STORMNAME", "MAXWIND"], "recent-hurricanes": ["STORMNAME", "INTENSITY"],
-  "air-quality-pm25": ["city", "country", "value"], "california-fire-perimeters-strata": ["FIRE_NAME", "YEAR_", "DECADES", "GIS_ACRES"],
+  "air-quality-pm25": ["city", "country", "value"], "california-fire-perimeters": ["FIRE_NAME", "YEAR_", "DECADES", "GIS_ACRES"],
   "usgs-seismic-activity": ["mag", "place", "eventTime"], "usgs-recent-earthquakes-map-service": ["mag", "place", "depth"],
   "ndfd-wind-gusts": ["label", "fromdate"], "ndfd-precipitation": ["label", "fromdate"], "ndfd-daily-temperature": ["Temp", "Period"],
   "historical-quakes": ["mag", "magType"], "usgs-earthquakes": ["mag", "place", "time"], "world-countries-generalized": ["COUNTRY", "ISO"],

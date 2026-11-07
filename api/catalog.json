@@ -96,26 +96,24 @@
       "page": "https://gismap.online/examples/air-quality-pm25/"
     },
     {
-      "slug": "california-fire-perimeters-strata",
-      "title": "California fire perimeters — 3D strata by decade",
+      "slug": "california-fire-perimeters",
+      "title": "California Historic Fire Perimeters",
       "url": "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Historic_Fire_Perimeters/FeatureServer/0",
       "type": "feature",
       "category": "Wildfires",
       "provider": "CAL FIRE",
-      "description": "California's historic fire perimeters of 1,000 acres or more, stacked in 3D by decade: the 1950s at the bottom, the 2020s on top.",
+      "description": "Mapped perimeters of California wildfires from 1878 to 2025, from CAL FIRE's historic fire perimeter record.",
       "tags": [
         "wildfire",
         "fire perimeter",
         "California",
         "CAL FIRE",
-        "3D",
-        "strata",
         "history",
         "FeatureServer"
       ],
-      "link": "https://gismap.online/?example=california-fire-perimeters-strata",
+      "link": "https://gismap.online/?example=california-fire-perimeters",
       "layerLink": "https://gismap.online/?layer=https%3A%2F%2Fservices1.arcgis.com%2FjUJYIo9tSA7EHvfZ%2Farcgis%2Frest%2Fservices%2FCalifornia_Historic_Fire_Perimeters%2FFeatureServer%2F0&layerType=feature",
-      "page": "https://gismap.online/examples/california-fire-perimeters-strata/"
+      "page": "https://gismap.online/examples/california-fire-perimeters/"
     },
     {
       "slug": "usgs-seismic-activity",

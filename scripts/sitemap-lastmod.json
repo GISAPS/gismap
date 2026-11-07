@@ -8,8 +8,8 @@
     "lastmod": "2026-11-02"
   },
   "/discover/examples/": {
-    "hash": "91abdae9d47cc261",
-    "lastmod": "2026-11-02"
+    "hash": "8d563082d9d7e85d",
+    "lastmod": "2026-11-07"
   },
   "/discover/engines/": {
     "hash": "8c97162d8a8910b0",
@@ -44,8 +44,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/": {
-    "hash": "7a6cc1a13bbee3ad",
-    "lastmod": "2026-11-06"
+    "hash": "8e2f13ef14a2b5db",
+    "lastmod": "2026-11-07"
   },
   "/examples/data-connections/local-postgis/": {
     "hash": "5e88d704404ad446",
@@ -92,8 +92,8 @@
     "lastmod": "2026-11-01"
   },
   "/examples/ai/3d-extrusion/": {
-    "hash": "4a15986ab06d7ddc",
-    "lastmod": "2026-11-06"
+    "hash": "fdadf3d54e09ea73",
+    "lastmod": "2026-11-07"
   },
   "/examples/ai/vibe-map/": {
     "hash": "31ccfc0175cc8ed1",
@@ -127,9 +127,9 @@
     "hash": "a3d4b07684fd1410",
     "lastmod": "2026-11-02"
   },
-  "/examples/california-fire-perimeters-strata/": {
-    "hash": "04d564173f60cd04",
-    "lastmod": "2026-11-06"
+  "/examples/california-fire-perimeters/": {
+    "hash": "027646efbad3ed0f",
+    "lastmod": "2026-11-07"
   },
   "/examples/historical-quakes/": {
     "hash": "a8144b391f0d051e",
@@ -256,15 +256,15 @@
     "lastmod": "2026-11-02"
   },
   "/llms.txt": {
-    "hash": "4f06a81a48d00f2f",
-    "lastmod": "2026-11-06"
+    "hash": "e7c23f84a4c06fe1",
+    "lastmod": "2026-11-07"
   },
   "/llms-full.txt": {
-    "hash": "5f34f86bb9d1f7e9",
-    "lastmod": "2026-11-06"
+    "hash": "709601828223a00c",
+    "lastmod": "2026-11-07"
   },
   "/api/catalog.json": {
-    "hash": "9af899308f069209",
-    "lastmod": "2026-11-06"
+    "hash": "5eabd29b68fbb092",
+    "lastmod": "2026-11-07"
   }
 }

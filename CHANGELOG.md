@@ -6,7 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
-- Popular data services has a new 3D example, California fire perimeters stacked by decade (`?example=california-fire-perimeters-strata`). It replaces the two PM2.5 3D column examples; the PM2.5 data entry stays. Catalog examples can now carry a filter, a 3D chart, a basemap and an angled camera.
+- California Historic Fire Perimeters is a plain data source in Popular data services (`?example=california-fire-perimeters`), and the 3D strata view of it, fires stacked by decade, is a map link on the [Discover examples page](https://gismap.online/discover/examples/). The two PM2.5 3D column examples are gone; the PM2.5 data entry stays.
 - The Source panel shows a publisher's description as readable text. HTML descriptions, including ones stored entity-escaped such as CAL FIRE's, no longer show their markup.
 - The product name now reads GISMap Online everywhere people, search engines and agents see it, including PDF and QR wordmarks and PDF metadata. Renamed installations keep their own name.
 - Attribute table stripes, hover states, the insights overlay and connection panels now derive from each skin's colours, so text stays readable in every skin and theme. A contract test blocks hard-coded surfaces and low-contrast skins.
