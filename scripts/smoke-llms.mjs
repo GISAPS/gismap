@@ -61,7 +61,9 @@ export async function smokeLlms(base, { matchLocal = false, fetcher = fetch } = 
   assert.match(skillPage.response.headers.get('content-type') || '', /^text\/html(?:\s*;|$)/i, 'Skill page must be HTML');
   assert.match(skillPage.content, /<h1>GISMap Online Agent Skill<\/h1>/, 'Skill page must not be a fallback or challenge');
   for (const id of ['interactive-map', 'interactive-briefing', 'geographic-tour', 'field-tasks', '3d-extrusion', 'spatial-3d-chart', 'lidar-and-3d-models', 'vibe-map']) assert.ok(skillPage.content.includes(`recipe-${id}`), `Skill page missing ${id}`);
-  if (matchLocal) assert.equal(skillPage.content, await readFile(new URL('../skills/index.html', import.meta.url), 'utf8'), 'Skill page differs from checkout (stale cache or wrong deployment)');
+  // Cloudflare Web Analytics injects its beacon into HTML responses; it is not part of the deployment artifact.
+  const withoutBeacon = (html) => html.replace(/<script\b[^>]*static\.cloudflareinsights\.com\/beacon[^>]*><\/script>\s*/g, '');
+  if (matchLocal) assert.equal(withoutBeacon(skillPage.content), await readFile(new URL('../skills/index.html', import.meta.url), 'utf8'), 'Skill page differs from checkout (stale cache or wrong deployment)');
   for (const [path, heading] of [['/skills/gismap/SKILL.md', /^---\r?\nname: gismap\r?\n/], ['/skills/gismap/references/agent-recipes.md', /^# Eight composable agent recipes\b/]]) {
     const { response, content } = await request(path);
     assert.equal(response.status, 200, `${path} must be served directly`);
@@ -80,15 +82,20 @@ export async function smokeLlms(base, { matchLocal = false, fetcher = fetch } = 
   assert.equal(new URL(alias.response.headers.get('location') || '', origin).href, new URL('/llms.txt', origin).href, 'The alias must point to the canonical endpoint on the same origin');
   const missing = await request('/__gismap_nonexistent_documentation_smoke_test__.txt');
   assert.equal(missing.response.status, 404, 'Missing documents must return a real 404');
-  // Edge bot rules act on the user agent before robots.txt. Search and user-initiated
-  // readers must get through; training crawlers are reported, since blocking them may be deliberate.
+  // docs/crawler-policy.md: every crawler, training ones included, may read the whole site.
+  const robots = await request('/robots.txt');
+  assert.equal(robots.response.status, 200, 'robots.txt must be served directly');
+  assert.doesNotMatch(robots.content, /BEGIN Cloudflare Managed/i, 'Cloudflare prepends its own robots.txt; turn off Bot Preference Sync in AI Crawl Control');
+  assert.doesNotMatch(robots.content, /^Disallow:\s*\/\s*$/im, 'robots.txt disallows a crawler from the whole site');
+  if (matchLocal) assert.equal(robots.content, await readFile(new URL('../robots.txt', import.meta.url), 'utf8'), 'robots.txt differs from the checked-out deployment artifact');
+  // Edge bot rules act on the user agent before robots.txt, so search, user-initiated and training crawlers must all get through.
   // A spoofed user agent cannot prove what a verified crawler (checked by IP) receives.
-  const crawlers = { required: ['bingbot/2.0', 'Googlebot/2.1', 'OAI-SearchBot/1.0', 'ChatGPT-User/1.0', 'Claude-User/1.0', 'Claude-SearchBot/1.0', 'PerplexityBot/1.0'], reported: ['ClaudeBot/1.0', 'GPTBot/1.0', 'CCBot/2.0', 'Amazonbot/0.1'] };
-  for (const [group, agents] of Object.entries(crawlers)) for (const agent of agents) for (const path of ['/skills/', '/llms.txt']) {
+  const crawlers = ['bingbot/2.0', 'Googlebot/2.1', 'OAI-SearchBot/1.0', 'ChatGPT-User/1.0', 'Claude-User/1.0', 'Claude-SearchBot/1.0', 'PerplexityBot/1.0', 'ClaudeBot/1.0', 'GPTBot/1.0', 'CCBot/2.0', 'Amazonbot/0.1'];
+  for (const agent of crawlers) for (const path of ['/skills/', '/llms.txt']) {
     const response = await fetcher(new URL(path, origin), { redirect: 'manual', signal: AbortSignal.timeout(30000), headers: { 'User-Agent': agent } });
     await response.arrayBuffer();
     console.log(`${path} as ${agent}: HTTP ${response.status}`);
-    if (group === 'required') assert.equal(response.status, 200, `${path} is blocked for ${agent}; check Cloudflare bot rules`);
+    assert.equal(response.status, 200, `${path} is blocked for ${agent}; check AI Crawl Control and other Cloudflare bot rules`);
   }
   console.log('Documentation smoke test passed.');
 }
