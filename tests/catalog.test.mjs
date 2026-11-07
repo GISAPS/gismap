@@ -47,8 +47,10 @@ test("California fire perimeters are a plain data source; the 3D strata view is 
   assert.deepEqual([layer.spatialChart.groups[0], layer.spatialChart.groups.at(-1)], ["1950-1959", "2020-2025"], "earliest decade at the bottom");
   assert.deepEqual(layer.spatialChart.height, { slotMeters: 4000, gapMeters: 500, thicknessMeters: 2500, scale: 1 }, "slabs tall enough to read at regional zoom");
   assert.equal(spec.camera.tilt, 55, "a stack reads best from an angle");
-  const discover = readFileSync(new URL("../discover/examples/index.html", import.meta.url), "utf8");
-  assert.ok(discover.includes(`href="${FIRE_STRATA_LINK.replace("https://gismap.online/", "../../")}"`), "the Discover card opens the same spec");
+  const examples = readFileSync(new URL("../discover/examples/index.html", import.meta.url), "utf8");
+  assert.ok(examples.includes('href="./3d-strata/"'), "the Discover card opens the strata technique page");
+  const technique = readFileSync(new URL("../discover/examples/3d-strata/index.html", import.meta.url), "utf8");
+  assert.ok(technique.includes(`href="${FIRE_STRATA_LINK.replace("https://gismap.online/", "../../../")}"`), "the technique page opens the same spec");
 });
 
 test("featured discovery examples carry a deliberate portable visual", () => {

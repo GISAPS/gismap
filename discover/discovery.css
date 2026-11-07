@@ -59,6 +59,9 @@ main section { padding:68px 0; }
 .link-list { display:grid; gap:0; border-top:1px solid var(--line); }
 .link-list a { display:flex; justify-content:space-between; gap:16px; padding:18px 0; border-bottom:1px solid var(--line); font-size:18px; font-weight:750; text-decoration:none; }
 .link-list a span { color:var(--muted); font-size:14px; font-weight:500; text-align:right; }
+.figure { margin:0; }
+.figure img { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+.figure figcaption { margin-top:10px; color:var(--muted); font-size:14px; }
 .callout { padding:24px; border-left:5px solid var(--gold); background:#fbf2e5; color:#425b54; }
 .embed-code { margin:22px 0 10px; padding:18px; overflow:auto; border:1px solid var(--line); border-radius:10px; color:#e8f4ed; background:#123b33; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; }
 .link-list > div { display:grid; grid-template-columns:minmax(180px,.36fr) minmax(0,1fr); gap:24px; padding:18px 0; border-bottom:1px solid var(--line); }
