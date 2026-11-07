@@ -22,6 +22,8 @@ export type SpatialChart = {
   mode: "attribute-extrusion" | "temporal-strata" | "stacked-footprints" | "exploded-timeline";
   groupBy?: string;
   groups?: Array<string | number>;
+  /** Stacking order from the bottom up; "descending" puts the highest group at the bottom, and colours follow. Default "ascending". */
+  order?: "ascending" | "descending";
   height: { mode?: "field" | "fixed-slot" | "magnitude"; field?: string; slotMeters?: number; gapMeters?: number; thicknessMeters?: number; scale?: number };
   color?: { field?: string | null; strategy?: "original" | "sequential" };
   geometry?: { strategy: "source-footprints"; aggregation: "none" };

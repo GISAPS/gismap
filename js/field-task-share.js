@@ -1,7 +1,7 @@
 // Field task links carry the whole assignment (or its completed report) in the
 // URL fragment, so no server is involved. A paid, database-backed service can
 // replace this later; until then the payload stays small enough for a QR code.
-import { sanitizeSharedResourceUrl } from "./share.js?v=0.69.8-skin";
+import { sanitizeSharedResourceUrl } from "./share.js?v=0.69.9-order";
 
 const MAX_URL_LENGTH = 2800;
 const MAX_FEATURES = 5;

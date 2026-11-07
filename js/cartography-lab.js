@@ -128,6 +128,7 @@ export class CartographyLab {
           <label class="field" data-lab-when-chart="grouped"><span>Slot height <small>m</small></span><input type="number" min="1" step="50" data-lab-slot value="${escapeHtml(chart?.height?.slotMeters ?? 400)}"></label>
           <label class="field" data-lab-when-chart="grouped"><span>Gap <small>m</small></span><input type="number" min="0" step="25" data-lab-gap value="${escapeHtml(chart?.height?.gapMeters ?? 100)}"></label>
           <label class="field" data-lab-when-chart="grouped"><span>Slab thickness <small>m</small></span><input type="number" min="1" step="10" data-lab-thickness value="${escapeHtml(chart?.height?.thicknessMeters ?? 120)}"></label>
+          <label class="field" data-lab-when-chart="grouped"><span>Stacking order</span><select data-lab-order>${option("ascending", "Lowest at the bottom", chart?.order || "ascending")}${option("descending", "Highest at the bottom", chart?.order || "ascending")}</select></label>
           <label class="field" data-lab-when-chart="grouped"><span>Slab colours</span><select data-lab-chart-color>${option("sequential", "One colour per group", chart?.color?.strategy || "sequential")}${option("original", "Keep the layer colors", chart?.color?.strategy || "sequential")}</select></label>
         </div>
         <p class="form-note" data-lab-height-note></p>
@@ -297,6 +298,7 @@ export class CartographyLab {
         type: SPATIAL_CHART_TYPE,
         mode: chartMode,
         ...(grouped ? { groupBy } : {}),
+        ...(grouped && value("[data-lab-order]") === "descending" ? { order: "descending" } : {}),
         height: {
           ...(heightField ? { field: heightField } : {}),
           scale: Number(value("[data-lab-scale]")) || 1,
