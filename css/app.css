@@ -3101,13 +3101,20 @@ body.utility-panel-open .utility-panel:has([data-utility-pane="data-notes"]:not(
 .cinematic-footer-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:2px; }
 .cinematic-footer-actions button { border:0; padding-inline:0; color:var(--muted); background:transparent; }
 .cinematic-footer-actions [data-cinematic-exit] { color:var(--green); }
-.cinematic-map-timeline { position:absolute; z-index:8; left:50%; bottom:28px; transform:translateX(-50%); display:grid; gap:.35rem; width:min(720px, calc(100% - 32px)); padding:.65rem .8rem; color:var(--ink); background:color-mix(in srgb, var(--surface) 94%, transparent); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); font-size:.78rem; font-variant-numeric:tabular-nums; }
+/* Sits inside the map, where MapLibre sets its own font, so every skin token is named here. */
+.cinematic-map-timeline { position:absolute; z-index:8; left:50%; bottom:28px; transform:translateX(-50%); display:grid; gap:.35rem; width:min(720px, calc(100% - 32px)); padding:.65rem .8rem; color:var(--ink); background:color-mix(in srgb, var(--surface) 94%, transparent); border:var(--ui-border-width, 1px) solid var(--line); border-radius:var(--ui-radius, 10px); box-shadow:var(--ui-panel-shadow, var(--shadow)); font-family:var(--ui-font, inherit); font-size:.78rem; font-variant-numeric:tabular-nums; }
 .cinematic-map-timeline__meta, .cinematic-map-timeline__controls { display:flex; align-items:center; gap:.55rem; }
 .cinematic-map-timeline__meta { justify-content:space-between; }
+.cinematic-map-timeline__meta strong { font-family:var(--ui-heading, inherit); font-size:.9rem; color:var(--green-2); }
 .cinematic-map-timeline__meta span { color:var(--muted); }
+.cinematic-map-timeline__controls input { accent-color:var(--green-2); }
 .cinematic-map-timeline__controls input[type="range"] { flex:1 1 10rem; min-width:5rem; }
-.cinematic-map-timeline__controls button { font:inherit; color:var(--ink); background:var(--surface-2); border:1px solid var(--line); border-radius:6px; padding:.28rem .48rem; }
+.cinematic-map-timeline__controls button { font:inherit; font-weight:600; color:var(--ink); background:var(--surface-2); border:var(--ui-border-width, 1px) solid var(--line); border-radius:var(--ui-radius-small, 6px); padding:.28rem .48rem; }
+.cinematic-map-timeline__controls button[aria-pressed="true"] { color:var(--surface); background:var(--green-2); border-color:var(--green-2); }
 .cinematic-map-timeline__controls label { white-space:nowrap; }
+:root[data-skin="highway"] .cinematic-map-timeline { background-image:linear-gradient(rgb(23 32 43 / 2%) 1px,transparent 1px); background-size:100% 24px; }
+:root[data-skin="highway"] .cinematic-map-timeline__meta strong { text-transform:uppercase; letter-spacing:.06em; }
+:root[data-skin="violet-circuit"] .cinematic-map-timeline { background-image:linear-gradient(90deg,transparent 97%,rgb(143 99 255 / 10%) 100%); background-size:24px 24px; }
 @media (max-width: 720px) { .cinematic-map-timeline { bottom:68px; } .cinematic-map-timeline__controls span { display:none; } }
 
 /* Compact, readable timeline preview at both workspace widths. */

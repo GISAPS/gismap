@@ -15,10 +15,10 @@ import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpre
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.69.7-year";
+import { createShareUrl } from "./share.js?v=0.69.8-skin";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.65.0-paths";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.7-year";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.69.8-skin";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
