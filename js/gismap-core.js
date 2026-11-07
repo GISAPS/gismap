@@ -29,8 +29,8 @@ import { SENTINEL_LABEL, detectSentinels, inspectSource } from "./source-inspect
 import { BREAK_METHODS, RAMPS, RENDERER_TYPES, chooseBreakMethod, chooseStyleField, closestField, compileRenderer, computeBreaks, describeValues, rampColors, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "./renderer-spec.js?v=0.29.0";
 import { ERROR_CODES, GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { LAYER_TOOL_DEFINITIONS, checkToolInput } from "./layer-tools.js?v=0.29.0";
-import { MAP_SPEC_JSON_LIMIT, MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, mapSpecFromShareParameters, rendererSpecFromParameters, validateMapSpec } from "./map-spec.js?v=0.69.6-fire";
-import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS } from "./share.js?v=0.69.6-fire";
+import { MAP_SPEC_JSON_LIMIT, MAP_SPEC_VERSION, createMapSpecLink, decodeMapSpec, encodeMapSpec, prepareMapVerification, mapSpecFromShareParameters, rendererSpecFromParameters, validateMapSpec } from "./map-spec.js?v=0.69.7-year";
+import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS } from "./share.js?v=0.69.7-year";
 import {
   SMART_IMAGE_CHUNK,
   SMART_IMAGE_FORMAT,
