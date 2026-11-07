@@ -119,3 +119,19 @@ test("height key values are rounded for reading", () => {
   const chart = normalizeSpatialChart({ type:"spatial-3d-chart", mode:"attribute-extrusion", height:{ field:"ACRES", scale:0.05 } }, { fields, geometryType:"polygon" });
   assert.deepEqual(spatialChartLegend(chart, [16389.54, 5062.198, 1.23456]).heights.map((item) => item.label), ["16,390 → 819 m", "5,062 → 253 m", "1.23 → 0 m"]);
 });
+
+test("descending order stacks the highest group at the bottom, and colours and legend follow", () => {
+  const input = { type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "YEAR_", order: "descending", height: { field: "YEAR_", slotMeters: 4000, gapMeters: 500, thicknessMeters: 2500 } };
+  const chart = normalizeSpatialChart(input, { fields, groupValues: [1950, 2025, 1990] });
+  assert.equal(chart.order, "descending");
+  assert.deepEqual(chart.groups, [2025, 1990, 1950]);
+  assert.deepEqual(normalizeSpatialChart(chart, { fields }).groups, [2025, 1990, 1950], "normalizing again keeps the order");
+  const [bottom] = spatialChartLayerSpecs({ chart, idPrefix: "fires", source: "fires", polygonFilter: true });
+  assert.deepEqual(bottom.filter.at(-1), ["==", ["get", "YEAR_"], 2025]);
+  assert.equal(bottom.paint["fill-extrusion-base"], 0);
+  assert.equal(bottom.paint["fill-extrusion-color"], spatialChartColor(0, 3));
+  const legend = spatialChartLegend(chart, [1950, 2025]);
+  assert.deepEqual(legend.slots.map((slot) => slot.label), ["1950", "1990", "2025"], "the top of the stack is listed first");
+  assert.equal(legend.heights[0].label.startsWith("2025 →"), true, "a year field reads without a thousands separator");
+  assert.equal(normalizeSpatialChart({ ...input, order: undefined }, { fields, groupValues: [1950, 2025] }).order, undefined, "ascending is the default and is not written out");
+});
