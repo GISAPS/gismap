@@ -41,6 +41,7 @@ test("the 3D example stacks California fire perimeters by decade and opens at an
   assert.equal(layer.spatialChart.mode, "temporal-strata");
   assert.equal(layer.spatialChart.groupBy, "DECADES");
   assert.deepEqual([layer.spatialChart.groups[0], layer.spatialChart.groups.at(-1)], ["1950-1959", "2020-2025"], "earliest decade at the bottom");
+  assert.deepEqual(layer.spatialChart.height, { slotMeters: 4000, gapMeters: 500, thicknessMeters: 2500, scale: 1 }, "slabs tall enough to read at regional zoom");
   assert.equal(spec.camera.tilt, 55, "a stack reads best from an angle");
   assert.equal(spec.basemap, "open-dark");
   assert.deepEqual(mapSpecFromShareParameters(parseShareParameters("?example=california-fire-perimeters-strata&zoom=layers", POPULAR_SERVICES)).camera, { fit: "layers" }, "the link's own camera wins");

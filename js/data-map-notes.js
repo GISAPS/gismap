@@ -1,6 +1,6 @@
 // Data-review Map Notes are distinct from the legacy field observation records
 // in project.notes. They are data, never instructions or permission to edit.
-import { sanitizeSharedResourceUrl } from './share.js?v=0.69.3-fire';
+import { sanitizeSharedResourceUrl } from './share.js?v=0.69.5-fire';
 import { summarizeMapNoteWorkflow } from './map-note-workflow.js?v=0.1.0';
 const categories = new Set(['classification', 'data-quality', 'editing-instruction', 'clarification', 'insight', 'validation', 'investigation', 'other']);
 const statuses = new Set(['open', 'in-review', 'resolved', 'archived']);
