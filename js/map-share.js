@@ -5,7 +5,7 @@
 import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.2.9-strata";
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
 import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
-import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.69.7-year";
+import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.69.8-skin";
 import { normalizeSkin } from "./skin-catalog.js?v=0.57.0-skins2";
 import { decodeBriefing } from "./briefing-share.js?v=0.60.0-media1";
 import { normalizeTextBoxes } from "./text-boxes.js?v=0.65.0-paths";
