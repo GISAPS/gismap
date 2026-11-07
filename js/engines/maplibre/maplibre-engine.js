@@ -764,9 +764,14 @@ export class MaplibreEngine {
         const effectSource = (id) => [NATIVE_EFFECT_PREFIX, SETTLED_EDGES_PREFIX].some((prefix) => String(id || "").startsWith(prefix));
         const effectSources = Object.entries(previous?.sources || {}).filter(([id]) => effectSource(id));
         const effectLayers = (previous?.layers || []).filter((layer) => effectSource(layer.source));
+        // The 3D ground carries over too: a diff that changes terrain fails in MapLibre 5.24
+        // (its setTerrain step runs against the style, not the map), and the full rebuild it
+        // falls back to can draw a frame before the projection exists.
+        const terrain = previous?.terrain?.source && previous.sources?.[previous.terrain.source] ? previous.terrain : null;
         return {
           ...incoming,
-          sources: { ...incoming.sources, [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])), ...Object.fromEntries(effectSources) },
+          ...(terrain ? { terrain } : {}),
+          sources: { ...incoming.sources, ...(terrain ? { [terrain.source]: previous.sources[terrain.source] } : {}), [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])), ...Object.fromEntries(effectSources) },
           layers: [...incoming.layers, ...[...this.#records.values()].filter((record) => record.kind !== "three").flatMap((record) => this.#layerSpecs(record)), ...effectLayers, ...this.#drawingSpecs(), ...(this.measurement ? this.#measureSpecs() : []), ...this.#highlightSpecs()],
         };
       },
