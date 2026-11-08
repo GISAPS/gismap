@@ -4,7 +4,7 @@ import { initializeStudioTabs } from "./studio-tabs.js?v=0.55.0-fieldwork1";
 // combination as a reusable layer style (js/layer-style.js), and makes an
 // interactive map link, briefing slides or a tour from it.
 import { RAMPS } from "./renderer-spec.js?v=0.29.1";
-import { SPATIAL_CHART_TYPE, listedOrder } from "./spatial-chart.js?v=0.70.3-geology";
+import { SPATIAL_CHART_TYPE, listedOrder } from "./spatial-chart.js?v=0.70.4-legend";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
 import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
 import { describeLayerStyle, layerStyleFileName, layerStyleRankField } from "./layer-style.js?v=0.70.3-geology";

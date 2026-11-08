@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { listedOrder, normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
+import { SPATIAL_CHART_DIM, listedOrder, normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
 import { strataData } from "../js/cinematic/cinematic-effects.js";
 import { generateSpatialChartBrief } from "../js/briefing-spatial-chart.js";
 import { normalizeBriefing } from "../js/briefing-document.js";
@@ -184,4 +184,15 @@ test("reversing a listed order flips its groups once, and unticking flips them b
   const back = normalizeSpatialChart({ ...reversed, ...listedOrder(reversed, false) }, { fields });
   assert.deepEqual(back.groups, ages);
   assert.equal(back.reversed, undefined);
+});
+
+test("a strata group picked out from the legend keeps its slabs and dims the others", () => {
+  const chart = normalizeSpatialChart({ type:"spatial-3d-chart", mode:"temporal-strata", groupBy:"YEAR_" }, { fields, geometryType:"polygon", groupValues:[2019, 2022, 2025] });
+  const specs = (focus) => spatialChartLayerSpecs({ chart, idPrefix:"x", source:"s", opacity:0.8, polygonFilter:true, focus }).map((spec) => spec.paint["fill-extrusion-opacity"]);
+  assert.deepEqual(specs(undefined), [0.8, 0.8, 0.8], "nothing picked: every slab as styled");
+  const picked = specs(2022);
+  assert.equal(picked[1], 0.8);
+  assert.ok(Math.abs(picked[0] - 0.8 * SPATIAL_CHART_DIM) < 1e-9 && picked[2] === picked[0]);
+  assert.deepEqual(specs("2022"), picked, "a group value read back as text still matches");
+  assert.deepEqual(spatialChartLegend(chart).slots.map((slot) => slot.value), [2025, 2022, 2019], "legend rows carry the group value they pick out");
 });

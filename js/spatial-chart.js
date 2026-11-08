@@ -135,8 +135,14 @@ export function spatialChartAxis(chart) {
   return { label: `Z order: ${chart.groupBy}`, detail: `${separation}${thickness}. Heights are display offsets, not physical altitude.` };
 }
 
-/** Compile derived MapLibre fill-extrusion layers without modifying source data. */
-export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, visibility = "visible", opacity = 0.75, polygonFilter, featureFilter = null, originalColor = "#1b7f6a" }) {
+/** How much of its opacity a group keeps while another group is picked out from the legend. */
+export const SPATIAL_CHART_DIM = 0.15;
+
+/**
+ * Compile derived MapLibre fill-extrusion layers without modifying source data.
+ * `focus` is a group value picked out from the legend: the other groups' slabs dim.
+ */
+export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, visibility = "visible", opacity = 0.75, polygonFilter, featureFilter = null, originalColor = "#1b7f6a", focus }) {
   if (!chart) return [];
   const baseFilter = featureFilter ? ["all", polygonFilter, featureFilter] : polygonFilter;
   // A magnitude slab never grows past its slot, so it cannot cover the next group's slot.
@@ -156,7 +162,8 @@ export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, vi
     const height = chart.height.field ? fieldHeight(base) : base + chart.height.thicknessMeters;
     const color = chart.color.strategy === "original" ? originalColor : spatialChartGroupColor(chart, index);
     const groupFilter = ["==", ["get", chart.groupBy], value];
-    return { id: `${idPrefix}-spatial-chart-${index}`, type: "fill-extrusion", source, ...range, filter: ["all", baseFilter, groupFilter], layout: { visibility }, paint: paint(base, height, color) };
+    const dimmed = focus !== undefined && String(focus) !== String(value);
+    return { id: `${idPrefix}-spatial-chart-${index}`, type: "fill-extrusion", source, ...range, filter: ["all", baseFilter, groupFilter], layout: { visibility }, paint: { ...paint(base, height, color), "fill-extrusion-opacity": dimmed ? opacity * SPATIAL_CHART_DIM : opacity } };
   });
 }
 
@@ -164,7 +171,7 @@ export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, vi
 const displayHeight = (meters) => (meters >= 1000 ? `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })} km` : `${Math.round(meters).toLocaleString()} m`);
 
 /**
- * What a chart's legend shows: { heights: [{ value, label, ratio }], slots: [{ label, color }], usesRendererColors }.
+ * What a chart's legend shows: { heights: [{ value, label, ratio }], slots: [{ value, label, color }], usesRendererColors }.
  * `values` are the height field's values on the drawn features. Heights are display metres.
  */
 export function spatialChartLegend(chart, values = []) {
@@ -179,6 +186,7 @@ export function spatialChartLegend(chart, values = []) {
   const usesRendererColors = chart.mode === "attribute-extrusion" || chart.color.strategy === "original";
   // The highest slot is drawn on top, so the list reads top-down like the stack.
   const slots = chart.mode === "attribute-extrusion" ? [] : chart.groups.map((value, index) => ({
+    value,
     label: `${value === "" ? "No value" : value}`,
     color: usesRendererColors ? null : spatialChartGroupColor(chart, index),
     base: index * (chart.height.slotMeters + chart.height.gapMeters),

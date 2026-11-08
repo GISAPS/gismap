@@ -260,8 +260,21 @@ test("MapLibre legend describes the symbols and class labels actually drawn", ()
   assert.equal(breaks.entries[0].paint.fill, "#008800");
 });
 
+// Just enough DOM for the legend panel: children, attributes, classes and listeners.
+function makeElement(tag = "div") {
+  return {
+    tag, children: [], style: {}, dataset: {}, attributes: {}, listeners: {}, textContent: "", className: "",
+    classList: { names: new Set(), add(name) { this.names.add(name); }, toggle(name, on) { if (on) this.names.add(name); else this.names.delete(name); }, contains(name) { return this.names.has(name); } },
+    append(...items) { this.children.push(...items); }, prepend(...items) { this.children.unshift(...items); }, get childElementCount() { return this.children.length; }, replaceChildren(...items) { this.children = items; },
+    setAttribute(name, value) { this.attributes[name] = value; }, getAttribute(name) { return this.attributes[name]; },
+    addEventListener(type, listener) { (this.listeners[type] ||= []).push(listener); }, removeEventListener(type, listener) { this.listeners[type] = (this.listeners[type] || []).filter((item) => item !== listener); },
+    dispatch(type, event = {}) { for (const listener of this.listeners[type] || []) listener({ stopPropagation() {}, ...event }); },
+    querySelectorAll(selector) { const key = selector.match(/^\[data-(.+)\]$/)?.[1].replace(/-(\w)/g, (_, letter) => letter.toUpperCase()); const found = []; const walk = (node) => { for (const child of node.children || []) { if (child.dataset?.[key] !== undefined) found.push(child); walk(child); } }; walk(this); return found; },
+  };
+}
+const labelOf = (row) => row.children.find((child) => child.className === "maplibre-legend__label")?.textContent;
+
 test("MapLibre legend updates for layer changes and closes through the widget contract", async () => {
-  const makeElement = () => ({ children: [], style: {}, dataset: {}, textContent: "", append(...items) { this.children.push(...items); }, prepend(...items) { this.children.unshift(...items); }, get childElementCount() { return this.children.length; }, replaceChildren(...items) { this.children = items; }, setAttribute() {} });
   const host = makeElement();
   // Section → header → title (a single unlabelled symbol sits beside it in the header).
   const legendTitle = () => host.children[0].children[0].children.find((child) => child.className === "maplibre-legend__title").textContent;
@@ -529,4 +542,70 @@ test("a failed terrain tile is not reported as terrain failing", async () => {
   assert.equal(isTerrainTileFailure({ error: { url: "https://tiles.mapterhorn.com/14/4701/6245.webp" } }), true);
   assert.equal(isTerrainTileFailure({ tile: {}, error: {} }), true);
   assert.equal(isTerrainTileFailure({ error: { url: TERRAIN_TILEJSON } }), false);
+});
+
+test("MapLibre legend rows pick out a strata group or a class on the map", async () => {
+  const host = makeElement();
+  const previous = { document: globalThis.document, fetch: globalThis.fetch };
+  globalThis.document = { querySelector: () => host, createElement: makeElement };
+  globalThis.fetch = async () => ({ ok:true, json:async () => ({ type:"FeatureCollection", features:[
+    { type:"Feature", geometry:{ type:"Polygon", coordinates:[[[0,0],[1,0],[1,1],[0,0]]] }, properties:{ YEAR_:2019, KIND:"a" } },
+    { type:"Feature", geometry:{ type:"Polygon", coordinates:[[[0,0],[2,0],[2,2],[0,0]]] }, properties:{ YEAR_:2022, KIND:"b" } },
+  ] }) });
+  const engine = new MaplibreEngine({ publish() {} });
+  engine.map = fakeMap();
+  try {
+    const layer = await engine.addService({ url:"https://example.org/strata.geojson" });
+    await engine.setSpatialChart(layer.uid, { type:"spatial-3d-chart", mode:"temporal-strata", groupBy:"YEAR_", height:{ slotMeters:400, gapMeters:100 } });
+    engine.toggleWidget("legend");
+    const slab = (index) => engine.map.layers.get(`gismap-${layer.uid}-spatial-chart-${index}`).paint["fill-extrusion-opacity"];
+    const styled = slab(0);
+    let rows = host.querySelectorAll("[data-legend-pick]");
+    assert.deepEqual(rows.map(labelOf), ["2022", "2019"], "strata rows are buttons, top slot first");
+    assert.ok(rows.every((row) => row.tag === "button" && row.attributes["aria-pressed"] === "false"));
+
+    rows[0].dispatch("pointerenter");
+    assert.ok(slab(0) < styled && slab(1) === styled, "hovering 2022 dims 2019's slabs");
+    rows[0].dispatch("pointerleave");
+    assert.equal(slab(0), styled);
+
+    rows[1].dispatch("click");
+    assert.equal(rows[1].attributes["aria-pressed"], "true");
+    assert.ok(slab(1) < styled && slab(0) === styled, "clicking 2019 pins it");
+    engine.setTitle(layer.uid, "Renamed");
+    rows = host.querySelectorAll("[data-legend-pick]");
+    assert.equal(rows[1].attributes["aria-pressed"], "true");
+    rows[1].dispatch("click");
+    assert.equal(slab(1), styled, "clicking again lets go");
+    assert.equal(rows[1].attributes["aria-pressed"], "false");
+
+    rows[0].dispatch("click");
+    host.dispatch("keydown", { key:"Escape" });
+    assert.equal(slab(1), styled, "Escape clears the pick");
+    assert.ok(rows.every((row) => row.attributes["aria-pressed"] === "false"));
+
+    await engine.setSpatialChart(layer.uid, null);
+    engine.setRenderer(layer.uid, { type:"uniqueValue", field:"KIND", uniqueValueInfos:[
+      { value:"a", label:"Alpha", symbol:{ type:"esriSFS", color:[255, 0, 0, 255] } },
+      { value:"b", label:"Beta", symbol:{ type:"esriSFS", color:[0, 0, 255, 255] } },
+    ] });
+    rows = host.querySelectorAll("[data-legend-pick]");
+    assert.deepEqual(rows.map(labelOf), ["Alpha", "Beta"]);
+    rows[1].dispatch("click");
+    const opacity = engine.map.layers.get(`gismap-${layer.uid}-fill`).paint["fill-opacity"];
+    assert.deepEqual(opacity[2], ["case", ["==", ["to-string", ["get", "KIND"]], "b"], 1, 0.15], "the other classes' features dim");
+    engine.toggleWidget("legend");
+    assert.equal(typeof engine.map.layers.get(`gismap-${layer.uid}-fill`).paint["fill-opacity"], "number", "closing the legend clears the pick");
+  } finally { globalThis.document = previous.document; globalThis.fetch = previous.fetch; }
+});
+
+test("class-break legend rows match the features their class draws", () => {
+  const legend = legendForLayer({ kind:"vector", geometryType:"polygon", renderer:{ type:"class-breaks", field:"value", minValue:0, classBreakInfos:[
+    { maxValue:5, label:"Low", symbol:{ type:"simple-fill", color:"#008800" } },
+    { minValue:5, maxValue:10, label:"High", symbol:{ type:"simple-fill", color:"#880000" } },
+  ], defaultSymbol:{ type:"simple-fill", color:"#888888" }, defaultLabel:"Other" } }, "#123456");
+  const [low, high, other] = legend.entries.map((entry) => entry.match);
+  assert.deepEqual(low.slice(2), [[">=", ["to-number", ["get", "value"], 0], 0], ["<=", ["to-number", ["get", "value"], 0], 5]]);
+  assert.deepEqual(high[2], [">", ["to-number", ["get", "value"], 0], 5], "a shared boundary belongs to the lower class, as drawn");
+  assert.deepEqual(other, ["!", ["any", low, high]]);
 });

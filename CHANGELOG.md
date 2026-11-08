@@ -6,6 +6,7 @@ All notable changes to GIS Map Online are documented here. This project follows
 
 ## Unreleased
 
+- Legend rows pick features out on the map (MapLibre engine). Pointing at or tabbing to a 3D strata group dims every other group's slabs; clicking pins it, and clicking again or pressing Escape lets go. Rows of a unique-value or class-breaks style do the same for their features. Rows are toggle buttons with `aria-pressed`. On the ArcGIS engine the Legend is Esri's own widget and its rows are not clickable yet.
 - New 3D strata example, Arizona rock by age: every unit on Arizona's state geologic map (USGS State Geologic Map Compilation) stacked by its oldest possible age, Proterozoic at the bottom and Holocene on top, coloured by geologic period. It opens over the Grand Canyon, is explained on the [3D strata](https://gismap.online/discover/examples/3d-strata/#geology) page and has a card on the Discover examples page.
 - 3D strata charts can keep their groups in the order given: `order: "listed"` on a `spatialChart` stacks `groups` as listed, first at the bottom, for values that do not sort, such as geologic ages. The Style panel and Cartography Lab keep a listed order when the chart is re-applied on the same field, and **Reverse stacking order** (or **As listed, reversed**) flips it, last listed group at the bottom.
 - On MapLibre, map and image services show their published legend in the Legend panel (from the service's `legend` endpoint) instead of "Legend unavailable".

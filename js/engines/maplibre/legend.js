@@ -26,9 +26,34 @@ export function legendForLayer(record, fallbackColor) {
   const field = renderer.valueExpressionTitle || rendererValue(renderer).field;
   const classes = renderer.uniqueValueInfos || renderer.classBreakInfos;
   if (Array.isArray(classes) && classes.length && rendererValue(renderer).field) {
-    const entries = classes.map((info) => entry(info.label ?? info.value ?? `${info.minValue ?? renderer.minValue ?? ""} – ${info.maxValue ?? info.classMaxValue ?? ""}`, info.symbol));
-    if (renderer.defaultSymbol) entries.push(entry(renderer.defaultLabel || "Other", renderer.defaultSymbol));
+    const matches = classMatches(renderer);
+    const entries = classes.map((info, index) => ({ ...entry(info.label ?? info.value ?? `${info.minValue ?? renderer.minValue ?? ""} – ${info.maxValue ?? info.classMaxValue ?? ""}`, info.symbol), ...(matches[index] ? { match: matches[index] } : {}) }));
+    if (renderer.defaultSymbol) entries.push({ ...entry(renderer.defaultLabel || "Other", renderer.defaultSymbol), ...(matches.length && matches.every(Boolean) ? { match: ["!", ["any", ...matches]] } : {}) });
     return { field, entries };
   }
   return { entries: [entry(renderer.label || "", renderer.symbol || renderer.defaultSymbol)] };
+}
+
+/**
+ * Each class's MapLibre filter, as the paint adapter draws it, so a legend row
+ * can pick out its features. Null for a class it cannot express.
+ */
+function classMatches(renderer) {
+  const { field, normalizeBy, exclude } = rendererValue(renderer);
+  if (!field) return [];
+  const raw = ["get", field];
+  if (renderer.uniqueValueInfos) return renderer.uniqueValueInfos.map((info) => info?.value != null ? ["==", ["to-string", raw], String(info.value)] : null);
+  const value = normalizeBy ? ["/", ["to-number", raw, 0], ["to-number", ["get", normalizeBy], 1]] : ["to-number", raw, 0];
+  const present = ["all", ["!=", raw, null], ...(exclude.length ? [["!", ["in", raw, ["literal", exclude]]]] : []), ...(normalizeBy ? [["!=", ["get", normalizeBy], null], ["!=", ["get", normalizeBy], 0]] : [])];
+  let lower = Number.isFinite(renderer.minValue) ? renderer.minValue : -Infinity;
+  let previous = null;
+  return renderer.classBreakInfos.map((info) => {
+    const min = Number.isFinite(info.minValue) ? info.minValue : lower;
+    const max = Number.isFinite(info.maxValue) ? info.maxValue : Number(info.classMaxValue);
+    // The paint takes the first class that fits, so a shared boundary belongs to the lower class.
+    const above = min === previous ? ">" : ">=";
+    previous = lower = max;
+    if (!Number.isFinite(max)) return null;
+    return ["all", present, ...(Number.isFinite(min) ? [[above, value, min]] : []), ["<=", value, max]];
+  });
 }
