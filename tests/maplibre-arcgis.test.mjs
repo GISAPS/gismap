@@ -157,7 +157,7 @@ test("an ArcGIS feature layer on MapLibre keeps its fields, IDs and service styl
   const engine = new MaplibreEngine({ publish: (topic, payload) => published.push([topic, payload]) });
   const layers = new Map();
   engine.map = {
-    addSource() {}, getSource: () => ({ setData() {} }),
+    addSource() {}, getSource: () => ({ setData() {} }), isStyleLoaded: () => true,
     addLayer: (spec) => layers.set(spec.id, structuredClone(spec)), getLayer: (id) => layers.get(id),
     setFilter() {}, setLayoutProperty() {}, setPaintProperty: (id, name, value) => { layers.get(id).paint[name] = value; }, setLayerZoomRange() {},
   };
@@ -192,7 +192,7 @@ test("an ArcGIS feature layer on MapLibre keeps its fields, IDs and service styl
 
 test("large service layers can be opened for filtering and share only complete results", async () => {
   const engine = new MaplibreEngine({ publish() {} });
-  engine.map = { addSource() {}, removeSource() {}, getSource: () => ({ setData() {} }), addLayer() {}, getLayer: () => null, setFilter() {}, setLayoutProperty() {}, setPaintProperty() {}, setLayerZoomRange() {} };
+  engine.map = { addSource() {}, removeSource() {}, getSource: () => ({ setData() {} }), isStyleLoaded: () => true, addLayer() {}, getLayer: () => null, setFilter() {}, setLayoutProperty() {}, setPaintProperty() {}, setLayerZoomRange() {} };
   const realFetch = globalThis.fetch;
   const seen = [];
   globalThis.fetch = fakeFetch([

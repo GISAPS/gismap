@@ -204,6 +204,12 @@ test("MapLibre draws the skin basemap and unstyled data in the skin's colours, l
     assert.equal(options.diff, true, "only what changed is redrawn");
     const carried = options.transformStyle(null, style);
     assert.ok(carried.layers.some((layer) => layer.id === `gismap-${plain.uid}-circle`), "data layers ride along");
+    assert.equal(carried.terrain, undefined, "flat ground adds no terrain");
+    // A diff that changes terrain fails in MapLibre 5.24 and rebuilds the style from scratch.
+    const dem = { type: "raster-dem", url: "https://example.org/dem.json" };
+    const grounded = options.transformStyle({ terrain: { source: "gismap-terrain-dem", exaggeration: 1.2 }, sources: { "gismap-terrain-dem": dem }, layers: [] }, style);
+    assert.deepEqual(grounded.terrain, { source: "gismap-terrain-dem", exaggeration: 1.2 }, "3D ground rides along");
+    assert.deepEqual(grounded.sources["gismap-terrain-dem"], dem, "with the elevation source it draws from");
 
     const midnight = themeFromTokens(tokensFor("dark-analytical"), { skin: "dark-analytical", dark: true });
     engine.setBasemapTheme(midnight);

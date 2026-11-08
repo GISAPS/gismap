@@ -158,6 +158,7 @@ export class MaplibreEngine {
   #loaded = null;
   #styleJson = new Map();
   #styleToken = 0;
+  #styleSwap = Promise.resolve();
 
   constructor(events) {
     this.id = "maplibre";
@@ -735,8 +736,21 @@ export class MaplibreEngine {
     }
   }
 
+  /** Swaps in the current basemap's style; layers added meanwhile wait for it (#styleSettled). */
+  #applyStyle() {
+    const swap = this.#swapStyle();
+    this.#styleSwap = swap.catch(() => {});
+    return swap;
+  }
+
+  /** Resolves once any basemap swap in progress has finished and the style can take new sources. */
+  async #styleSettled() {
+    await this.#styleSwap;
+    if (this.map && !this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 3000); });
+  }
+
   /** Swaps in the current basemap's style, carrying the data layers over (only what changed is redrawn). */
-  async #applyStyle() {
+  async #swapStyle() {
     const token = ++this.#styleToken;
     const style = await this.#styleFor(this.basemapId);
     // A style still loading cannot be diffed (MapLibre would rebuild from scratch); wait for it.
@@ -750,13 +764,19 @@ export class MaplibreEngine {
         const effectSource = (id) => [NATIVE_EFFECT_PREFIX, SETTLED_EDGES_PREFIX].some((prefix) => String(id || "").startsWith(prefix));
         const effectSources = Object.entries(previous?.sources || {}).filter(([id]) => effectSource(id));
         const effectLayers = (previous?.layers || []).filter((layer) => effectSource(layer.source));
+        // The 3D ground carries over too: a diff that changes terrain fails in MapLibre 5.24
+        // (its setTerrain step runs against the style, not the map), and the full rebuild it
+        // falls back to can draw a frame before the projection exists.
+        const terrain = previous?.terrain?.source && previous.sources?.[previous.terrain.source] ? previous.terrain : null;
         return {
           ...incoming,
-          sources: { ...incoming.sources, [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])), ...Object.fromEntries(effectSources) },
+          ...(terrain ? { terrain } : {}),
+          sources: { ...incoming.sources, ...(terrain ? { [terrain.source]: previous.sources[terrain.source] } : {}), [HIGHLIGHT_SOURCE]: this.#highlightSource(), [DRAW_SOURCE]: this.#drawingSource(), ...(this.measurement ? { [MEASURE_SOURCE]: this.#measureSource() } : {}), ...Object.fromEntries([...this.#records.values()].filter((record) => record.kind !== "three").map((record) => [this.#sourceId(record), this.#sourceSpec(record)])), ...Object.fromEntries(effectSources) },
           layers: [...incoming.layers, ...[...this.#records.values()].filter((record) => record.kind !== "three").flatMap((record) => this.#layerSpecs(record)), ...effectLayers, ...this.#drawingSpecs(), ...(this.measurement ? this.#measureSpecs() : []), ...this.#highlightSpecs()],
         };
       },
     });
+    if (!this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 10000); });
   }
 
   async whenBasemapLoaded(timeout = 15000) {
@@ -1089,6 +1109,8 @@ export class MaplibreEngine {
   async addService(config = {}) {
     const url = String(config.url || "").trim().replace(/\/$/, "");
     if (!url) throw new Error("A service URL is required.");
+    // A basemap chosen just before (a map spec or example) may still be swapping in.
+    await this.#styleSettled();
     const type = config.serviceType || "arcgis-auto";
     const scene3dType = SCENE3D_TYPES.includes(type) ? type : type === "arcgis-auto" ? scene3dTypeFor(url) : null;
     if (scene3dType) return this.#addScene3d({ ...config, url }, scene3dType);
