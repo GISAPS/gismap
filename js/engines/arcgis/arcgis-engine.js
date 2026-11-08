@@ -12,9 +12,9 @@ import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
 import { ENGINE_CAPABILITIES, unsupported } from "../engine-interface.js?v=0.52.0";
 import { loadArcGISRuntime } from "./arcgis-loader.js?v=0.38.0";
 import { basemapOnEngine, basemapsForEngine } from "../../basemap-catalog.js?v=0.53.0-gallery1";
-import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.70.3-geology";
+import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.70.4-legend";
 import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.70.3-geology";
-import { legendForLayer } from "../maplibre/legend.js?v=0.70.3-geology";
+import { legendForLayer } from "../maplibre/legend.js?v=0.70.4-legend";
 
 // GISMap Online's own symbols are stored as "/assets/…" so projects move between hosts;
 // they load from wherever this app is installed (it may live in a subfolder).
