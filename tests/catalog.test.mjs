@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 import { mapSpecFromShareParameters, validateMapSpec } from "../js/map-spec.js";
 import { parseShareParameters } from "../js/share.js";
 import { FIRE_SOURCE, FIRE_STRATA, FIRE_STRATA_LINK } from "../scripts/fire-refinement.mjs";
+import { GEOLOGY_AGES, GEOLOGY_SOURCE, GEOLOGY_STRATA, GEOLOGY_STRATA_LINK } from "../scripts/geology-strata.mjs";
+import { normalizeSpatialChart } from "../js/spatial-chart.js";
 
 test("catalog entries have stable, complete discovery metadata", () => {
   const ids = new Set();
@@ -51,6 +53,26 @@ test("California fire perimeters are a plain data source; the 3D strata view is 
   assert.ok(examples.includes('href="./3d-strata/"'), "the Discover card opens the strata technique page");
   const technique = readFileSync(new URL("../discover/examples/3d-strata/index.html", import.meta.url), "utf8");
   assert.ok(technique.includes(`href="${FIRE_STRATA_LINK.replace("https://gismap.online/", "../../../")}"`), "the technique page opens the same spec");
+});
+
+test("Arizona geology stacks rock units in time order, oldest at the bottom", () => {
+  const { valid, issues, spec } = validateMapSpec(GEOLOGY_STRATA);
+  assert.ok(valid, JSON.stringify(issues));
+  const [layer] = spec.layers;
+  assert.equal(layer.url, GEOLOGY_SOURCE);
+  assert.match(layer.where, /STATE = 'AZ'/);
+  assert.equal(layer.spatialChart.order, "listed", "text ages do not sort, so the listed order is kept");
+  assert.equal(new Set(GEOLOGY_AGES).size, GEOLOGY_AGES.length);
+  assert.ok(GEOLOGY_AGES.length <= 40, "a chart holds 40 groups at most");
+  assert.match(GEOLOGY_AGES[0], /Paleoproterozoic/);
+  assert.match(GEOLOGY_AGES.at(-1), /Holocene/);
+  const chart = normalizeSpatialChart(layer.spatialChart, { fields: [{ name: "AGE_MAX", type: "string" }] });
+  assert.deepEqual(chart.groups, GEOLOGY_AGES);
+  assert.equal(Object.keys(chart.color.colors).length, GEOLOGY_AGES.length, "every age has its period colour");
+  const html = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+  const href = (prefix) => `href="${GEOLOGY_STRATA_LINK.replace("https://gismap.online/", prefix).replaceAll("&", "&amp;")}"`;
+  assert.ok(html("../discover/examples/3d-strata/index.html").includes(href("../../../")), "the technique page opens the same spec");
+  assert.ok(html("../discover/examples/index.html").includes(href("../../")), "the Discover card opens the same spec");
 });
 
 test("featured discovery examples carry a deliberate portable visual", () => {

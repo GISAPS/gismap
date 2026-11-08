@@ -2,11 +2,11 @@ import { generateFilterSeries } from "./briefing-data-series.js?v=0.60.0-media1"
 import { isDateField } from "./briefing-timeline-dates.js?v=0.60.0-media1";
 import { generateTimeline } from "./briefing-timeline.js?v=0.60.0-media1";
 import { extentToBounds, generateGridAtlas } from "./briefing-grid-atlas.js?v=0.60.0-media1";
-import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.70.1-colours";
-import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.70.1-colours";
-import { createShareLink } from "./map-share.js?v=0.70.1-colours";
+import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.70.3-geology";
+import core, { normalizeBriefing, updateSlide, validateBriefingDocument } from "./gismap-core.js?v=0.70.3-geology";
+import { createShareLink } from "./map-share.js?v=0.70.3-geology";
 import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
-import { featureLayerUrl } from "./field-task-share.js?v=0.70.1-colours";
+import { featureLayerUrl } from "./field-task-share.js?v=0.70.3-geology";
 import { brandedQrFile, printPalette } from "./pdf-document.js?v=0.69.1-pdflinks";
 
 const clone = (value) => structuredClone(value);

@@ -92,7 +92,7 @@ export async function describeArcGIS(value, options = {}) {
   const url = query?.layerUrl || trim(value);
   const json = await getJson(url, {}, options);
   const path = new URL(url).pathname;
-  const sublayer = path.match(/^(.*\/MapServer)\/(\d+)$/i);
+  const sublayer = url.split("?")[0].match(/^(.*\/MapServer)\/(\d+)$/i);
   if (json.type === "Feature Layer" || (json.geometryType && Array.isArray(json.fields))) {
     return {
       kind: "feature",

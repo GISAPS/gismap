@@ -5,20 +5,20 @@ import { renderNotesHub } from "./notes-hub.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteFilters } from './map-note-filters.js?v=0.4.1';
 import { openDataMapNotesPanel } from "./data-map-notes-panel.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteWorkflow } from "./map-note-workflow-ui.js?v=0.1.0";
-import { noteFeatureReference } from './map-note-feature.js?v=0.70.1-colours';
-import { openMapNotesPanel } from "./map-notes-panel.js?v=0.70.1-colours";
+import { noteFeatureReference } from './map-note-feature.js?v=0.70.3-geology';
+import { openMapNotesPanel } from "./map-notes-panel.js?v=0.70.3-geology";
 import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
-import { POPULAR_SERVICES } from "./catalog.js?v=0.18.6-fire-source";
+import { POPULAR_SERVICES } from "./catalog.js?v=0.70.3-geology";
 import { plainText } from "./layer-insight.js?v=0.50.1";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
 import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl } from "./share.js?v=0.70.1-colours";
-import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.1-colours";
+import { createShareUrl } from "./share.js?v=0.70.3-geology";
+import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.3-geology";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.1-colours";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.3-geology";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -32,11 +32,11 @@ import { bindMobileSheetResize } from "./mobile-sheet-resize.js?v=0.52.7";
 import { BRAND } from "./brand.js";
 import { BRAND_LOGO, PdfDocument, brandedMapImage, brandedQrCanvas, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.69.1-pdflinks";
 import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.54.0-print";
-import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.1-colours";
+import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.3-geology";
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.70.1-colours";
+import { BriefingSlides } from "./briefing-slides.js?v=0.70.3-geology";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -44,17 +44,17 @@ import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
 import { aiDescriptionPrompt, applyAiDescriptions, describeWhere, generateBriefing, readAiDescriptions, rendererTheme } from "./briefing-generator.js?v=0.60.0-media1";
 import { briefingFileStem } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { RAMPS, rampColors, compileRenderer } from "./renderer-spec.js?v=0.29.1";
-import { spatialChartColor, spatialChartGroupColor, spreadColors } from "./spatial-chart.js?v=0.70.1-colours";
+import { spatialChartColor, spatialChartGroupColor, spreadColors } from "./spatial-chart.js?v=0.70.3-geology";
 import { saveEngine } from "./engine-preference.js?v=0.52.1";
 import { BASEMAPS } from "./basemap-catalog.js?v=0.53.0-gallery1";
-import { CartographyLab } from "./cartography-lab.js?v=0.70.1-colours";
+import { CartographyLab } from "./cartography-lab.js?v=0.70.3-geology";
 import { CONTEXT_ACTIONS, createSuggestionPreferences, deriveWorkspace, executeContextAction, suggestionKey, summarizeFeature } from "./contextual-workspace.js?v=6";
 import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.62.3-briefing-slide-engines";
 import { HISTORICAL_QUAKES_SOURCE, HISTORICAL_QUAKES_WHERE, createHistoricalQuakesExampleBriefing } from "./example-hazards-briefing.js?v=0.62.3-briefing-slide-engines";
-import { CinematicModeController } from "./cinematic/mode.js?v=0.70.1-colours";
-import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.70.1-colours";
+import { CinematicModeController } from "./cinematic/mode.js?v=0.70.3-geology";
+import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.70.3-geology";
 import { PROVENANCE_STATUSES } from "./cinematic/clock.js?v=0.1.0";
-import { recommendAnimations } from "./cinematic/recommend.js?v=0.70.1-colours";
+import { recommendAnimations } from "./cinematic/recommend.js?v=0.70.3-geology";
 
 // What each provenance label tells a viewer about a track's displayed progression.
 const PROVENANCE_HELP = Object.freeze({
@@ -66,7 +66,7 @@ const PROVENANCE_HELP = Object.freeze({
 });
 import { numericFieldCandidates, temporalFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.3.1";
 import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.10-strata";
-import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.70.1-colours";
+import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.70.3-geology";
 import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
 import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
 import { readTextBoxEditor, textBoxEditorMarkup, textBoxRunMarkup, textBoxSummary } from "./text-box-editor.js?v=0.65.0-paths";
@@ -9498,7 +9498,7 @@ export class UIController {
       if (spatialGroupControl) spatialGroupControl.hidden = !grouped;
       if (spatialSlotControl) spatialSlotControl.hidden = !grouped;
       if (spatialGapControl) spatialGapControl.hidden = !grouped;
-      if (spatialOrderControl) spatialOrderControl.hidden = !grouped;
+      if (spatialOrderControl) spatialOrderControl.hidden = !grouped || savedChart?.order === "listed";
       if (spatialColorsControl) spatialColorsControl.hidden = !grouped;
       if (extrusionSource && !grouped) extrusionSource.value = "field";
       const usingField = extrusionSource?.value === "field";
@@ -9586,7 +9586,8 @@ export class UIController {
               type: "spatial-3d-chart",
               mode: spatialChartMode.value,
               ...(grouped ? { groupBy: pane.querySelector("[data-spatial-group-field]").value } : {}),
-              ...(grouped && pane.querySelector("[data-spatial-order]")?.checked ? { order: "descending" } : {}),
+              // A listed order (such as geologic ages) has no sort to rebuild it from, so it stays while the field does.
+              ...(grouped && savedChart?.order === "listed" && savedChart.groupBy === pane.querySelector("[data-spatial-group-field]").value ? { order: "listed", groups: savedChart.groups } : grouped && pane.querySelector("[data-spatial-order]")?.checked ? { order: "descending" } : {}),
               ...(pane.querySelector("[data-spatial-ground-outlines]")?.checked ? { groundOutlines: true } : {}),
               height: {
                 ...(extrusionSource.value === "field" ? { field: pane.querySelector("[data-extrusion-field]").value } : {}),
@@ -10181,7 +10182,7 @@ export class UIController {
         { label: "Import observation", primary: true, handler: async (event) => {
           const button = event.currentTarget; button.disabled = true;
           try {
-            const { FieldSessionController } = await import("./field-session-store.js?v=0.70.1-colours");
+            const { FieldSessionController } = await import("./field-session-store.js?v=0.70.3-geology");
             const field = this.fieldSessionController ||= new FieldSessionController(this.projectManager, this.events);
             await field.importBundle(bundle);
             this.dialog.close();

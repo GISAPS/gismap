@@ -22,8 +22,8 @@ export type SpatialChart = {
   mode: "attribute-extrusion" | "temporal-strata" | "stacked-footprints" | "exploded-timeline";
   groupBy?: string;
   groups?: Array<string | number>;
-  /** Stacking order from the bottom up; "descending" puts the highest group at the bottom, and colours follow. Default "ascending". */
-  order?: "ascending" | "descending";
+  /** Stacking order from the bottom up; "descending" puts the highest group at the bottom, and colours follow. "listed" stacks `groups` in the order given (first at the bottom), for values that do not sort, such as geologic ages. Default "ascending". */
+  order?: "ascending" | "descending" | "listed";
   /** Also draw the flat source outlines on the ground under the 3D shapes. Default false. */
   groundOutlines?: boolean;
   height: { mode?: "field" | "fixed-slot" | "magnitude"; field?: string; slotMeters?: number; gapMeters?: number; thicknessMeters?: number; scale?: number };

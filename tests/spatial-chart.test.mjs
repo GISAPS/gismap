@@ -159,3 +159,16 @@ test("a palette spread over more groups than it has stops gives every group its 
   assert.equal(new Set(eight).size, 8);
   assert.deepEqual([eight[0], eight.at(-1)], ["#fcfdbf", "#3b0f70"]);
 });
+
+test("listed order stacks groups as given, for values that do not sort, such as geologic ages", () => {
+  const ages = ["Paleozoic - Cambrian", "Paleozoic - Permian", "Mesozoic - Triassic", "Cenozoic - Neogene"];
+  const fields = [{ name: "AGE_MAX", type: "string" }];
+  const input = { type: "spatial-3d-chart", mode: "stacked-footprints", groupBy: "AGE_MAX", order: "listed", groups: [...ages, ages[0]], height: { slotMeters: 1000 } };
+  const chart = normalizeSpatialChart(input, { fields, groupValues: ["Cenozoic - Neogene"] });
+  assert.equal(chart.order, "listed");
+  assert.deepEqual(chart.groups, ages, "oldest at the bottom; duplicates dropped, not sorted");
+  assert.deepEqual(normalizeSpatialChart(chart, { fields }).groups, ages, "normalizing again keeps the order");
+  const [bottom] = spatialChartLayerSpecs({ chart, idPrefix: "geology", source: "geology", polygonFilter: true });
+  assert.deepEqual(bottom.filter.at(-1), ["==", ["get", "AGE_MAX"], "Paleozoic - Cambrian"]);
+  assert.equal(normalizeSpatialChart({ ...input, groups: undefined }, { fields, groupValues: ages }).order, undefined, "without groups to keep, the order falls back to sorted");
+});

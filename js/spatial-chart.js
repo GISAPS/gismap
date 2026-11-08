@@ -27,8 +27,9 @@ const comparable = (a, b) => {
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 };
 // Too many groups is an error, not a silent slice: dropped groups would vanish from the map.
-const uniqueValues = (values = [], field = "") => {
-  const unique = [...new Map(values.filter((value) => value !== null && value !== undefined && value !== "").map((value) => [`${typeof value}:${String(value)}`, value])).values()].sort(comparable);
+const uniqueValues = (values = [], field = "", { sort = true } = {}) => {
+  const distinct = [...new Map(values.filter((value) => value !== null && value !== undefined && value !== "").map((value) => [`${typeof value}:${String(value)}`, value])).values()];
+  const unique = sort ? distinct.sort(comparable) : distinct;
   if (unique.length > MAX_SPATIAL_CHART_GROUPS) throw new Error(`${field || "The group field"} has ${unique.length} distinct values; 3D spatial charts support at most ${MAX_SPATIAL_CHART_GROUPS}. Filter the layer or group by a coarser field.`);
   return unique;
 };
@@ -55,9 +56,11 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
   if (mode !== "attribute-extrusion" && (!groupBy || !byName.has(groupBy))) throw new Error("Choose a valid field for the chart's vertical groups.");
   if (mode === "attribute-extrusion" && (!heightField || !numericType(byName.get(heightField)?.type))) throw new Error("Choose a numeric height field for attribute extrusion.");
   if (heightField && (!byName.has(heightField) || !numericType(byName.get(heightField)?.type))) throw new Error("The chart height field must be numeric.");
-  // Groups stack from the bottom up, lowest value first; "descending" puts the highest at the bottom.
-  const order = mode !== "attribute-extrusion" && input.order === "descending" ? "descending" : "ascending";
-  const sorted = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy);
+  // Groups stack from the bottom up, lowest value first; "descending" puts the highest at the bottom,
+  // and "listed" keeps the order of `groups` as given, for values that do not sort, such as geologic ages.
+  const listed = input.order === "listed" && input.groups?.length > 0;
+  const order = mode === "attribute-extrusion" ? "ascending" : listed ? "listed" : input.order === "descending" ? "descending" : "ascending";
+  const sorted = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy, { sort: !listed });
   const groups = order === "descending" ? sorted.reverse() : sorted;
   if (mode !== "attribute-extrusion" && !groups.length) throw new Error(`No values were found in ${groupBy}.`);
   const heightMode = mode === "attribute-extrusion" ? "field" : heightField ? "magnitude" : "fixed-slot";
@@ -66,7 +69,7 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     mode,
     ...(groupBy ? { groupBy } : {}),
     ...(groups.length ? { groups } : {}),
-    ...(order === "descending" ? { order } : {}),
+    ...(order !== "ascending" ? { order } : {}),
     // The flat source outlines under the slabs are off unless asked for: they make a stack busy.
     ...(input.groundOutlines === true ? { groundOutlines: true } : {}),
     height: {

@@ -80,7 +80,8 @@ test("services are described from their JSON: names, fields, kinds and tile URLs
   assert.match(imagery.tiles.urls[0], /\/exportImage\?.*format=png32/, "no-data areas stay transparent");
   const sublayer = await describeArcGIS("https://x.org/arcgis/rest/services/Dynamic/MapServer/3", { fetchImpl });
   assert.deepEqual([sublayer.kind, sublayer.title], ["map-image", "Dynamic — Elevation"]);
-  assert.match(sublayer.tiles.urls[0], /layers=show%3A3/);
+  assert.match(sublayer.tiles.urls[0], /^https:\/\/x\.org\/arcgis\/rest\/services\/Dynamic\/MapServer\/export\?.*layers=show%3A3/, "the service draws the sublayer, at its own host");
+  assert.equal(sublayer.url, "https://x.org/arcgis/rest/services/Dynamic/MapServer");
 });
 
 test("features are paged as GeoJSON, with Esri JSON when a service cannot answer f=geojson", async () => {

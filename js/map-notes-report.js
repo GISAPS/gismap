@@ -1,7 +1,7 @@
 // A deliberately bounded first report. The existing field bundle remains the
 // authoritative portable record; the PDF contains one self-contained link per note.
-import { makeFieldBundle } from './field-session-bundle.js?v=0.70.1-colours';
-import { createFieldNoteUrl } from './field-note-link.js?v=0.70.1-colours';
+import { makeFieldBundle } from './field-session-bundle.js?v=0.70.3-geology';
+import { createFieldNoteUrl } from './field-note-link.js?v=0.70.3-geology';
 import { PdfDocument, qrAsset } from './pdf-document.js?v=0.69.1-pdflinks';
 
 export function prepareMapNotesReport(baseUrl, session, notes) {
