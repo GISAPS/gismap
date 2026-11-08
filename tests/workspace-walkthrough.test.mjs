@@ -25,6 +25,15 @@ test('examples have a focused walkthrough that connects the map, records, and st
   assert.match(steps.at(-1).description, /Style/);
 });
 
+test('map and image service examples skip records and point at the legend instead', () => {
+  const steps = createExampleWalkthroughSteps({ title: 'Forest risk', description: 'Projected loss.', serviceType: 'map-image', layers: [{ serviceType: 'map-image' }] });
+  assert.equal(steps.length, 5);
+  assert.ok(steps.some((step) => step.title === 'Read the legend' && step.desktop === '#utility-legend-content'));
+  assert.ok(!steps.some((step) => /table/i.test(step.desktop) || step.title === 'Open the records' || step.title === 'Inspect a feature'), 'a picture layer has no records to open');
+  const mixed = createExampleWalkthroughSteps({ title: 'Mixed', serviceType: 'feature', layers: [{ serviceType: 'feature' }, { serviceType: 'map-image' }] });
+  assert.ok(mixed.some((step) => step.title === 'Open the records'), 'feature layers keep the records step');
+});
+
 test('briefing guide covers the workflow without requiring a loaded dataset', async () => {
   assert.ok(BRIEFING_WALKTHROUGH_STEPS.length >= 5 && BRIEFING_WALKTHROUGH_STEPS.length <= 10);
   for (const title of ['Start with data', 'Try a finished example', 'Choose your features', 'Build your slides', 'Arrange and review', 'Preview and share']) {

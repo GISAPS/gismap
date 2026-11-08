@@ -39,7 +39,7 @@ import { BriefingPlayer, slideHasMap } from "./briefing-player.js?v=0.62.3-brief
 import { expandTimelinePdfSlides } from "./briefing-timeline-pdf.js?v=0.1.0";
 import { briefingFileStem, briefingPdf, markdownToText } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { featureId } from "./presentation-query.js?v=0.30.0";
-import { startWorkspaceWalkthrough } from "./workspace-walkthrough.js?v=0.57.0-slides1";
+import { startWorkspaceWalkthrough } from "./workspace-walkthrough.js?v=0.70.3-geology";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const templateLabel = (id) => SLIDE_TEMPLATES.find((template) => template.id === id)?.label || "Slide";

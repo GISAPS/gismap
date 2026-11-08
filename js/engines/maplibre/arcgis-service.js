@@ -128,6 +128,22 @@ export async function describeArcGIS(value, options = {}) {
   throw new Error("That URL is not an ArcGIS feature layer, map service or image service.");
 }
 
+/**
+ * The legend a map or image service draws (its `legend` endpoint), as
+ * [{ title, entries: [{ label, image }] }] with each swatch a data: URL.
+ * `layerIds` keeps those MapServer sublayers; unlabelled swatches such as a
+ * mosaic's footprint outline are dropped when the layer has labelled ones.
+ */
+export async function serviceLegend(url, { layerIds = null, ...options } = {}) {
+  const json = await getJson(`${trim(url)}/legend`, {}, options);
+  const all = Array.isArray(json.layers) ? json.layers : [];
+  const kept = layerIds?.length ? all.filter((layer) => layerIds.includes(layer.layerId)) : all;
+  return (kept.length ? kept : all).map((layer) => {
+    const entries = (layer.legend || []).filter((item) => item.imageData).map((item) => ({ label: String(item.label ?? "").trim(), image: `data:${item.contentType || "image/png"};base64,${item.imageData}` }));
+    return { title: layer.layerName || "", entries: entries.some((item) => item.label) ? entries.filter((item) => item.label) : entries };
+  }).filter((layer) => layer.entries.length);
+}
+
 /** Tile URLs for a service cached in Web Mercator, or null. */
 function cachedTiles(url, json) {
   const wkid = json.tileInfo?.spatialReference?.latestWkid ?? json.tileInfo?.spatialReference?.wkid;

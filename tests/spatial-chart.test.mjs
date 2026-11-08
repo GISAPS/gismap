@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
+import { listedOrder, normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
 import { strataData } from "../js/cinematic/cinematic-effects.js";
 import { generateSpatialChartBrief } from "../js/briefing-spatial-chart.js";
 import { normalizeBriefing } from "../js/briefing-document.js";
@@ -171,4 +171,17 @@ test("listed order stacks groups as given, for values that do not sort, such as 
   const [bottom] = spatialChartLayerSpecs({ chart, idPrefix: "geology", source: "geology", polygonFilter: true });
   assert.deepEqual(bottom.filter.at(-1), ["==", ["get", "AGE_MAX"], "Paleozoic - Cambrian"]);
   assert.equal(normalizeSpatialChart({ ...input, groups: undefined }, { fields, groupValues: ages }).order, undefined, "without groups to keep, the order falls back to sorted");
+});
+
+test("reversing a listed order flips its groups once, and unticking flips them back", () => {
+  const fields = [{ name: "AGE_MAX", type: "string" }];
+  const ages = ["Cambrian", "Permian", "Triassic"];
+  const chart = normalizeSpatialChart({ type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "AGE_MAX", order: "listed", groups: ages, height: {} }, { fields });
+  const reversed = normalizeSpatialChart({ ...chart, ...listedOrder(chart, true) }, { fields });
+  assert.deepEqual(reversed.groups, ["Triassic", "Permian", "Cambrian"], "youngest at the bottom");
+  assert.equal(reversed.reversed, true);
+  assert.deepEqual(normalizeSpatialChart({ ...reversed, ...listedOrder(reversed, true) }, { fields }).groups, reversed.groups, "applying again with the box still ticked changes nothing");
+  const back = normalizeSpatialChart({ ...reversed, ...listedOrder(reversed, false) }, { fields });
+  assert.deepEqual(back.groups, ages);
+  assert.equal(back.reversed, undefined);
 });

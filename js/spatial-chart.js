@@ -44,6 +44,12 @@ const groupColors = (colors, groups) => {
   return kept.length ? { colors: Object.fromEntries(kept) } : {};
 };
 
+/** The order settings that keep a listed chart's groups, flipped when `reversed` differs from how they are stacked now. */
+export function listedOrder(chart, reversed) {
+  const flip = reversed !== Boolean(chart.reversed);
+  return { order: "listed", groups: flip ? [...chart.groups].reverse() : chart.groups, reversed };
+}
+
 /** Validate and bound a chart configuration. Throws before anything is rendered. */
 export function normalizeSpatialChart(input, { fields = [], geometryType = "polygon", groupValues = [] } = {}) {
   if (input == null || input === false) return null;
@@ -70,6 +76,8 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     ...(groupBy ? { groupBy } : {}),
     ...(groups.length ? { groups } : {}),
     ...(order !== "ascending" ? { order } : {}),
+    // Reversing a listed order flips `groups` itself; this records it so the controls can show it and flip back.
+    ...(order === "listed" && input.reversed === true ? { reversed: true } : {}),
     // The flat source outlines under the slabs are off unless asked for: they make a stack busy.
     ...(input.groundOutlines === true ? { groundOutlines: true } : {}),
     height: {

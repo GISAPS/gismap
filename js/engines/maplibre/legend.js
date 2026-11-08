@@ -4,7 +4,8 @@
 import { rendererToPaint, rendererValue, symbolColor, symbolPaint } from "./arcgis-renderer.js?v=0.42.0";
 
 export function legendForLayer(record, fallbackColor) {
-  if (record.kind === "raster") return { entries: [], note: "Legend unavailable for this image layer." };
+  // A map or image service draws its own pictures; its published legend swatches stand in for symbols.
+  if (record.kind === "raster") return record.serviceLegend?.length ? { entries: [], images: record.serviceLegend } : { entries: [], note: "Legend unavailable for this image layer." };
   const renderer = record.renderer || record.serviceRenderer;
   const usable = renderer && rendererToPaint(renderer);
   const geometry = /point/i.test(record.geometryType || "") ? "point" : /line/i.test(record.geometryType || "") ? "line" : "polygon";

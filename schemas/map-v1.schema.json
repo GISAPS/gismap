@@ -130,6 +130,7 @@
             "groupBy": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$" },
             "groups": { "type": "array", "maxItems": 40, "items": { "type": ["string", "number"] } },
             "order": { "enum": ["ascending", "descending", "listed"], "default": "ascending", "description": "Stacking order from the bottom up. \"descending\" puts the highest group at the bottom; \"listed\" stacks groups in the order given, first at the bottom, for values that do not sort, such as geologic ages." },
+            "reversed": { "type": "boolean", "default": false, "description": "With order \"listed\": the listed groups were flipped by Reverse stacking order. groups is already in stacking order, first at the bottom." },
             "groundOutlines": { "type": "boolean", "default": false, "description": "Also draw the flat layer outlines on the ground under the stack." },
             "height": { "type": "object" },
             "color": { "type": "object" },

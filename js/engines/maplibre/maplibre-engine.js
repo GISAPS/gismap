@@ -27,7 +27,7 @@ import { arcgisMetadata } from "../../source-inspector.js?v=0.70.3-geology";
 import { OpenGeocoder } from "./geocoder.js?v=0.47.0";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
 import { rendererToPaint } from "./arcgis-renderer.js?v=0.42.0";
-import { legendForLayer } from "./legend.js?v=0.52.4";
+import { legendForLayer } from "./legend.js?v=0.70.3-geology";
 import { inspectExternalTiles } from "./external-tiles.js?v=0.70.3-geology";
 import { hostCredit, joinCredits, legendSwatch, plainAttribution } from "../map-credits.js?v=0.1.0";
 import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.70.3-geology";
@@ -40,7 +40,7 @@ const LAYER_EFFECT_VIEW_FIRST = 800;
 const SETTLED_EDGES_PREFIX = "cinematic-edges:";
 // Native animated effects (Rise, Reveal) use this source/layer prefix.
 const NATIVE_EFFECT_PREFIX = "cinematic-native:";
-import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetchGeometries, queryServiceIds } from "./arcgis-service.js?v=0.70.3-geology";
+import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetchGeometries, queryServiceIds, serviceLegend } from "./arcgis-service.js?v=0.70.3-geology";
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
 import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
@@ -1135,7 +1135,15 @@ export class MaplibreEngine {
     const title = config.title?.trim() || service.title || titleFromUrl(url);
     const common = { ...this.#common(config), title, url: service.url, sourceJSON: service.json, attribution: service.json?.copyrightText || undefined, config: { sourceType: type, url } };
     if (service.kind !== "feature") {
-      return this.#addRecord({ ...common, kind: "raster", type: service.kind, layerId: service.layers?.[0] ?? null, tiles: service.tiles, transparency: service.json?.drawingInfo?.transparency || 0, minScale: service.json?.minScale || 0, maxScale: service.json?.maxScale || 0 });
+      const handle = this.#addRecord({ ...common, kind: "raster", type: service.kind, layerId: service.layers?.[0] ?? null, tiles: service.tiles, transparency: service.json?.drawingInfo?.transparency || 0, minScale: service.json?.minScale || 0, maxScale: service.json?.maxScale || 0 });
+      // The legend arrives after the layer; a service without one keeps the "unavailable" note.
+      void serviceLegend(service.url, { layerIds: service.layers }).then((legend) => {
+        const record = this.#records.get(handle.uid);
+        if (!record || !legend.length) return;
+        record.serviceLegend = legend;
+        this.#renderLegend();
+      }).catch(() => {});
+      return handle;
     }
     const where = config.definitionExpression ?? service.where ?? null;
     // The layer is on the map at once and fills in page by page; queries wait for all of it.
@@ -2104,6 +2112,28 @@ export class MaplibreEngine {
         label.textContent = entry.label;
         row.append(swatch, label);
         list.append(row);
+      }
+      for (const group of legend.images || []) {
+        if (legend.images.length > 1 && group.title) {
+          const field = document.createElement("p");
+          field.className = "maplibre-legend__field";
+          field.textContent = group.title;
+          list.append(field);
+        }
+        for (const entry of group.entries) {
+          const row = document.createElement("div");
+          row.className = "maplibre-legend__entry";
+          const swatch = document.createElement("img");
+          swatch.className = "maplibre-legend__image";
+          swatch.src = entry.image;
+          swatch.alt = "";
+          swatch.style.opacity = String(record.opacity);
+          const label = document.createElement("span");
+          label.className = "maplibre-legend__label";
+          label.textContent = entry.label;
+          row.append(swatch, label);
+          list.append(row);
+        }
       }
       if (list.childElementCount) section.append(list);
       host.append(section);
