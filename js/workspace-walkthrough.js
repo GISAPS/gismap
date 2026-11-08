@@ -18,6 +18,15 @@ export function createExampleWalkthroughSteps(example = {}) {
   const title = String(example.title || "this example");
   const description = String(example.description || "a public dataset prepared for exploration");
   const whyUseful = String(example.whyUseful || "Inspect the source and symbols before drawing conclusions from a live dataset.");
+  // A map or image service sends pictures, not features: there are no records to select or tabulate.
+  const layers = example.layers?.length ? example.layers : [example];
+  if (layers.every((layer) => ["map-image", "imagery"].includes(layer.serviceType || example.serviceType))) return [
+    { title: `Welcome to ${title}`, desktop: ".example-guide", mobile: ".example-guide", description: `${description} ${whyUseful}` },
+    { title: "Read the map", desktop: "#viewDiv", mobile: "#viewDiv", description: "This layer is a picture the publisher’s server draws for each view, so its colours are the publisher’s own. Zoom in for more detail; the server redraws as you go." },
+    { id: "legend", title: "Read the legend", desktop: "#utility-legend-content", mobile: '[data-mobile-panel="layers-panel"]', description: "The Legend shows what each colour means, as published with the service. Map → Legend opens it again later." },
+    { title: "Compare and adjust", desktop: '#layers-list .layer-card:first-of-type', mobile: '[data-mobile-panel="layers-panel"]', description: "Use the opacity slider to see the basemap underneath, or add other layers to compare. A picture layer has no records, so Table and filters do not apply." },
+    { title: "Share it", desktop: ".studio-share", mobile: "#mobile-menu-toggle", description: "Share sends this map, its view and its layers to someone else as a link." },
+  ];
   return [
     { title: `Welcome to ${title}`, desktop: ".example-guide", mobile: ".example-guide", description: `${description} ${whyUseful}` },
     { title: "Read the map", desktop: "#viewDiv", mobile: "#viewDiv", description: "Pan and zoom first. The example’s symbols make the published features easier to scan, but they do not add measurements or change the source data." },

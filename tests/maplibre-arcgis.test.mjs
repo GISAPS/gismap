@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rendererToPaint, rendererValue, symbolColor } from "../js/engines/maplibre/arcgis-renderer.js";
-import { describeArcGIS, fetchFeatures, parseQueryUrl, queryGeometry, queryServiceIds, serviceFields, serviceName } from "../js/engines/maplibre/arcgis-service.js";
+import { serviceLegend, describeArcGIS, fetchFeatures, parseQueryUrl, queryGeometry, queryServiceIds, serviceFields, serviceName } from "../js/engines/maplibre/arcgis-service.js";
 import { regroupPolygon } from "../js/engines/maplibre/geojson.js";
 import { compileRenderer } from "../js/renderer-spec.js";
 import { MaplibreEngine } from "../js/engines/maplibre/maplibre-engine.js";
@@ -80,7 +80,8 @@ test("services are described from their JSON: names, fields, kinds and tile URLs
   assert.match(imagery.tiles.urls[0], /\/exportImage\?.*format=png32/, "no-data areas stay transparent");
   const sublayer = await describeArcGIS("https://x.org/arcgis/rest/services/Dynamic/MapServer/3", { fetchImpl });
   assert.deepEqual([sublayer.kind, sublayer.title], ["map-image", "Dynamic — Elevation"]);
-  assert.match(sublayer.tiles.urls[0], /layers=show%3A3/);
+  assert.match(sublayer.tiles.urls[0], /^https:\/\/x\.org\/arcgis\/rest\/services\/Dynamic\/MapServer\/export\?.*layers=show%3A3/, "the service draws the sublayer, at its own host");
+  assert.equal(sublayer.url, "https://x.org/arcgis/rest/services/Dynamic/MapServer");
 });
 
 test("features are paged as GeoJSON, with Esri JSON when a service cannot answer f=geojson", async () => {
@@ -214,4 +215,18 @@ test("large service layers can be opened for filtering and share only complete r
     await assert.rejects(engine.loadLayer(layer.uid), /feature limit/);
     assert.equal((await engine.loadLayer(layer.uid, { allowTruncated: true })).truncated, true);
   } finally { globalThis.fetch = realFetch; }
+});
+
+test("a map service's published legend becomes image swatches for the layer shown", async () => {
+  const swatch = (label) => ({ label, imageData: "iVBORw0KGgo=", contentType: "image/png" });
+  const fetchImpl = fakeFetch([["/Risk/MapServer/legend?", { layers: [
+    { layerId: 1, layerName: "Boundary", legend: [swatch("")] },
+    { layerId: 3, layerName: "Loss Image", legend: [swatch("1 - 5 %"), swatch("> 35%"), swatch("")] },
+  ] }]]);
+  const legend = await serviceLegend("https://x.org/arcgis/rest/services/Risk/MapServer", { layerIds: [3], fetchImpl });
+  assert.deepEqual(legend.map((layer) => layer.title), ["Loss Image"], "only the sublayer on the map");
+  assert.deepEqual(legend[0].entries.map((entry) => entry.label), ["1 - 5 %", "> 35%"], "unlabelled swatches are dropped beside labelled ones");
+  assert.equal(legend[0].entries[0].image, "data:image/png;base64,iVBORw0KGgo=");
+  const whole = await serviceLegend("https://x.org/arcgis/rest/services/Risk/MapServer", { fetchImpl });
+  assert.equal(whole.length, 2, "without sublayers, every layer with swatches");
 });

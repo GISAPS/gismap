@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
+import { SPATIAL_CHART_DIM, listedOrder, normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend, spatialChartColor, spatialChartGroupColor, spreadColors } from "../js/spatial-chart.js";
 import { strataData } from "../js/cinematic/cinematic-effects.js";
 import { generateSpatialChartBrief } from "../js/briefing-spatial-chart.js";
 import { normalizeBriefing } from "../js/briefing-document.js";
@@ -158,4 +158,41 @@ test("a palette spread over more groups than it has stops gives every group its 
   const eight = spreadColors(["#fcfdbf", "#fec488", "#fc8961", "#e75263", "#b5367a", "#7e2482", "#3b0f70"], 8);
   assert.equal(new Set(eight).size, 8);
   assert.deepEqual([eight[0], eight.at(-1)], ["#fcfdbf", "#3b0f70"]);
+});
+
+test("listed order stacks groups as given, for values that do not sort, such as geologic ages", () => {
+  const ages = ["Paleozoic - Cambrian", "Paleozoic - Permian", "Mesozoic - Triassic", "Cenozoic - Neogene"];
+  const fields = [{ name: "AGE_MAX", type: "string" }];
+  const input = { type: "spatial-3d-chart", mode: "stacked-footprints", groupBy: "AGE_MAX", order: "listed", groups: [...ages, ages[0]], height: { slotMeters: 1000 } };
+  const chart = normalizeSpatialChart(input, { fields, groupValues: ["Cenozoic - Neogene"] });
+  assert.equal(chart.order, "listed");
+  assert.deepEqual(chart.groups, ages, "oldest at the bottom; duplicates dropped, not sorted");
+  assert.deepEqual(normalizeSpatialChart(chart, { fields }).groups, ages, "normalizing again keeps the order");
+  const [bottom] = spatialChartLayerSpecs({ chart, idPrefix: "geology", source: "geology", polygonFilter: true });
+  assert.deepEqual(bottom.filter.at(-1), ["==", ["get", "AGE_MAX"], "Paleozoic - Cambrian"]);
+  assert.equal(normalizeSpatialChart({ ...input, groups: undefined }, { fields, groupValues: ages }).order, undefined, "without groups to keep, the order falls back to sorted");
+});
+
+test("reversing a listed order flips its groups once, and unticking flips them back", () => {
+  const fields = [{ name: "AGE_MAX", type: "string" }];
+  const ages = ["Cambrian", "Permian", "Triassic"];
+  const chart = normalizeSpatialChart({ type: "spatial-3d-chart", mode: "temporal-strata", groupBy: "AGE_MAX", order: "listed", groups: ages, height: {} }, { fields });
+  const reversed = normalizeSpatialChart({ ...chart, ...listedOrder(chart, true) }, { fields });
+  assert.deepEqual(reversed.groups, ["Triassic", "Permian", "Cambrian"], "youngest at the bottom");
+  assert.equal(reversed.reversed, true);
+  assert.deepEqual(normalizeSpatialChart({ ...reversed, ...listedOrder(reversed, true) }, { fields }).groups, reversed.groups, "applying again with the box still ticked changes nothing");
+  const back = normalizeSpatialChart({ ...reversed, ...listedOrder(reversed, false) }, { fields });
+  assert.deepEqual(back.groups, ages);
+  assert.equal(back.reversed, undefined);
+});
+
+test("a strata group picked out from the legend keeps its slabs and dims the others", () => {
+  const chart = normalizeSpatialChart({ type:"spatial-3d-chart", mode:"temporal-strata", groupBy:"YEAR_" }, { fields, geometryType:"polygon", groupValues:[2019, 2022, 2025] });
+  const specs = (focus) => spatialChartLayerSpecs({ chart, idPrefix:"x", source:"s", opacity:0.8, polygonFilter:true, focus }).map((spec) => spec.paint["fill-extrusion-opacity"]);
+  assert.deepEqual(specs(undefined), [0.8, 0.8, 0.8], "nothing picked: every slab as styled");
+  const picked = specs(2022);
+  assert.equal(picked[1], 0.8);
+  assert.ok(Math.abs(picked[0] - 0.8 * SPATIAL_CHART_DIM) < 1e-9 && picked[2] === picked[0]);
+  assert.deepEqual(specs("2022"), picked, "a group value read back as text still matches");
+  assert.deepEqual(spatialChartLegend(chart).slots.map((slot) => slot.value), [2025, 2022, 2019], "legend rows carry the group value they pick out");
 });

@@ -16,6 +16,7 @@ Curated datasets (the link needs no field names):
 - `https://gismap.online/?example=recent-hurricanes`: Recent tropical cyclone tracks and observations published for hurricane analysis. Key fields: STORMNAME, INTENSITY.
 - `https://gismap.online/?example=air-quality-pm25`: Latest particulate matter air-quality observations and results. Key fields: city, country, value.
 - `https://gismap.online/?example=california-fire-perimeters`: Mapped perimeters of California wildfires from 1878 to 2025, from CAL FIRE's historic fire perimeter record. Key fields: FIRE_NAME, YEAR_, DECADES, GIS_ACRES.
+- `https://gismap.online/?example=forest-insect-disease-risk`: Share of tree basal area projected to die from insects and diseases from 2024 to 2038, from the USDA Forest Service national risk map.
 - `https://gismap.online/?example=usgs-seismic-activity`: Recent earthquake and seismic activity reported by the USGS. Key fields: mag, place, eventTime.
 - `https://gismap.online/?example=usgs-recent-earthquakes-map-service`: A USGS ArcGIS MapServer presenting recent earthquake activity. Key fields: mag, place, depth.
 - `https://gismap.online/?example=ndfd-wind-gusts`: Forecast wind-gust conditions from the National Digital Forecast Database. Key fields: label, fromdate.
@@ -140,7 +141,7 @@ Follow-up refinement: [derive year and acreage maps from one filtered California
 - [A failure: CORS_BLOCKED](https://gismap.online/examples/ai/cors-blocked/): Prompt: "Put https://example.com/ on a map as GeoJSON." Status reached: prepared.
 
 ## Data
-- [Curated public datasets (JSON)](https://gismap.online/api/catalog.json): 14 services with ready links
+- [Curated public datasets (JSON)](https://gismap.online/api/catalog.json): 15 services with ready links
 
 ## Limits
 - At most 10 layers per map; HTTPS only; URLs containing tokens or keys are refused; sources must allow browser (CORS) access.

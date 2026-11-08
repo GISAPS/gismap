@@ -27,8 +27,9 @@ const comparable = (a, b) => {
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 };
 // Too many groups is an error, not a silent slice: dropped groups would vanish from the map.
-const uniqueValues = (values = [], field = "") => {
-  const unique = [...new Map(values.filter((value) => value !== null && value !== undefined && value !== "").map((value) => [`${typeof value}:${String(value)}`, value])).values()].sort(comparable);
+const uniqueValues = (values = [], field = "", { sort = true } = {}) => {
+  const distinct = [...new Map(values.filter((value) => value !== null && value !== undefined && value !== "").map((value) => [`${typeof value}:${String(value)}`, value])).values()];
+  const unique = sort ? distinct.sort(comparable) : distinct;
   if (unique.length > MAX_SPATIAL_CHART_GROUPS) throw new Error(`${field || "The group field"} has ${unique.length} distinct values; 3D spatial charts support at most ${MAX_SPATIAL_CHART_GROUPS}. Filter the layer or group by a coarser field.`);
   return unique;
 };
@@ -43,6 +44,12 @@ const groupColors = (colors, groups) => {
   return kept.length ? { colors: Object.fromEntries(kept) } : {};
 };
 
+/** The order settings that keep a listed chart's groups, flipped when `reversed` differs from how they are stacked now. */
+export function listedOrder(chart, reversed) {
+  const flip = reversed !== Boolean(chart.reversed);
+  return { order: "listed", groups: flip ? [...chart.groups].reverse() : chart.groups, reversed };
+}
+
 /** Validate and bound a chart configuration. Throws before anything is rendered. */
 export function normalizeSpatialChart(input, { fields = [], geometryType = "polygon", groupValues = [] } = {}) {
   if (input == null || input === false) return null;
@@ -55,9 +62,11 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
   if (mode !== "attribute-extrusion" && (!groupBy || !byName.has(groupBy))) throw new Error("Choose a valid field for the chart's vertical groups.");
   if (mode === "attribute-extrusion" && (!heightField || !numericType(byName.get(heightField)?.type))) throw new Error("Choose a numeric height field for attribute extrusion.");
   if (heightField && (!byName.has(heightField) || !numericType(byName.get(heightField)?.type))) throw new Error("The chart height field must be numeric.");
-  // Groups stack from the bottom up, lowest value first; "descending" puts the highest at the bottom.
-  const order = mode !== "attribute-extrusion" && input.order === "descending" ? "descending" : "ascending";
-  const sorted = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy);
+  // Groups stack from the bottom up, lowest value first; "descending" puts the highest at the bottom,
+  // and "listed" keeps the order of `groups` as given, for values that do not sort, such as geologic ages.
+  const listed = input.order === "listed" && input.groups?.length > 0;
+  const order = mode === "attribute-extrusion" ? "ascending" : listed ? "listed" : input.order === "descending" ? "descending" : "ascending";
+  const sorted = mode === "attribute-extrusion" ? [] : uniqueValues(input.groups?.length ? input.groups : groupValues, groupBy, { sort: !listed });
   const groups = order === "descending" ? sorted.reverse() : sorted;
   if (mode !== "attribute-extrusion" && !groups.length) throw new Error(`No values were found in ${groupBy}.`);
   const heightMode = mode === "attribute-extrusion" ? "field" : heightField ? "magnitude" : "fixed-slot";
@@ -66,7 +75,9 @@ export function normalizeSpatialChart(input, { fields = [], geometryType = "poly
     mode,
     ...(groupBy ? { groupBy } : {}),
     ...(groups.length ? { groups } : {}),
-    ...(order === "descending" ? { order } : {}),
+    ...(order !== "ascending" ? { order } : {}),
+    // Reversing a listed order flips `groups` itself; this records it so the controls can show it and flip back.
+    ...(order === "listed" && input.reversed === true ? { reversed: true } : {}),
     // The flat source outlines under the slabs are off unless asked for: they make a stack busy.
     ...(input.groundOutlines === true ? { groundOutlines: true } : {}),
     height: {
@@ -124,8 +135,14 @@ export function spatialChartAxis(chart) {
   return { label: `Z order: ${chart.groupBy}`, detail: `${separation}${thickness}. Heights are display offsets, not physical altitude.` };
 }
 
-/** Compile derived MapLibre fill-extrusion layers without modifying source data. */
-export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, visibility = "visible", opacity = 0.75, polygonFilter, featureFilter = null, originalColor = "#1b7f6a" }) {
+/** How much of its opacity a group keeps while another group is picked out from the legend. */
+export const SPATIAL_CHART_DIM = 0.15;
+
+/**
+ * Compile derived MapLibre fill-extrusion layers without modifying source data.
+ * `focus` is a group value picked out from the legend: the other groups' slabs dim.
+ */
+export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, visibility = "visible", opacity = 0.75, polygonFilter, featureFilter = null, originalColor = "#1b7f6a", focus }) {
   if (!chart) return [];
   const baseFilter = featureFilter ? ["all", polygonFilter, featureFilter] : polygonFilter;
   // A magnitude slab never grows past its slot, so it cannot cover the next group's slot.
@@ -145,7 +162,8 @@ export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, vi
     const height = chart.height.field ? fieldHeight(base) : base + chart.height.thicknessMeters;
     const color = chart.color.strategy === "original" ? originalColor : spatialChartGroupColor(chart, index);
     const groupFilter = ["==", ["get", chart.groupBy], value];
-    return { id: `${idPrefix}-spatial-chart-${index}`, type: "fill-extrusion", source, ...range, filter: ["all", baseFilter, groupFilter], layout: { visibility }, paint: paint(base, height, color) };
+    const dimmed = focus !== undefined && String(focus) !== String(value);
+    return { id: `${idPrefix}-spatial-chart-${index}`, type: "fill-extrusion", source, ...range, filter: ["all", baseFilter, groupFilter], layout: { visibility }, paint: { ...paint(base, height, color), "fill-extrusion-opacity": dimmed ? opacity * SPATIAL_CHART_DIM : opacity } };
   });
 }
 
@@ -153,7 +171,7 @@ export function spatialChartLayerSpecs({ chart, idPrefix, source, range = {}, vi
 const displayHeight = (meters) => (meters >= 1000 ? `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })} km` : `${Math.round(meters).toLocaleString()} m`);
 
 /**
- * What a chart's legend shows: { heights: [{ value, label, ratio }], slots: [{ label, color }], usesRendererColors }.
+ * What a chart's legend shows: { heights: [{ value, label, ratio }], slots: [{ value, label, color }], usesRendererColors }.
  * `values` are the height field's values on the drawn features. Heights are display metres.
  */
 export function spatialChartLegend(chart, values = []) {
@@ -168,6 +186,7 @@ export function spatialChartLegend(chart, values = []) {
   const usesRendererColors = chart.mode === "attribute-extrusion" || chart.color.strategy === "original";
   // The highest slot is drawn on top, so the list reads top-down like the stack.
   const slots = chart.mode === "attribute-extrusion" ? [] : chart.groups.map((value, index) => ({
+    value,
     label: `${value === "" ? "No value" : value}`,
     color: usesRendererColors ? null : spatialChartGroupColor(chart, index),
     base: index * (chart.height.slotMeters + chart.height.gapMeters),

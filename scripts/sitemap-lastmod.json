@@ -8,12 +8,12 @@
     "lastmod": "2026-11-02"
   },
   "/discover/examples/": {
-    "hash": "60bf636e9d452c27",
-    "lastmod": "2026-11-07"
+    "hash": "7ff486ed43835e88",
+    "lastmod": "2026-11-08"
   },
   "/discover/examples/3d-strata/": {
-    "hash": "e22dfc1301ab88b2",
-    "lastmod": "2026-11-07"
+    "hash": "becaf56f794b7f79",
+    "lastmod": "2026-11-08"
   },
   "/discover/engines/": {
     "hash": "8c97162d8a8910b0",
@@ -48,8 +48,8 @@
     "lastmod": "2026-11-02"
   },
   "/examples/": {
-    "hash": "8e2f13ef14a2b5db",
-    "lastmod": "2026-11-07"
+    "hash": "538a35560dca1646",
+    "lastmod": "2026-11-08"
   },
   "/examples/data-connections/local-postgis/": {
     "hash": "5e88d704404ad446",
@@ -134,6 +134,10 @@
   "/examples/california-fire-perimeters/": {
     "hash": "027646efbad3ed0f",
     "lastmod": "2026-11-07"
+  },
+  "/examples/forest-insect-disease-risk/": {
+    "hash": "ba0958728cd979c1",
+    "lastmod": "2026-11-08"
   },
   "/examples/historical-quakes/": {
     "hash": "a8144b391f0d051e",
@@ -260,15 +264,15 @@
     "lastmod": "2026-11-02"
   },
   "/llms.txt": {
-    "hash": "e7c23f84a4c06fe1",
-    "lastmod": "2026-11-07"
+    "hash": "169525a7b8e6818b",
+    "lastmod": "2026-11-08"
   },
   "/llms-full.txt": {
-    "hash": "709601828223a00c",
-    "lastmod": "2026-11-07"
+    "hash": "e131b9455940483e",
+    "lastmod": "2026-11-08"
   },
   "/api/catalog.json": {
-    "hash": "5eabd29b68fbb092",
-    "lastmod": "2026-11-07"
+    "hash": "72bbe98360fa3a0d",
+    "lastmod": "2026-11-08"
   }
 }

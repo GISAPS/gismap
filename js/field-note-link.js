@@ -1,6 +1,6 @@
 // A small, explicit share of the same canonical bundle used by JSON export.
 // The fragment contains private content: callers must warn before sharing it.
-import { makeFieldBundle, normalizeFieldBundle } from './field-session-bundle.js?v=0.70.1-colours';
+import { makeFieldBundle, normalizeFieldBundle } from './field-session-bundle.js?v=0.70.3-geology';
 
 export const FIELD_NOTE_URL_LIMIT = 2800;
 const encode = (value) => {

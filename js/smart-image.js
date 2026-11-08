@@ -1,4 +1,4 @@
-import { sanitizeSharedResourceUrl } from "./share.js?v=0.70.1-colours";
+import { sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
 import { brandedMapCanvas, printPalette } from "./pdf-document.js?v=0.69.1-pdflinks";
 
 export const SMART_IMAGE_FORMAT = "gismap-smart-image";
