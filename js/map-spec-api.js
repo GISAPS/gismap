@@ -69,7 +69,7 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
           });
         } catch (error) {
           const problem = toGisMapError(error, "LAYER_LOAD_FAILED");
-          issues.push({ level: "error", code: problem.code, path, message: `${entry.title || entry.url}: ${problem.message}`, hint: problem.hint });
+          issues.push({ level: "error", code: problem.code, path, message: `${entry.title || entry.url}: ${problem.message}`, hint: problem.hint, link: entry.url });
           continue;
         }
         // The style is applied once the layer's fields are known; a bad field keeps the service's style.

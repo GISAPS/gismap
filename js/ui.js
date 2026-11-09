@@ -14,7 +14,7 @@ import { plainText } from "./layer-insight.js?v=0.50.1";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
-import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
+import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.71.0-subsurface";
 import { createShareUrl, parseShareParameters } from "./share.js?v=0.71.0-subsurface";
 import { mapSpecFromShareParameters } from "./map-spec.js?v=0.71.0-subsurface";
 import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.71.0-subsurface";
@@ -136,6 +136,10 @@ const escapeHtml = (value) =>
     "'": "&#39;",
   })[char]);
 
+/** A map-link issue's message and hint, with a link to open a layer's server directly when it failed to load. */
+const specIssueMarkup = (issue) =>
+  `<p>${escapeHtml(issue.message)}</p>${issue.hint ? `<small>${escapeHtml(issue.hint)}</small>` : ""}${/^https?:\/\//i.test(issue.link || "") ? ` <a href="${escapeHtml(issue.link)}" target="_blank" rel="noopener noreferrer">Open the server ↗</a>` : ""}`;
+
 export class UIController {
   constructor(events, mapController, projectManager, authController, aiController, toolManager, exportController, applicationRuntime, panelManager, mobilePanelManager) {
     Object.assign(this, { events, mapController, projectManager, authController, aiController, toolManager, exportController, applicationRuntime, panelManager, mobilePanelManager });
@@ -143,7 +147,7 @@ export class UIController {
     this.searchResults = [];
     this.searchTimer = null;
     this.searchRequestId = 0;
-    this.lastPlaceLabel = "";
+    this.lastPlace = null;
     this.searchSelection = -1;
     this.lastInsight = null;
     this.intelligenceInsight = null;
@@ -735,7 +739,7 @@ export class UIController {
     const placeInput = document.querySelector("#place-query");
     document.querySelector("#place-search").addEventListener("submit", (event) => this.#search(event));
     placeInput.addEventListener("input", () => {
-      this.lastPlaceLabel = "";
+      this.lastPlace = null;
       this.#schedulePlaceSearch(placeInput.value);
     });
     document.querySelector("#recent-places-list").addEventListener("click", (event) => {
@@ -4640,30 +4644,70 @@ export class UIController {
       ? ENTERPRISE_CATALOGS.find((item) => item.id === catalogIdOrDefinition)
       : catalogIdOrDefinition;
     if (!definition) throw new Error("That ArcGIS service directory is not configured.");
-    const catalog = new EnterpriseCatalog(definition);
+    await this.#serviceDirectoryDialog({ eyebrow: definition.version, title: definition.title, servers: [{ catalog: new EnterpriseCatalog(definition), folder: "" }] });
+  }
+
+  /**
+   * Opens the layer picker for ?layer= links that name an ArcGIS services
+   * directory or folder: [{ rootUrl, folder, title }]. Several servers share one
+   * picker that starts with a list of them. `issues` are the link's other
+   * layers that failed, listed above the services.
+   */
+  async openServiceDirectories(directories, { issues = [] } = {}) {
+    const servers = directories.map(({ rootUrl, folder = "", title }) => ({
+      catalog: new EnterpriseCatalog({ rootUrl }),
+      folder,
+      label: title || `${new URL(rootUrl).hostname}${folder ? ` · ${folder}` : ""}`,
+    }));
+    // The link's title= heads the picker; servers with different titles share a plain heading.
+    const titles = [...new Set(directories.map((item) => item.title).filter(Boolean))];
+    const title = titles.length === 1 ? titles[0] : servers.length === 1 ? `${new URL(directories[0].rootUrl).hostname} services` : "ArcGIS services";
+    const notice = issues.length ? `<div class="warning-box"><strong>${issues.length === 1 ? "A layer in this link" : `${issues.length} layers in this link`} could not be shown</strong>${issues.map(specIssueMarkup).join("")}</div>` : "";
+    await this.#serviceDirectoryDialog({ eyebrow: "ArcGIS services directory", title, servers, notice });
+  }
+
+  async #serviceDirectoryDialog({ eyebrow, title, servers, notice = "" }) {
     this.openDialog({
-      eyebrow: definition.version,
-      title: definition.title,
+      eyebrow,
+      title,
       content: '<div class="loading-row"><span></span> Reading service directory…</div>',
     });
+    const session = this.dialogSession;
+    const content = document.querySelector("#dialog-content");
 
-    const render = async (folder = "") => {
-      const content = document.querySelector("#dialog-content");
+    const listServers = () => {
+      content.innerHTML = `${notice}<div class="enterprise-list">${servers.map((server, index) => `<button class="enterprise-row" data-directory-server="${index}"><span><strong>${escapeHtml(server.label)}</strong><small>${escapeHtml(server.catalog.definition.rootUrl)}${server.folder ? `/${escapeHtml(server.folder)}` : ""}</small></span><b>→</b></button>`).join("")}</div>
+        <p class="form-note">This link names ${servers.length} ArcGIS server directories. Open one to choose its layers.</p>`;
+      content.querySelectorAll("[data-directory-server]").forEach((button) => {
+        const index = Number(button.dataset.directoryServer);
+        button.addEventListener("click", () => render(index, servers[index].folder));
+      });
+    };
+
+    const render = async (serverIndex, folder = "") => {
+      const { catalog } = servers[serverIndex];
+      const { rootUrl } = catalog.definition;
       content.innerHTML = '<div class="loading-row"><span></span> Reading service directory…</div>';
       try {
         const listing = await catalog.browse(folder);
+        if (this.dialogSession !== session) return;
         const parent = listing.folder.includes("/")
           ? listing.folder.split("/").slice(0, -1).join("/")
           : "";
-        content.innerHTML = `<div class="catalog-path"><button data-enterprise-folder="${escapeHtml(parent)}" ${listing.folder ? "" : "disabled"}>← Back</button><code>/${escapeHtml(listing.folder)}</code></div>
+        // At a server's top, Back returns to the list of servers when the link named several.
+        const back = listing.folder
+          ? `<button data-enterprise-folder="${escapeHtml(parent)}">← Back</button>`
+          : `<button data-directory-servers ${servers.length > 1 ? "" : "disabled"}>← Back</button>`;
+        content.innerHTML = `${notice}<div class="catalog-path">${back}<code>/${escapeHtml(listing.folder)}</code></div>
           <div class="enterprise-list">
             ${listing.folders.map((name) => `<button class="enterprise-row" data-enterprise-folder="${escapeHtml(name)}"><span><strong>${escapeHtml(name.split("/").pop())}</strong><small>Folder</small></span><b>→</b></button>`).join("")}
             ${listing.services.map((service) => `<div class="enterprise-row"><span><strong>${escapeHtml(service.name.split("/").pop())}</strong><small>${escapeHtml(service.type)}</small></span><button data-enterprise-service="${escapeHtml(service.url)}" data-service-type="${escapeHtml(service.serviceType)}">Add</button></div>`).join("")}
           </div>
           ${!listing.folders.length && !listing.services.length ? '<div class="empty-state">This folder is empty.</div>' : ""}
-          <p class="form-note">Services are discovered live from <code>${escapeHtml(definition.rootUrl)}</code>. Availability and access are controlled by the service owner.</p>`;
+          <p class="form-note">Services are discovered live from <code>${escapeHtml(rootUrl)}</code>. Availability and access are controlled by the service owner.</p>`;
+        content.querySelector("[data-directory-servers]")?.addEventListener("click", listServers);
         content.querySelectorAll("[data-enterprise-folder]").forEach((button) =>
-          button.addEventListener("click", () => render(button.dataset.enterpriseFolder)),
+          button.addEventListener("click", () => render(serverIndex, button.dataset.enterpriseFolder)),
         );
         content.querySelectorAll("[data-enterprise-service]").forEach((button) =>
           button.addEventListener("click", async () => {
@@ -4685,10 +4729,12 @@ export class UIController {
           }),
         );
       } catch (error) {
-        content.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}<br />The server may not allow cross-origin browser access.</div>`;
+        if (this.dialogSession !== session) return;
+        content.innerHTML = `${notice}<div class="empty-state">${escapeHtml(error.message)}<br />The server may not allow cross-origin browser access. <a href="${escapeHtml(rootUrl)}${folder ? `/${escapeHtml(folder)}` : ""}" target="_blank" rel="noopener noreferrer">Open the server ↗</a></div>`;
       }
     };
-    await render();
+    if (servers.length === 1) await render(0, servers[0].folder);
+    else listServers();
   }
 
   #customToolDialog() {
@@ -8919,7 +8965,6 @@ export class UIController {
     if (!result) return;
     const input = document.querySelector("#place-query");
     input.value = "";
-    this.lastPlaceLabel = result.label;
     this.#clearSearchResults();
     this.#rememberPlace(result);
     input.blur();
@@ -8927,9 +8972,16 @@ export class UIController {
   }
 
   async #goToPlace(place) {
+    // The place's name labels bookmarks only while the view stays where the search landed.
+    const visit = { label: place.label };
+    this.lastPlace = visit;
     try {
       await this.mapController.goToSearchResult(place);
+      if (this.lastPlace !== visit) return;
+      const { center, zoom } = this.mapController.getViewState();
+      Object.assign(visit, { center, zoom });
     } catch (error) {
+      if (this.lastPlace === visit) this.lastPlace = null;
       // A newer camera move interrupting this one is expected, not a failure.
       if (error?.name !== "AbortError") this.error(error.message);
     }
@@ -8977,7 +9029,6 @@ export class UIController {
   async #goToRecentPlace(index) {
     const place = this.#readRecentPlaces()[index];
     if (!place) return;
-    this.lastPlaceLabel = place.label;
     this.#rememberPlace(place);
     await this.#goToPlace({ ...place, extent: place.extent || undefined });
   }
@@ -8995,8 +9046,10 @@ export class UIController {
 
   async #addBookmark() {
     const [longitude, latitude] = this.mapController.getViewState().center;
-    const name = document.querySelector("#place-query").value.trim() || this.lastPlaceLabel || `View at ${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const typed = document.querySelector("#place-query").value.trim();
+    const placeLabel = this.#viewIsAtLastPlace() ? this.lastPlace.label : "";
     const address = await this.mapController.reverseGeocode({ longitude, latitude }).catch(() => null);
+    const name = typed || placeLabel || address?.address || `View at ${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
     this.projectManager.addBookmark({
       name,
       description: "",
@@ -9008,6 +9061,17 @@ export class UIController {
       lingerSeconds: 4,
       layerVisibility: this.mapController.getLayers().map((layer) => ({ key: this.#atlasLayerKey(layer), visible: layer.visible })),
     });
+  }
+
+  /** Whether the view is still about where the last place search left it: no farther than a view's width away, and not zoomed well out. */
+  #viewIsAtLastPlace() {
+    const place = this.lastPlace;
+    const { center, zoom } = this.mapController.getViewState();
+    if (!place?.center || !center || !Number.isFinite(place.zoom) || !Number.isFinite(zoom)) return false;
+    if (zoom < place.zoom - 1.5) return false;
+    const degreesAcross = 360 / 2 ** place.zoom * 4;
+    const east = (center[0] - place.center[0]) * Math.cos((center[1] * Math.PI) / 180);
+    return Math.hypot(east, center[1] - place.center[1]) < degreesAcross / 2;
   }
 
   #bookmarkManagerDialog() {
@@ -10102,7 +10166,7 @@ export class UIController {
 
   /** Lists what a map spec or link could not do, so a person (or an agent reading describe()) can fix it. */
   showSpecIssues(issues = []) {
-    const rows = issues.map((issue) => `<li class="spec-issue spec-issue--${issue.level}"><strong>${escapeHtml(issue.code || issue.level)}</strong> <code>${escapeHtml(issue.path || "")}</code><p>${escapeHtml(issue.message)}</p>${issue.hint ? `<small>${escapeHtml(issue.hint)}</small>` : ""}</li>`).join("");
+    const rows = issues.map((issue) => `<li class="spec-issue spec-issue--${issue.level}"><strong>${escapeHtml(issue.code || issue.level)}</strong> <code>${escapeHtml(issue.path || "")}</code>${specIssueMarkup(issue)}</li>`).join("");
     this.openDialog({
       eyebrow: "Map link",
       title: "Some of this map could not be shown",
