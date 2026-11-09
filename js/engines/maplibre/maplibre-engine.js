@@ -44,7 +44,7 @@ import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetc
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
 import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.71.0-subsurface";
+import { SPATIAL_CHART_DIM, normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.71.0-subsurface";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
 import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.5";
 import { UNDERGROUND_DEFAULTS, normalizeSubsurface, normalizeUnderground, parseColor, rendererColorResolver, subsurfaceSummary } from "../../subsurface.js?v=0.71.0-subsurface";
@@ -83,6 +83,8 @@ const toGisZoom = (zoom) => Number(zoom) + ZOOM_OFFSET;
 const zoomForScale = (scale) => Math.log2(SCALE_AT_ZOOM_0 / Math.max(1, Number(scale)));
 const normalizeHeading = (bearing) => ((Number(bearing) % 360) + 360) % 360;
 const round = (value, digits) => Number(Number(value).toFixed(digits));
+// Two legend picks name the same row: a strata group by value, or a class by position.
+const sameLegendFocus = (a, b) => Boolean(a && b) && a.uid === b.uid && ("slot" in a ? "slot" in b && String(a.slot) === String(b.slot) : a.index === b.index);
 
 function titleFromUrl(url = "") {
   const name = String(url).split(/[?#]/)[0].replace(/\/+$/, "").split("/").at(-1) || "GeoJSON layer";
@@ -162,6 +164,13 @@ export class MaplibreEngine {
   #styleJson = new Map();
   #styleToken = 0;
   #styleSwap = Promise.resolve();
+  #legendRowFocus = new WeakMap();
+  #legendKeydown = (event) => {
+    if (event.key === "Escape" && this.#clearLegendFocus()) event.stopPropagation();
+  };
+  #legendPointerLeave = () => {
+    if (this.legendFocus.hover) this.#setLegendFocus("hover", null);
+  };
 
   constructor(events) {
     this.id = "maplibre";
@@ -174,6 +183,8 @@ export class MaplibreEngine {
     this.initialBasemapId = null;
     this.basemapTheme = null;
     this.highlight = { enabled: true, color: "#00b8d9", style: "fill", feature: null };
+    // A legend row picked out on the map: `pinned` by a click, `hover` while pointed at or focused.
+    this.legendFocus = { pinned: null, hover: null };
     this.noteMarkers = [];
     this.tourMarkers = [];
     this.tourMarkerChapters = [];
@@ -869,10 +880,13 @@ export class MaplibreEngine {
       const base = ["match", ["geometry-type"], types, true, false];
       return featureFilter ? ["all", base, featureFilter] : base;
     };
+    // A class picked out from the legend: the layer's other features dim.
+    const focus = this.#legendFocusFor(record);
+    const dim = (paint, keys) => focus?.match ? Object.fromEntries(Object.entries(paint).map(([key, value]) => [key, keys.includes(key) ? ["*", value, ["case", focus.match, 1, SPATIAL_CHART_DIM]] : value])) : paint;
     const fill = scaled({ "fill-color": color, "fill-opacity": styled.fill ? 1 : 0.35, ...styled.fill }, ["fill-opacity"]);
-    const outline = scaled({ "line-color": color, "line-width": 1.5, "line-opacity": 1, ...styled.outline }, ["line-opacity"]);
-    const line = scaled({ "line-color": color, "line-width": 2.5, "line-opacity": 1, ...styled.line }, ["line-opacity"]);
-    const circle = scaled({ "circle-color": color, "circle-radius": 4.5, "circle-stroke-color": halo, "circle-stroke-width": 1.5, "circle-opacity": 1, "circle-stroke-opacity": 1, ...styled.circle }, ["circle-opacity", "circle-stroke-opacity"]);
+    const outline = dim(scaled({ "line-color": color, "line-width": 1.5, "line-opacity": 1, ...styled.outline }, ["line-opacity"]), ["line-opacity"]);
+    const line = dim(scaled({ "line-color": color, "line-width": 2.5, "line-opacity": 1, ...styled.line }, ["line-opacity"]), ["line-opacity"]);
+    const circle = dim(scaled({ "circle-color": color, "circle-radius": 4.5, "circle-stroke-color": halo, "circle-stroke-width": 1.5, "circle-opacity": 1, "circle-stroke-opacity": 1, ...styled.circle }, ["circle-opacity", "circle-stroke-opacity"]), ["circle-opacity", "circle-stroke-opacity"]);
     const symbol = record.renderer?.symbol || record.renderer?.classBreakInfos?.[0]?.symbol || record.renderer?.uniqueValueInfos?.[0]?.symbol;
     const extrusion = symbol?.symbolLayers?.find((item) => String(item.type).toLowerCase() === "extrude");
     const variable = record.renderer?.visualVariables?.find((item) => /^(size|sizeinfo)$/i.test(item.type));
@@ -887,13 +901,13 @@ export class MaplibreEngine {
     const fillVisibility = extrusion || chart || stacked ? "none" : visibility;
     const outlineVisibility = (chart || stacked) && !chart?.groundOutlines ? "none" : visibility;
     const specs = [
-      { id: `${source}-fill`, type: "fill", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: fillVisibility }, paint: fill },
+      { id: `${source}-fill`, type: "fill", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: fillVisibility }, paint: dim(fill, ["fill-opacity"]) },
       { id: `${source}-extrusion`, type: "fill-extrusion", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: extrusion && !chart && !stacked ? visibility : "none" }, paint: { "fill-extrusion-color": fill["fill-color"], "fill-extrusion-height": height, "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity } },
       { id: `${source}-outline`, type: "line", source, ...range, filter: filtered(["Polygon", "MultiPolygon"]), layout: { visibility: outlineVisibility }, paint: outline },
       { id: `${source}-line`, type: "line", source, ...range, filter: filtered(["LineString", "MultiLineString"]), layout: { visibility, "line-cap": "round", "line-join": "round" }, paint: line },
       { id: `${source}-circle`, type: "circle", source, ...range, filter: filtered(["Point", "MultiPoint"]), layout: { visibility }, paint: circle },
     ];
-    if (chart) specs.push(...spatialChartLayerSpecs({ chart, idPrefix: source, source, range, visibility: stacked ? "none" : visibility, opacity, polygonFilter: ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false], featureFilter, originalColor: fill["fill-color"] }));
+    if (chart) specs.push(...spatialChartLayerSpecs({ chart, idPrefix: source, source, range, visibility: stacked ? "none" : visibility, opacity, polygonFilter: ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false], featureFilter, originalColor: fill["fill-color"], focus: focus?.slot }));
     return specs;
   }
 
@@ -2166,7 +2180,7 @@ export class MaplibreEngine {
         const chart = record.spatialChart;
         const key = spatialChartLegend(chart, chart.height.field ? this.#visibleFeatures(record).map((feature) => feature.properties?.[chart.height.field]) : []);
         const heading = (text) => { const element = document.createElement("p"); element.className = "maplibre-legend__field"; element.textContent = text; section.append(element); };
-        const row = (swatch, text) => { const entry = document.createElement("div"); entry.className = "maplibre-legend__entry"; const label = document.createElement("span"); label.textContent = text; entry.append(swatch, label); section.append(entry); };
+        const row = (swatch, text, focus = null) => section.append(this.#legendRow(focus, swatch, text));
         if (key.heights.length) {
           heading(chart.mode === "attribute-extrusion" ? "Height key" : "Slab thickness");
           for (const item of key.heights) {
@@ -2185,7 +2199,7 @@ export class MaplibreEngine {
             swatch.setAttribute("aria-hidden", "true");
             swatch.style.backgroundColor = slot.color || "transparent";
             if (!slot.color) swatch.style.borderStyle = "dashed";
-            row(swatch, slot.label);
+            row(swatch, slot.label, record.kind === "vector" ? { uid: record.uid, slot: slot.value } : null);
           }
         }
         // Strata drawn in their own colours: the base style's classes are not on the map.
@@ -2207,9 +2221,7 @@ export class MaplibreEngine {
       const single = legend.entries.length === 1 && !legend.entries[0].label.trim();
       const list = document.createElement("div");
       list.className = "maplibre-legend__entries";
-      for (const entry of legend.entries) {
-        const row = document.createElement("div");
-        row.className = "maplibre-legend__entry";
+      for (const [index, entry] of legend.entries.entries()) {
         const swatch = document.createElement("span");
         swatch.className = `maplibre-legend__swatch maplibre-legend__swatch--${entry.geometry}`;
         swatch.setAttribute("aria-hidden", "true");
@@ -2224,11 +2236,7 @@ export class MaplibreEngine {
           swatch.style.height = `${size}px`;
         }
         if (single) { head.prepend(swatch); continue; }
-        const label = document.createElement("span");
-        label.className = "maplibre-legend__label";
-        label.textContent = entry.label;
-        row.append(swatch, label);
-        list.append(row);
+        list.append(this.#legendRow(entry.match && record.kind === "vector" ? { uid: record.uid, index, label: entry.label } : null, swatch, entry.label));
       }
       for (const group of legend.images || []) {
         if (legend.images.length > 1 && group.title) {
@@ -2255,6 +2263,79 @@ export class MaplibreEngine {
       if (list.childElementCount) section.append(list);
       host.append(section);
     }
+    this.#syncLegendRows();
+  }
+
+  /* ---------------- Legend focus ---------------- */
+
+  /** A legend row; one that can pick out its features on the map is a toggle button. */
+  #legendRow(focus, swatch, text) {
+    const row = document.createElement(focus ? "button" : "div");
+    row.className = "maplibre-legend__entry";
+    const label = document.createElement("span");
+    label.className = "maplibre-legend__label";
+    label.textContent = text;
+    row.append(swatch, label);
+    if (!focus) return row;
+    row.type = "button";
+    row.classList.add("maplibre-legend__entry--pick");
+    row.dataset.legendPick = "";
+    row.title = "Pick these out on the map";
+    this.#legendRowFocus.set(row, focus);
+    const preview = (on) => this.#setLegendFocus("hover", on ? focus : null);
+    row.addEventListener("pointerenter", () => preview(true));
+    row.addEventListener("pointerleave", () => preview(false));
+    row.addEventListener("focus", () => preview(true));
+    row.addEventListener("blur", () => preview(false));
+    // A second click lets go; the preview goes too so the map shows the change at once.
+    row.addEventListener("click", () => {
+      this.legendFocus.hover = null;
+      this.#setLegendFocus("pinned", sameLegendFocus(this.legendFocus.pinned, focus) ? null : focus);
+    });
+    // Double-clicking the layer opens its style editor; picking a row twice should not.
+    row.addEventListener("dblclick", (event) => event.stopPropagation());
+    return row;
+  }
+
+  /** What the legend picks out on this layer: { slot } for a strata group, { match } for a class, else null. */
+  #legendFocusFor(record) {
+    const focus = this.legendFocus.hover || this.legendFocus.pinned;
+    if (!focus || focus.uid !== record.uid) return null;
+    if ("slot" in focus) return record.spatialChart?.groups?.some((value) => String(value) === String(focus.slot)) ? { slot: focus.slot } : null;
+    const entry = legendForLayer(record, this.#dataColor()).entries?.[focus.index];
+    return entry?.match && entry.label === focus.label ? { match: entry.match } : null;
+  }
+
+  /** Sets the previewed or pinned legend row (null clears it) and restyles only the layers it touches. */
+  #setLegendFocus(kind, focus) {
+    const before = this.legendFocus.hover || this.legendFocus.pinned;
+    this.legendFocus[kind] = focus;
+    const after = this.legendFocus.hover || this.legendFocus.pinned;
+    for (const uid of new Set([before?.uid, after?.uid])) {
+      const record = uid && this.#records.get(uid);
+      if (record?.kind !== "vector" || !this.map) continue;
+      for (const spec of this.#layerSpecs(record)) {
+        if (!this.map.getLayer(spec.id)) continue;
+        for (const [name, value] of Object.entries(spec.paint)) if (name.endsWith("opacity")) this.map.setPaintProperty(spec.id, name, value);
+      }
+    }
+    this.#syncLegendRows();
+  }
+
+  #clearLegendFocus() {
+    if (!this.legendFocus.hover && !this.legendFocus.pinned) return false;
+    this.legendFocus.hover = null;
+    this.#setLegendFocus("pinned", null);
+    return true;
+  }
+
+  #syncLegendRows() {
+    const shown = this.legendFocus.hover || this.legendFocus.pinned;
+    for (const row of this.legendHost?.querySelectorAll("[data-legend-pick]") || []) {
+      const focus = this.#legendRowFocus.get(row);
+      row.setAttribute("aria-pressed", String(sameLegendFocus(this.legendFocus.pinned, focus)));
+      row.classList.toggle("is-picked", sameLegendFocus(shown, focus));
+    }
   }
 
   toggleWidget(name) {
@@ -2273,13 +2354,19 @@ export class MaplibreEngine {
     }
     if (name === "legend") {
       if (this.legendHost) {
+        this.legendHost.removeEventListener("keydown", this.#legendKeydown);
+        this.legendHost.removeEventListener("pointerleave", this.#legendPointerLeave);
         this.legendHost.replaceChildren();
         this.legendHost = null;
+        // Nothing on screen says why the map is dimmed once the legend is closed.
+        this.#clearLegendFocus();
         this.events.publish("widget:toggled", { name, open: false });
         return false;
       }
       this.legendHost = document.querySelector("#utility-legend-content");
       if (!this.legendHost) throw new Error("The legend panel is unavailable.");
+      this.legendHost.addEventListener("keydown", this.#legendKeydown);
+      this.legendHost.addEventListener("pointerleave", this.#legendPointerLeave);
       this.#renderLegend();
       this.events.publish("widget:toggled", { name, open: true });
       return true;
