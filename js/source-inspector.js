@@ -1,4 +1,4 @@
-import { sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
+import { sanitizeSharedResourceUrl } from "./share.js?v=0.71.0-subsurface";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 
 const MAX_FIELDS = 500;

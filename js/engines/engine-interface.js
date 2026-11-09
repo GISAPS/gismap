@@ -37,6 +37,7 @@ export const ENGINE_CAPABILITIES = Object.freeze([
   "geocode", // search(text) / reverseGeocode({ longitude, latitude })
   "geocode-suggest",
   "buildings-3d", // setBuildings3d(on): extruded buildings on the basemap // search() may run as the user types (place suggestions)
+  "subsurface", // setSubsurface / setUndergroundView: layers drawn below the ground, seen through a faded surface
   "draw", // draw(type), sketching graphics
   "widgets", // toggleWidget(name): legend, measurement, elevation profile, …
   "measurement", // interactive distance measurement
@@ -88,7 +89,7 @@ export const MAP_CONTROLLER_METHODS = Object.freeze([
   "setCinematicEffect", "clearCinematicEffect", "getCinematicEffectStats", "requestEffectFrame",
   "addLocalFile", "discoverFeatureServiceLayers", "getQueryableLayer", "getAllLayerConfigs",
   "setTitle", "setOutFields", "setRefreshInterval", "refreshLayer", "ignoreScaleRange", "scaleState", "layerMetadata", "getLocalAsset",
-  "suggestRenderers", "restoreRenderer", "setRenderer", "recordRendererSpec", "setLayerSymbology", "setSpatialChart", "distinctValues", "fieldValues",
+  "suggestRenderers", "restoreRenderer", "setRenderer", "recordRendererSpec", "setLayerSymbology", "setSpatialChart", "setSubsurface", "setUndergroundView", "getUndergroundView", "distinctValues", "fieldValues",
   "getCamera", "getScale", "getViewpoint", "getCurrentExtentDetails", "restoreView", "navigate", "viewExtentFilter",
   "goToLayer", "goToLayers", "goToLayerOnInitialLoad", "layerExtent", "dataBounds", "goToFeature", "goToFeatures", "goToSearchResult", "goToTaskPlaces",
   "highlightFeature", "clearFeatureHighlight", "configureInteractionFeedback", "clearClickMarker", "locateUser", "geographicCoordinates",
@@ -103,7 +104,7 @@ export const METHOD_CAPABILITIES = Object.freeze({
   native: "native", setGround: "ground", getGroundId: "ground",
   setCinematicEffect: "three-3d", clearCinematicEffect: "three-3d", getCinematicEffectStats: "three-3d", requestEffectFrame: "three-3d", setLayerEffect: "three-3d", getLayerEffect: "three-3d", suspendLayerEffect: "three-3d",
   addLocalFile: "layers-files", discoverFeatureServiceLayers: "layers-arcgis", getQueryableLayer: "query",
-  suggestRenderers: "renderer-spec", restoreRenderer: "renderer-native", setRenderer: "renderer-native", setLayerSymbology: "renderer-native", setSpatialChart: "spatial-chart-3d",
+  suggestRenderers: "renderer-spec", restoreRenderer: "renderer-native", setRenderer: "renderer-native", setLayerSymbology: "renderer-native", setSpatialChart: "spatial-chart-3d", setSubsurface: "subsurface", setUndergroundView: "subsurface", getUndergroundView: "subsurface",
   distinctValues: "query", fieldValues: "query", navigate: "view-2d", viewExtentFilter: "spatial-query",
   goToLayer: "query", goToLayers: "query", goToLayerOnInitialLoad: "query", layerExtent: "query", dataBounds: "query",
   highlightFeature: "highlight", clearFeatureHighlight: "highlight", configureInteractionFeedback: "highlight", clearClickMarker: "highlight", locateUser: "view-2d",
@@ -125,6 +126,7 @@ export const METHOD_CAPABILITIES = Object.freeze({
  *   layers:reset         {}
  *   map:basemap-changed  { id }
  *   map:ground-changed   { id }
+ *   map:underground-changed { enabled, groundOpacity }
  *   draw:complete        { feature: Feature }
  *   tour-marker:click    { index }
  *   widget:toggled       { name, open }
@@ -133,7 +135,7 @@ export const METHOD_CAPABILITIES = Object.freeze({
 export const ENGINE_EVENTS = Object.freeze([
   "map:ready", "map:click", "view:pointer-move", "view:scale-change", "view:stationary",
   "layer:added", "layer:removed", "layer:changed", "layers:reset",
-  "map:basemap-changed", "map:ground-changed", "draw:complete", "tour-marker:click", "widget:toggled", "app:error",
+  "map:basemap-changed", "map:ground-changed", "map:underground-changed", "draw:complete", "tour-marker:click", "widget:toggled", "app:error",
 ]);
 
 /**

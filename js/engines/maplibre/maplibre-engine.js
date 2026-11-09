@@ -17,20 +17,20 @@ import { tourChapterPoint, tourMarkerDataUrl } from "../tour-markers.js?v=0.65.9
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
 import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
-import { unsupported } from "../engine-interface.js?v=0.52.4";
+import { unsupported } from "../engine-interface.js?v=0.71.0-subsurface";
 import { openBasemapFor, withUsgsImagery } from "./basemaps.js?v=0.53.0-gallery1";
 import { mountBasemapGallery } from "./basemap-gallery.js?v=0.53.0-gallery1";
 import { basemapOnEngine, basemapsForEngine } from "../../basemap-catalog.js?v=0.53.0-gallery1";
 import { applyBasemapTheme, withBuildings3d } from "./basemap-theme.js?v=0.52.0";
 import { compileWhere } from "./where.js?v=0.40.0-timeline";
-import { arcgisMetadata } from "../../source-inspector.js?v=0.70.3-geology";
+import { arcgisMetadata } from "../../source-inspector.js?v=0.71.0-subsurface";
 import { OpenGeocoder } from "./geocoder.js?v=0.47.0";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
 import { rendererToPaint } from "./arcgis-renderer.js?v=0.42.0";
-import { legendForLayer } from "./legend.js?v=0.70.3-geology";
-import { inspectExternalTiles } from "./external-tiles.js?v=0.70.3-geology";
+import { legendForLayer } from "./legend.js?v=0.71.0-subsurface";
+import { inspectExternalTiles } from "./external-tiles.js?v=0.71.0-subsurface";
 import { hostCredit, joinCredits, legendSwatch, plainAttribution } from "../map-credits.js?v=0.1.0";
-import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.70.3-geology";
+import { CINEMATIC_EFFECT_TYPES, effectFields, effectRanges, resolveQuality, suggestEffect } from "../../cinematic/cinematic-effects.js?v=0.71.0-subsurface";
 
 // A layer effect draws over at most this many features; more would cost frame rate for no visible gain.
 const LAYER_EFFECT_MAX_FEATURES = 20000;
@@ -40,21 +40,23 @@ const LAYER_EFFECT_VIEW_FIRST = 800;
 const SETTLED_EDGES_PREFIX = "cinematic-edges:";
 // Native animated effects (Rise, Reveal) use this source/layer prefix.
 const NATIVE_EFFECT_PREFIX = "cinematic-native:";
-import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetchGeometries, queryServiceIds, serviceLegend } from "./arcgis-service.js?v=0.70.3-geology";
+import { MAX_FEATURES, describeArcGIS, featureServiceLayers, fetchFeatures, fetchGeometries, queryServiceIds, serviceLegend } from "./arcgis-service.js?v=0.71.0-subsurface";
 import { OBJECT_ID_FIELD, boundsIntersect, boundsOf, expandBounds, geometryTypeOf, inferFields, normalizeFeatures, regroupPolygon, representativePoint } from "./geojson.js?v=0.42.0";
 import { loadMaplibre } from "./maplibre-loader.js?v=0.62.5-amd-safe";
 import { HILLSHADE_LAYER_ID, HILLSHADE_SOURCE_ID, MAPLIBRE_GROUNDS, TERRAIN_SOURCE_ID, isTerrainTileFailure, hillshadeLayer, maplibreGround, terrainSource } from "./terrain.js?v=0.43.0";
-import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.70.3-geology";
+import { normalizeSpatialChart, spatialChartAxis, spatialChartLayerSpecs, spatialChartLegend } from "../../spatial-chart.js?v=0.71.0-subsurface";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "../../scene3d.js?v=0.1.0";
-import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.4";
+import { THREE_LAYER_ID, ThreeHost, loadThree } from "../three/three-host.js?v=0.1.5";
+import { UNDERGROUND_DEFAULTS, normalizeSubsurface, normalizeUnderground, parseColor, rendererColorResolver, subsurfaceSummary } from "../../subsurface.js?v=0.71.0-subsurface";
 
-export const MAPLIBRE_CAPABILITIES = Object.freeze(["view-2d", "view-3d", "spatial-chart-3d", "three-3d", "basemaps", "basemap-themes", "ground", "layers-arcgis", "layers-files", "query", "feature-filter", "renderer-spec", "renderer-native", "identify", "highlight", "capture", "geocode", "buildings-3d", "draw", "measurement", "legend", "tour-markers", "native"]);
+export const MAPLIBRE_CAPABILITIES = Object.freeze(["view-2d", "view-3d", "spatial-chart-3d", "three-3d", "basemaps", "basemap-themes", "ground", "layers-arcgis", "layers-files", "query", "feature-filter", "renderer-spec", "renderer-native", "identify", "highlight", "capture", "geocode", "buildings-3d", "subsurface", "draw", "measurement", "legend", "tour-markers", "native"]);
 
 const ZOOM_OFFSET = 1;
 const SCALE_AT_ZOOM_0 = 591657527.591555;
 // GISMap Online green, until a skin's theme gives the data its accent colour.
 const DEFAULT_COLOR = "#1b7f6a";
 const MAX_PITCH = 85;
+const UNDERGROUND_VEIL = "gismap-underground-veil";
 const HIGHLIGHT_SOURCE = "gismap-highlight";
 const DRAW_SOURCE = "gismap-drawings";
 const MEASURE_SOURCE = "gismap-measurement";
@@ -128,6 +130,7 @@ function layerHandle(record) {
     get rendererSpec() { return record.rendererSpec; },
     get renderer() { return record.renderer ?? record.serviceRenderer ?? null; },
     get spatialChart() { return record.spatialChart ?? null; },
+    get subsurface() { return record.subsurface ?? null; },
     get scene3d() { return record.scene3d ?? null; },
     get scene3dInfo() { return record.scene3dInfo ?? null; },
     get minScale() { return record.minScale || 0; },
@@ -181,6 +184,7 @@ export class MaplibreEngine {
     this.measurement = null;
     this.legendHost = null;
     this.groundId = "world-elevation";
+    this.underground = { ...UNDERGROUND_DEFAULTS };
   }
 
   /* ---------------- Lifecycle ---------------- */
@@ -319,7 +323,7 @@ export class MaplibreEngine {
     // A track switched from a native effect (Rise, Reveal, Strata) leaves no layers behind.
     this.#removeNativeEffect(id);
     this.three ??= new ThreeHost({ map: this.map, THREE, notify: (message) => this.events.publish("app:error", { message }) });
-    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.70.3-geology"), import("../../cinematic/cinematic-effects.js?v=0.70.3-geology")]);
+    const [{ buildCinematicEffect }, { effectColor }] = await Promise.all([import("../../cinematic/effects-three.js?v=0.71.0-subsurface"), import("../../cinematic/cinematic-effects.js?v=0.71.0-subsurface")]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     // Decoration is simplified to half a screen pixel at the current zoom; the map draws the exact outline.
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));
@@ -372,7 +376,7 @@ export class MaplibreEngine {
    */
   async #drawNativeEffect(id, name, effect, revision) {
     const [{ effectColor, nativeEffectData, valueField, riseAmount, revealAmount }, { effectSeconds, effectClockRunning }, { trackTime, normalizeTiming }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.70.3-geology"), import("../../cinematic/effects-three.js?v=0.70.3-geology"), import("../../cinematic/clock.js?v=0.1.0"),
+      import("../../cinematic/cinematic-effects.js?v=0.71.0-subsurface"), import("../../cinematic/effects-three.js?v=0.71.0-subsurface"), import("../../cinematic/clock.js?v=0.1.0"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -433,7 +437,7 @@ export class MaplibreEngine {
    */
   async #drawStrataEffect(id, effect, revision) {
     const [{ effectColor, strataData, strataLanding }, { effectSeconds, effectClockRunning }] = await Promise.all([
-      import("../../cinematic/cinematic-effects.js?v=0.70.3-geology"), import("../../cinematic/effects-three.js?v=0.70.3-geology"),
+      import("../../cinematic/cinematic-effects.js?v=0.71.0-subsurface"), import("../../cinematic/effects-three.js?v=0.71.0-subsurface"),
     ]);
     if (!this.#cinematicEffectIsCurrent(id, revision) || !this.map) return false;
     this.#effectClockRunning = effectClockRunning;
@@ -519,7 +523,7 @@ export class MaplibreEngine {
    * and far cheaper than shader ribbons for thousands of outlines.
    */
   async #drawSettledEdges(id, name, effect, revision) {
-    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.70.3-geology");
+    const { effectColor, effectParts } = await import("../../cinematic/cinematic-effects.js?v=0.71.0-subsurface");
     if (!this.#cinematicEffectIsCurrent(id, revision)) return false;
     this.three?.remove(id);
     const simplify = Number.isFinite(effect.simplify) ? effect.simplify : 0.5 * 360 / (512 * 2 ** (this.map?.getZoom?.() ?? 0));
@@ -657,6 +661,7 @@ export class MaplibreEngine {
       if (this.map.getLayer?.(HILLSHADE_LAYER_ID)) this.map.removeLayer(HILLSHADE_LAYER_ID);
       if (this.map.getSource?.(HILLSHADE_SOURCE_ID)) this.map.removeSource(HILLSHADE_SOURCE_ID);
       if (this.map.getSource?.(TERRAIN_SOURCE_ID)) this.map.removeSource(TERRAIN_SOURCE_ID);
+      this.#rebuildSubsurfaces();
       return;
     }
     if (!this.map.getSource?.(TERRAIN_SOURCE_ID)) this.map.addSource(TERRAIN_SOURCE_ID, terrainSource());
@@ -668,6 +673,7 @@ export class MaplibreEngine {
     }
     this.map.setTerrain?.({ source: TERRAIN_SOURCE_ID, exaggeration: option.exaggeration });
     this.map.setSky?.({});
+    this.#rebuildSubsurfaces();
   }
 
   /** The basemaps this engine draws, and the one it is drawing now (an ArcGIS id from a link shows as its open equivalent). */
@@ -701,7 +707,8 @@ export class MaplibreEngine {
   /** Shows or hides the basemap's 3D buildings (on unless turned off). */
   setBuildings3d(on = true) {
     this.buildings3d = on !== false;
-    if (this.map?.getLayer?.("building-3d")) this.map.setLayoutProperty("building-3d", "visibility", this.buildings3d ? "visible" : "none");
+    // The underground view hides buildings: they would stand over what is under them.
+    if (this.map?.getLayer?.("building-3d")) this.map.setLayoutProperty("building-3d", "visibility", this.buildings3d && !this.underground.enabled ? "visible" : "none");
   }
 
   setBasemapTheme(theme) {
@@ -756,7 +763,7 @@ export class MaplibreEngine {
     // A style still loading cannot be diffed (MapLibre would rebuild from scratch); wait for it.
     if (this.map && !this.map.isStyleLoaded()) await new Promise((resolve) => { this.map.once("style.load", resolve); setTimeout(resolve, 10000); });
     if (token !== this.#styleToken || !this.map) return;
-    this.map.once?.("style.load", () => { if (token === this.#styleToken) { void this.#applyGround({ styleReady: true }); this.three?.attach(); } });
+    this.map.once?.("style.load", () => { if (token === this.#styleToken) { void this.#applyGround({ styleReady: true }); this.three?.attach(); this.#applyUnderground(); } });
     this.map.setStyle(style, {
       diff: true,
       transformStyle: (previous, incoming) => {
@@ -846,7 +853,8 @@ export class MaplibreEngine {
   #layerSpecs(record) {
     const source = this.#sourceId(record);
     const visibility = record.visible ? "visible" : "none";
-    const opacity = record.opacity;
+    // In the underground view a below-ground layer's flat drawing stays as a faint trace on the surface.
+    const opacity = record.opacity * (record.subsurface && this.underground.enabled ? 0.3 : 1);
     const range = this.#zoomRange(record);
     if (record.kind === "raster") {
       return [{ id: `${source}-raster`, type: "raster", source, ...range, layout: { visibility }, paint: { "raster-opacity": opacity * (1 - (record.transparency || 0) / 100) } }];
@@ -924,6 +932,7 @@ export class MaplibreEngine {
 
   /** Redraws a layer after its data, filter, range or style changed. */
   #refresh(record, { data = false } = {}) {
+    if (record.subsurface) record.subsurfaceSync = this.#syncSubsurface(record, { rebuild: data });
     if (record.kind === "three") {
       this.three?.set(record.uid, { visible: record.visible, opacity: record.opacity });
       this.#renderLegend();
@@ -1053,6 +1062,7 @@ export class MaplibreEngine {
       where: null,
       featureFilter: null,
       spatialChart: null,
+      subsurface: null,
       renderLayerIds: [],
       rendererSpec: null,
       renderer: null,
@@ -1396,6 +1406,7 @@ export class MaplibreEngine {
     if (record.kind === "three") this.three?.remove(record.uid);
     clearTimeout(record.effectTimer);
     this.three?.remove(this.#layerEffectId(record));
+    this.three?.remove(this.#subsurfaceId(record));
     for (const id of this.#layerIds(record)) if (this.map?.getLayer(id)) this.map.removeLayer(id);
     if (this.map?.getSource(this.#sourceId(record))) this.map.removeSource(this.#sourceId(record));
     this.#records.delete(record.uid);
@@ -1408,6 +1419,7 @@ export class MaplibreEngine {
       if (record.kind === "three") this.three?.remove(record.uid);
       clearTimeout(record.effectTimer);
       this.three?.remove(this.#layerEffectId(record));
+      this.three?.remove(this.#subsurfaceId(record));
       for (const id of this.#layerIds(record)) if (this.map?.getLayer(id)) this.map.removeLayer(id);
       if (this.map?.getSource(this.#sourceId(record))) this.map.removeSource(this.#sourceId(record));
     }
@@ -1478,6 +1490,7 @@ export class MaplibreEngine {
       styled: Boolean(record.renderer),
       rendererSpec: record.rendererSpec,
       spatialChart: record.spatialChart ? structuredClone(record.spatialChart) : null,
+      subsurface: record.subsurface ? structuredClone(record.subsurface) : null,
       animatedEffect: record.animatedEffect ? { ...record.animatedEffect } : null,
       scene3d: record.scene3d ? structuredClone(record.scene3d) : null,
       ignoreServiceScaleRange: record.ignoreScaleRange,
@@ -1692,6 +1705,103 @@ export class MaplibreEngine {
     this.#renderLegend();
     this.events.publish("layer:changed", { uid: record.uid });
     return record.spatialChart ? structuredClone(record.spatialChart) : null;
+  }
+
+  /* ---------------- Below ground ---------------- */
+
+  /**
+   * Draw a layer's features below the local ground (js/subsurface.js): lines as
+   * pipes or tunnels, points as wells or shafts, polygons as units of rock. They
+   * show in the underground view; null returns the layer to the surface.
+   */
+  async setSubsurface(uid, input = null) {
+    const record = this.#requireVector(uid);
+    record.subsurface = normalizeSubsurface(input, { fields: this.#styleFields(record), geometryType: record.geometryType });
+    if (!record.subsurface) this.three?.remove(this.#subsurfaceId(record));
+    else await this.#syncSubsurface(record, { rebuild: true });
+    this.#refresh(record);
+    this.events.publish("layer:changed", { uid: record.uid });
+    return record.subsurface ? structuredClone(record.subsurface) : null;
+  }
+
+  /** The underground view: { enabled, groundOpacity }. On, the ground fades and below-ground layers show under it. */
+  async setUndergroundView(input) {
+    this.underground = normalizeUnderground(input);
+    this.#applyUnderground();
+    const below = [...this.#records.values()].filter((record) => record.subsurface);
+    for (const record of below) this.#refresh(record);
+    await Promise.all(below.map((record) => record.subsurfaceSync));
+    this.events.publish("map:underground-changed", { ...this.underground });
+    return { ...this.underground };
+  }
+
+  getUndergroundView() {
+    return { ...this.underground };
+  }
+
+  #subsurfaceId(record) { return `${record.uid}::subsurface`; }
+
+  /** The veil over the basemap and the 3D buildings, as the underground view wants them. */
+  #applyUnderground() {
+    if (!this.map) return;
+    try {
+      this.#placeVeil();
+    } catch {
+      // A basemap still loading takes no layers yet; the veil goes on when it has loaded.
+      this.map.once("style.load", () => this.#applyUnderground());
+      return;
+    }
+    this.setBuildings3d(this.buildings3d !== false);
+    this.map.triggerRepaint?.();
+  }
+
+  #placeVeil() {
+    const veil = UNDERGROUND_VEIL;
+    const on = this.underground.enabled;
+    if (this.map.getLayer?.(veil)) this.map.removeLayer(veil);
+    if (on) {
+      if (!this.map.getSource?.(veil)) this.map.addSource(veil, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[-180, -85.06], [180, -85.06], [180, 85.06], [-180, 85.06], [-180, -85.06]]] } } });
+      // Over the basemap but under its labels and every data layer.
+      const layers = this.map.getStyle?.()?.layers || [];
+      const dataLayers = new Set([...this.#records.values()].flatMap((record) => this.#layerIds(record)));
+      const before = layers.find((layer) => layer.type === "symbol" || dataLayers.has(layer.id))?.id;
+      this.map.addLayer({ id: veil, type: "fill", source: veil, paint: { "fill-color": "#241c15", "fill-opacity": 1 - this.underground.groundOpacity, "fill-antialias": false } }, before);
+    } else if (this.map.getSource?.(veil)) this.map.removeSource(veil);
+  }
+
+  #rebuildSubsurfaces() {
+    for (const record of this.#records.values()) if (record.subsurface) void this.#syncSubsurface(record, { rebuild: true });
+  }
+
+  /** Builds (or just shows, hides and fades) a layer's below-ground drawing. Only built in the underground view. */
+  async #syncSubsurface(record, { rebuild = false } = {}) {
+    const id = this.#subsurfaceId(record);
+    const shown = Boolean(record.subsurface) && this.underground.enabled;
+    if (!rebuild || !shown) {
+      this.three?.set(id, { visible: shown && record.visible, opacity: record.opacity });
+      if (!shown || this.three?.has?.(id)) return;
+    }
+    const revision = (record.subsurfaceRevision || 0) + 1;
+    record.subsurfaceRevision = revision;
+    const THREE = await loadThree();
+    if (record.subsurfaceRevision !== revision || !this.#records.has(record.uid) || !record.subsurface) return;
+    this.three ??= new ThreeHost({ map: this.map, THREE, notify: (message) => this.events.publish("app:error", { message }) });
+    const { buildSubsurfaceItem } = await import("../three/subsurface.js?v=0.71.0-subsurface");
+    if (record.subsurfaceRevision !== revision || !record.subsurface) return;
+    const renderer = record.renderer ?? record.serviceRenderer;
+    const color = record.subsurface.color ? parseColor(record.subsurface.color) : null;
+    const colorOf = color ? () => color : rendererColorResolver(renderer, this.#dataColor());
+    const terrain = Boolean(this.map?.getTerrain?.());
+    const elevationAt = (lon, lat) => (terrain ? this.map.queryTerrainElevation?.([lon, lat]) ?? null : 0);
+    const built = buildSubsurfaceItem(THREE, this.#visibleFeatures(record), record.subsurface, { elevationAt, colorOf });
+    if (!built) { this.three.remove(id); return; }
+    record.subsurfaceInfo = built.info;
+    this.three.add(id, built.item);
+    this.three.set(id, { visible: record.visible, opacity: record.opacity });
+    // Terrain tiles still loading leave the relief flat; draw again once they arrive (a few tries).
+    if (built.info.terrainPending && terrain && (record.subsurfaceRetries = (record.subsurfaceRetries || 0) + 1) <= 4) {
+      this.map.once("idle", () => { if (record.subsurfaceRevision === revision) void this.#syncSubsurface(record, { rebuild: true }); });
+    } else if (!built.info.terrainPending) record.subsurfaceRetries = 0;
   }
 
   /** Ranked style options for one field, from the values matching the layer's filter (renderer-spec.js). */
@@ -2036,6 +2146,13 @@ export class MaplibreEngine {
         continue;
       }
       let legend = legendForLayer(record, this.#dataColor());
+      const below = subsurfaceSummary(record.subsurface);
+      if (below) {
+        const note = document.createElement("p");
+        note.className = "maplibre-legend__note";
+        note.textContent = this.underground.enabled ? below : `${below} Turn on Underground view (Map menu) to see it.`;
+        section.append(note);
+      }
       const axis = spatialChartAxis(record.spatialChart);
       if (axis) {
         const field = document.createElement("p");

@@ -1,9 +1,9 @@
 import { BRAND } from "./brand.js";
 import { APP_VERSION } from "./version.js?v=0.54.0-print";
-import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.70.3-geology";
+import { DataMapNotesRegistry, normalizeDataMapNotes } from "./data-map-notes.js?v=0.71.0-subsurface";
 import { NoteRelationshipsRegistry, normalizeNoteRelationships } from "./note-relationships.js?v=0.2.0";
 import { previewMapNoteTasks, prepareMapNoteTasks } from "./map-note-task-planner.js?v=0.1.0";
-import { MapNotesRegistry, normalizeNotes } from "./map-notes.js?v=0.70.3-geology";
+import { MapNotesRegistry, normalizeNotes } from "./map-notes.js?v=0.71.0-subsurface";
 import { applicationToLegacyPresentation, normalizeApplicationConfig } from "./application-config.js?v=0.68.0-charts1";
 import { normalizeDataCatalog } from "./data-catalog.js?v=0.18.2";
 import { normalizeSkin, normalizeSkinColors } from "./skin-catalog.js?v=0.57.0-skins2";
@@ -12,7 +12,7 @@ import { normalizeMobileWorkflow } from "./mobile-feed-store.js?v=0.18.7";
 import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
 import { importCinematicSpec } from "./cinematic/state.js?v=0.2.9-strata";
 import { normalizeCinematicClips } from "./cinematic/clip-model.js?v=0.3.10-strata";
-import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.70.3-geology";
+import { composeSmartImage, embedProjectInPng, readProjectFromPng } from "./smart-image.js?v=0.71.0-subsurface";
 import { normalizeCharts } from "./charting-tools.js?v=0.68.0-charts1";
 import { stripProjectCredentials } from "./project-privacy.js?v=0.62.7-save-all";
 
@@ -71,6 +71,7 @@ export class ProjectManager {
       basemap: this.mapController?.getDefaultBasemapId?.() ?? "topo-3d",
       defaultBasemap: this.mapController?.getDefaultBasemapId?.() ?? "topo-3d",
       ground: "world-elevation",
+      underground: { enabled: false, groundOpacity: 0.45 },
       view: { type: "scene", center: [-98.5, 39.5], zoom: 4, heading: 0, tilt: 35 },
       layers: [],
       bookmarks: [],
@@ -103,6 +104,7 @@ export class ProjectManager {
     this.mapController.clearTextBoxes?.();
     this.mapController.setBasemap(this.mapController.getDefaultBasemapId());
     this.mapController.setGround("world-elevation");
+    await Promise.resolve(this.mapController.setUndergroundView?.({ enabled: false })).catch(() => {});
     await this.mapController.restoreView({ center: [-98.5, 39.5], zoom: 4, heading: 0, tilt: 35 });
     this.current = this.#blank(name.trim() || "Untitled project");
     this.events.publish("project:loaded", { project: this.current, missingFiles: [] });
@@ -116,6 +118,7 @@ export class ProjectManager {
       basemap: this.mapController.getBasemapId(),
       defaultBasemap: this.mapController.getDefaultBasemapId(),
       ground: this.mapController.getGroundId(),
+      underground: this.mapController.getUndergroundView?.() ?? this.current.underground ?? null,
       engine: this.mapController.getEngineId?.() ?? this.current.engine ?? null,
       view: this.mapController.getViewState(),
       layers: this.mapController.getAllLayerConfigs().map(({ uid, ...layer }) => layer),
@@ -212,6 +215,7 @@ export class ProjectManager {
     this.mapController.setDefaultBasemap(project.defaultBasemap || this.mapController.getDefaultBasemapId());
     this.mapController.setBasemap(project.basemap || this.mapController.getDefaultBasemapId());
     this.mapController.setGround(project.ground || "world-elevation");
+    await Promise.resolve(this.mapController.setUndergroundView?.(project.underground || { enabled: false })).catch(() => {});
     const missingFiles = [];
 
     for (const layer of project.layers) {
@@ -292,6 +296,11 @@ export class ProjectManager {
     if (config.renderer && config.styled !== false) this.mapController.restoreRenderer(layer.uid, config.renderer);
     if (config.rendererSpec) this.mapController.recordRendererSpec(layer.uid, config.rendererSpec);
     if (config.spatialChart) await this.mapController.setSpatialChart(layer.uid, config.spatialChart);
+    if (config.subsurface && this.mapController.getCapabilities?.().includes("subsurface")) {
+      try { await this.mapController.setSubsurface(layer.uid, config.subsurface); } catch (error) {
+        this.events.publish("app:error", { message: `${config.title || "A layer"} could not be drawn below ground: ${error.message}` });
+      }
+    }
     // A decorative effect is optional: an engine without it shows the layer plainly.
     if (config.animatedEffect && this.mapController.getCapabilities?.().includes("three-3d")) {
       try { await this.mapController.setLayerEffect(layer.uid, config.animatedEffect); } catch { /* Shown without the effect. */ }

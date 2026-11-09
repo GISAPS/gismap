@@ -2,7 +2,7 @@
 // through the `layers` and `camera` APIs, and exports the current map as one.
 // Issues (from the schema, and from loading: a misspelled field, a service that
 // will not load) are collected so describe() and the issues panel can show them.
-import { MAP_SPEC_VERSION, chartSpecFromMapChart, createMapSpecLink, decodeMapSpec, encodeMapSpec, mapChartFromChartSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.70.3-geology";
+import { MAP_SPEC_VERSION, chartSpecFromMapChart, createMapSpecLink, decodeMapSpec, encodeMapSpec, mapChartFromChartSpec, prepareMapVerification, validateMapSpec } from "./map-spec.js?v=0.71.0-subsurface";
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { basemapEntry, basemapLabel, basemapOnEngine } from "./basemap-catalog.js?v=0.53.0-gallery1";
 
@@ -42,6 +42,11 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
         }
       }
       if (spec.skin) host.applySkin?.(spec.skin);
+      if (spec.underground || replace) {
+        try { await mapController?.setUndergroundView?.(spec.underground || { enabled: false }); } catch (error) {
+          if (spec.underground?.enabled) issues.push({ level: "warning", code: "UNSUPPORTED_LAYER_TYPE", path: "underground", message: `${error.message} The map is shown from above ground.` });
+        }
+      }
       if (spec.title) host.setTitle?.(spec.title);
       const loaded = [];
       const loadedAt = new Map(); // position in spec.layers → loaded layer
@@ -80,6 +85,12 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
               const problem = toGisMapError(error, "INVALID_SPEC");
               issues.push({ level: "warning", code: problem.code, path: `${path}.spatialChart`, message: `${problem.message} The 3D chart was not drawn.` });
             }
+          }
+        }
+        if (entry.subsurface) {
+          try { info = await layers.update(info.id, { subsurface: entry.subsurface }); } catch (error) {
+            const problem = toGisMapError(error, "INVALID_SPEC");
+            issues.push({ level: "warning", code: problem.code, path: `${path}.subsurface`, message: `${problem.message} The layer is drawn on the surface.` });
           }
         }
         // A decorative animated effect (MapLibre); another engine shows the layer without it.
@@ -142,6 +153,8 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
     if (basemap) spec.basemap = basemap;
     const skin = host.getSkin?.();
     if (skin) spec.skin = skin;
+    const underground = mapController.getUndergroundView?.();
+    if (underground?.enabled) spec.underground = underground;
     try {
       const current = camera.get();
       spec.camera = { center: current.center, zoom: current.zoom, heading: current.heading, tilt: current.tilt };
@@ -155,6 +168,7 @@ export function createMapSpecApi({ layers, camera, mapController, analysis = nul
       ...(layer.where ? { where: layer.where } : {}),
       ...(layer.renderer && layer.renderer.type !== "service" ? { renderer: layer.renderer } : {}),
       ...(layer.spatialChart ? { spatialChart: layer.spatialChart } : {}),
+      ...(layer.subsurface ? { subsurface: layer.subsurface } : {}),
       ...(layer.animatedEffect ? { animatedEffect: layer.animatedEffect } : {}),
       ...(layer.scene3d ? { scene3d: layer.scene3d } : {}),
       ...(layer.opacity < 1 ? { opacity: layer.opacity } : {}),

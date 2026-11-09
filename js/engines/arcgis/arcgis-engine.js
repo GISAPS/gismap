@@ -6,15 +6,16 @@
 import { madeWithForPage, madeWithHtml } from "../../made-with.js?v=0.65.8-made-with";
 import { tourChapterPoint, tourMarkerDataUrl } from "../tour-markers.js?v=0.65.9-tourpins";
 import { parseLocalVectorFile } from "../../local-vector-import.js?v=0.54.0-vector1";
-import { arcgisMetadata } from "../../source-inspector.js?v=0.70.3-geology";
+import { arcgisMetadata } from "../../source-inspector.js?v=0.71.0-subsurface";
 import { chooseStyleField, compileRenderer, resolveRendererSpec, suggestRenderers, validateRendererSpec } from "../../renderer-spec.js?v=0.29.1";
 import { GisMapError } from "../../gismap-errors.js?v=0.54.0-print";
-import { ENGINE_CAPABILITIES, unsupported } from "../engine-interface.js?v=0.52.0";
+import { ENGINE_CAPABILITIES, unsupported } from "../engine-interface.js?v=0.71.0-subsurface";
 import { loadArcGISRuntime } from "./arcgis-loader.js?v=0.38.0";
 import { basemapOnEngine, basemapsForEngine } from "../../basemap-catalog.js?v=0.53.0-gallery1";
-import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.70.3-geology";
-import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.70.3-geology";
-import { legendForLayer } from "../maplibre/legend.js?v=0.70.3-geology";
+import { normalizeSpatialChart } from "../../spatial-chart.js?v=0.71.0-subsurface";
+import { spatialChartArcgis } from "../../spatial-chart-arcgis.js?v=0.71.0-subsurface";
+import { UNDERGROUND_DEFAULTS, normalizeSubsurface, normalizeUnderground, subsurfaceArcgis } from "../../subsurface.js?v=0.71.0-subsurface";
+import { legendForLayer } from "../maplibre/legend.js?v=0.71.0-subsurface";
 
 // GISMap Online's own symbols are stored as "/assets/…" so projects move between hosts;
 // they load from wherever this app is installed (it may live in a subfolder).
@@ -183,6 +184,7 @@ export class ArcGISEngine {
     this.defaultBasemapId = "topo-3d";
     this.basemapId = "topo-3d";
     this.groundId = "world-elevation";
+    this.underground = { ...UNDERGROUND_DEFAULTS };
     this.basemapTheme = null;
   }
 
@@ -1140,10 +1142,11 @@ export class ArcGISEngine {
       definitionExpression: layer.definitionExpression || source.definitionExpression || null,
       wfsName: source.wfsName ?? layer.name ?? null,
       customParameters: source.customParameters ?? layer.customParameters ?? null,
-      // While a spatial chart is drawn, projects and links keep the style it was made from, plus the chart.
-      elevationInfo: source.spatialChart ? source.chartRestore?.elevationInfo?.toJSON?.() ?? null : layer.elevationInfo?.toJSON?.() ?? source.elevationInfo ?? null,
-      renderer: portableAssets(source.spatialChart ? source.chartRestore?.renderer?.toJSON?.() ?? null : layer.renderer?.toJSON?.() ?? null),
+      // While a spatial chart or below-ground drawing is on, projects and links keep the style it was made from, plus the setting.
+      elevationInfo: source.spatialChart || source.subsurface ? source.chartRestore?.elevationInfo?.toJSON?.() ?? null : layer.elevationInfo?.toJSON?.() ?? source.elevationInfo ?? null,
+      renderer: portableAssets(source.spatialChart || source.subsurface ? source.chartRestore?.renderer?.toJSON?.() ?? null : layer.renderer?.toJSON?.() ?? null),
       spatialChart: source.spatialChart ? structuredClone(source.spatialChart) : null,
+      subsurface: source.subsurface ? structuredClone(source.subsurface) : null,
       // True when the style was set in GISMap Online (or arrived with a shared map), not the service's own.
       styled: Boolean(source.renderer),
       rendererSpec: source.rendererSpec ?? null,
@@ -1627,6 +1630,7 @@ export class ArcGISEngine {
     const groupValues = groupBy ? await this.#styleFieldValues(layer, groupBy, false) : [];
     const fields = (layer.fields || []).map((field) => ({ name: field.name, alias: field.alias, type: field.type }));
     const chart = normalizeSpatialChart(input, { fields, geometryType: layer.geometryType, groupValues });
+    config.subsurface = null;
     // The style the chart was made from is kept, so removing the chart (or saving the project) returns to it.
     config.chartRestore ??= { renderer: layer.renderer?.clone?.() ?? null, elevationInfo: layer.elevationInfo?.clone?.() ?? null };
     const { renderer, elevationInfo } = spatialChartArcgis(chart, this.#rendererPalette(config.chartRestore.renderer));
@@ -1635,6 +1639,58 @@ export class ArcGISEngine {
     config.spatialChart = chart;
     this.events.publish("layer:changed", { uid: layer.uid });
     return structuredClone(chart);
+  }
+
+  /**
+   * Draw a layer's features below the ground (js/subsurface.js) with SceneView 3D
+   * symbols: tubes, hanging cylinders and extruded units. null restores its style.
+   */
+  async setSubsurface(uid, input = null) {
+    const layer = this.#layer(uid);
+    if (!layer || !("renderer" in layer)) throw new GisMapError("UNSUPPORTED_LAYER_TYPE", "Below-ground drawing needs a feature layer.");
+    await layer.load();
+    const config = this.layerConfigs.get(layer.uid) ?? {};
+    this.layerConfigs.set(layer.uid, config);
+    const geometryType = layer.geometryType === "multipoint" ? "point" : layer.geometryType;
+    const fields = (layer.fields || []).map((field) => ({ name: field.name, alias: field.alias, type: field.type }));
+    const subsurface = normalizeSubsurface(input, { fields, geometryType });
+    if (!subsurface) {
+      if (config.subsurface) {
+        const { renderer, elevationInfo } = config.chartRestore || {};
+        if (renderer) layer.renderer = renderer;
+        layer.elevationInfo = elevationInfo || { mode: "on-the-ground" };
+        Object.assign(config, { subsurface: null, chartRestore: null });
+      }
+      this.events.publish("layer:changed", { uid: layer.uid });
+      return null;
+    }
+    config.spatialChart = null;
+    config.chartRestore ??= { renderer: layer.renderer?.clone?.() ?? null, elevationInfo: layer.elevationInfo?.clone?.() ?? null };
+    const { renderer, elevationInfo } = subsurfaceArcgis(subsurface, geometryType, this.#rendererPalette(config.chartRestore.renderer));
+    layer.renderer = renderer;
+    layer.elevationInfo = elevationInfo;
+    config.subsurface = subsurface;
+    this.events.publish("layer:changed", { uid: layer.uid });
+    return structuredClone(subsurface);
+  }
+
+  /** The underground view: the ground turns see-through and the camera may go below it. */
+  setUndergroundView(input) {
+    this.underground = normalizeUnderground(input);
+    this.#applyUnderground();
+    this.events.publish("map:underground-changed", { ...this.underground });
+    return { ...this.underground };
+  }
+
+  getUndergroundView() {
+    return { ...this.underground };
+  }
+
+  #applyUnderground() {
+    const ground = this.map?.ground;
+    if (!ground) return;
+    ground.opacity = this.underground.enabled ? this.underground.groundOpacity : 1;
+    ground.navigationConstraint = { type: this.underground.enabled ? "none" : "stay-above" };
   }
 
   #dropSpatialChart(layer) {
@@ -1830,6 +1886,8 @@ export class ArcGISEngine {
   setGround(id) {
     this.groundId = id || "world-elevation";
     this.map.ground = this.groundId === "flat" ? new this.modules.Ground() : this.groundId;
+    // A new ground starts opaque; the underground view carries over to it.
+    if (this.underground.enabled) this.#applyUnderground();
     this.events.publish("map:ground-changed", { id: this.groundId });
   }
 

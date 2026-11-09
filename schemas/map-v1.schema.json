@@ -36,6 +36,10 @@
         }
       ]
     },
+    "underground": {
+      "description": "The underground view: the ground fades (groundOpacity 0 hides it, 1 keeps it solid) so layers with subsurface show below it. true is { enabled: true, groundOpacity: 0.45 }.",
+      "oneOf": [{ "type": "boolean" }, { "type": "object", "additionalProperties": false, "properties": { "enabled": { "type": "boolean" }, "groundOpacity": { "type": "number", "minimum": 0, "maximum": 1 } } }]
+    },
     "layers": {
       "type": "array",
       "minItems": 1,
@@ -119,6 +123,20 @@
             "field": { "type": "string", "maxLength": 160, "description": "The numeric field a Rise (extrude) or Reveal reads; chosen from the layer when absent." }
           },
           "additionalProperties": false
+        },
+        "subsurface": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Draw the layer below the local ground (MapLibre and ArcGIS engines): lines as pipes, cables or tunnels, points as wells, shafts or manholes hanging from the ground, polygons as rock units or basements between a top and a base. Seen in the underground view, which fades the ground. Depth is real metres below the terrain, times exaggeration.",
+          "properties": {
+            "type": { "const": "subsurface" },
+            "depth": { "description": "Down from the local ground to a pipe's centre, a unit's top or a well's bottom. Default 3 m.", "oneOf": [{ "type": "number", "minimum": 0 }, { "type": "object", "additionalProperties": false, "properties": { "field": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$", "description": "A numeric field; features without a value use meters." }, "meters": { "type": "number", "minimum": 0 }, "scale": { "type": "number", "minimum": 0, "description": "Field units to metres: 0.3048 for feet, 0.0254 for inches." } } }] },
+            "thickness": { "description": "Polygons: a unit's top to its base. Default 20 m.", "oneOf": [{ "type": "number", "minimum": 0 }, { "type": "object", "additionalProperties": false, "properties": { "field": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$", "description": "A numeric field; features without a value use meters." }, "meters": { "type": "number", "minimum": 0 }, "scale": { "type": "number", "minimum": 0, "description": "Field units to metres: 0.3048 for feet, 0.0254 for inches." } } }] },
+            "diameter": { "description": "Lines and points: a pipe's or shaft's width. Default 1 m.", "oneOf": [{ "type": "number", "minimum": 0 }, { "type": "object", "additionalProperties": false, "properties": { "field": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$", "description": "A numeric field; features without a value use meters." }, "meters": { "type": "number", "minimum": 0 }, "scale": { "type": "number", "minimum": 0, "description": "Field units to metres: 0.3048 for feet, 0.0254 for inches." }, "minMeters": { "type": "number", "minimum": 0, "description": "Display floor so small pipes stay visible. Default 1 m." } } }] },
+            "exaggeration": { "type": "number", "minimum": 0.1, "maximum": 100, "description": "Vertical exaggeration of depth and thickness. Default 1." },
+            "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "One colour for everything below ground; without it features keep the layer's style colours." }
+          },
+          "examples": [{ "depth": { "field": "DEPTH_FT", "scale": 0.3048 }, "diameter": { "field": "DIAMETER_IN", "scale": 0.0254 } }]
         },
         "spatialChart": {
           "type": "object",

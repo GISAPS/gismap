@@ -31,15 +31,15 @@ import { compileWhere } from "./engines/maplibre/where.js?v=0.40.0-timeline";
 import { generateTimeline, previewTimeline, isYearField } from "./briefing-timeline.js?v=0.60.0-media1";
 import { isDateField, previewDateTimeline } from "./briefing-timeline-dates.js?v=0.60.0-media1";
 import { generateFilterSeries, seriesWhere } from "./briefing-data-series.js?v=0.60.0-media1";
-import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.70.3-geology";
+import { generateSpatialChartBrief } from "./briefing-spatial-chart.js?v=0.71.0-subsurface";
 import { previewFilterSeries, formatSeriesTitle } from "./briefing-series-preview.js?v=0.60.0-media1";
-import { briefingLayerRef } from "./briefing-api.js?v=0.70.3-geology";
+import { briefingLayerRef } from "./briefing-api.js?v=0.71.0-subsurface";
 import { renderMarkdown } from "./markdown.js?v=0.18.2";
 import { BriefingPlayer, slideHasMap } from "./briefing-player.js?v=0.62.3-briefing-slide-engines";
 import { expandTimelinePdfSlides } from "./briefing-timeline-pdf.js?v=0.1.0";
 import { briefingFileStem, briefingPdf, markdownToText } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { featureId } from "./presentation-query.js?v=0.30.0";
-import { startWorkspaceWalkthrough } from "./workspace-walkthrough.js?v=0.70.3-geology";
+import { startWorkspaceWalkthrough } from "./workspace-walkthrough.js?v=0.71.0-subsurface";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const templateLabel = (id) => SLIDE_TEMPLATES.find((template) => template.id === id)?.label || "Slide";
