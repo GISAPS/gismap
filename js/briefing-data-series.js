@@ -1,5 +1,5 @@
 // Data-driven slides store a small declarative filter, never executable SQL.
-import { MAX_SLIDES, addSlide, createSlide, normalizeBriefing } from './briefing-document.js?v=0.61.0-briefing-player';
+import { MAX_SLIDES, addSlide, createSlide, normalizeBriefing } from './briefing-document.js?v=0.70.4-sequence';
 import { previewFilterSeries } from './briefing-series-preview.js?v=0.60.0-media1';
 import { isDateField } from './briefing-timeline-dates.js?v=0.60.0-media1';
 import { isYearField } from './briefing-timeline.js?v=0.60.0-media1';
