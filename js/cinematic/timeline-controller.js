@@ -1,5 +1,5 @@
 import { createAnimationClock } from "../animation-clock.js?v=0.1.0";
-import { nearestObservationIndex } from "./temporal-adapter.js?v=0.1.0";
+import { nearestObservationIndex } from "./temporal-adapter.js?v=0.4.0-sequence";
 
 /** A shared clock with uniform observed-step playback, independent of date gaps. */
 export function createCinematicTimeline({ ticks = [], durationSeconds = 120, rate = 0.25, loop = false, reducedMotion = false, clockFactory = createAnimationClock } = {}) {

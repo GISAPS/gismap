@@ -1,5 +1,6 @@
-import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
+import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.70.4-sequence";
 import { PROVENANCE_STATUSES, normalizeTiming } from "./clock.js?v=0.1.0";
+import { normalizeSequence } from "./temporal-adapter.js?v=0.4.0-sequence";
 
 export const CINEMATIC_CLIP_SCHEMA = "gismap.cinematicClip";
 export const CINEMATIC_CLIP_VERSION = 1;
@@ -52,6 +53,7 @@ function normalizeTrack(track, durationMs) {
         ...(track.temporal.kind === "number" && Number.isFinite(Number(track.temporal.steps)) ? { steps: Math.max(0, Math.min(5000, Math.round(Number(track.temporal.steps)))) } : {}),
         startField: text(track.temporal.startField, 160) || null, groupField: text(track.temporal.groupField, 160) || null,
         featureIdField: text(track.temporal.featureIdField, 160) || null,
+        ...normalizeSequence(track.temporal),
       } : null,
       // How the layer looked when captured: its decorative effect and opacity.
       animation: {

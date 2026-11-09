@@ -400,3 +400,21 @@ test("tracks carry their own timing to the effect, can be hidden, and the effect
   assert.equal(mode.state().layers[0].provenance, "modeled");
   await mode.destroy();
 });
+
+test("a listed Sequence takes its order from the layer's 3D chart and names its steps", async () => {
+  const layer = { uid: "rocks", title: "Rocks", queryable: true, objectIdField: "OBJECTID", opacity: 1, fields: [], spatialChart: { mode: "temporal-strata", groupBy: "AGE", groups: ["Statherian", "Norian", "Holocene"] } };
+  const mapController = {
+    getLayer: (id) => (id === "rocks" ? layer : null),
+    getFeatureFilter: async () => null, setFeatureFilter: async () => true, setOpacity: async () => {},
+    setCinematicEffect: async () => true, clearCinematicEffect: () => {},
+    queryFeatures: async () => ({ features: ["Holocene", "Statherian", "Norian"].map((age, index) => ({ attributes: { OBJECTID: index + 1, AGE: age }, geometry: { type: "Polygon", coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] } })) }),
+  };
+  const mode = new CinematicModeController({ mapController });
+  await mode.load({ cinematic: { layers: [{ layerRef: "rocks", temporal: { kind: "number", startField: "AGE", order: "listed" } }] } });
+  const state = mode.state();
+  assert.deepEqual(state.timeline.ticks, [1, 2, 3]);
+  assert.deepEqual(state.layers[0].labels, { 1: "Statherian", 2: "Norian", 3: "Holocene" });
+  assert.equal(state.layers[0].order, "listed");
+  assert.deepEqual(state.spec.cinematic.layers[0].temporal.values, ["Statherian", "Norian", "Holocene"], "the order is saved with the scene");
+  await mode.destroy();
+});

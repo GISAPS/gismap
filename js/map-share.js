@@ -4,7 +4,7 @@
 // briefing, its slides. Small enough links also fit in a QR code.
 import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.70.3-geology";
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
-import { normalizeBriefing } from "./briefing-document.js?v=0.61.0-briefing-player";
+import { normalizeBriefing } from "./briefing-document.js?v=0.70.4-sequence";
 import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
 import { normalizeSkin } from "./skin-catalog.js?v=0.57.0-skins2";
 import { decodeBriefing } from "./briefing-share.js?v=0.60.0-media1";

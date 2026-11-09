@@ -3,14 +3,15 @@
 // Timeline is offered only when a real date field exists; without one the
 // suggestions are Ambient loops or a Scenario sweep, never an invented date.
 import { CINEMATIC_EFFECTS, effectFields, suggestEffect, valueField } from "./cinematic-effects.js?v=0.70.3-geology";
-import { numericFieldCandidates, temporalFieldCandidates } from "./temporal-adapter.js?v=0.3.1";
+import { numericFieldCandidates, temporalFieldCandidates } from "./temporal-adapter.js?v=0.4.0-sequence";
 
 const geometryOf = (layer) => (/point/i.test(layer?.geometryType || "") ? "point" : /line/i.test(layer?.geometryType || "") ? "line" : /polygon/i.test(layer?.geometryType || "") ? "polygon" : "");
 const plural = { point: "points", line: "lines", polygon: "areas" };
 
 /**
  * Ranked suggestions for `layer` ({ title, geometryType, fields }), best first:
- * [{ id, kind: "time" | "number" | "none", effect, field, timeMode, label, reason, provenance }].
+ * [{ id, kind: "time" | "number" | "none", order?, effect, field, timeMode, label, reason, provenance }].
+ * `order` ("listed") marks a Sequence: the field's values played in the layer's 3D chart order.
  */
 export function recommendAnimations(layer = {}, { sample = {} } = {}) {
   const geometry = geometryOf(layer);
@@ -31,6 +32,15 @@ export function recommendAnimations(layer = {}, { sample = {} } = {}) {
     add({ id: `timeline-${effect}`, kind: "time", field: date.name, effect, timeMode: geometry === "point" ? "cumulative" : "instant",
       label: `Timeline: play ${things} by ${date.label}`, provenance: "observed",
       reason: `${date.label} holds real dates, so playback can step through the recorded observations${geometry === "point" ? " and build them up" : ""}.` });
+  }
+  // A stacked 3D chart already says what order its groups go in: play them in it, bottom slab first.
+  const chart = layer.spatialChart;
+  if (chart?.groupBy && chart.groups?.length > 1 && chart.mode !== "attribute-extrusion") {
+    const field = fields.find((item) => item.name === chart.groupBy);
+    const name = field?.alias || chart.groupBy;
+    add({ id: "sequence-strata", kind: "number", order: "listed", field: chart.groupBy, effect: "strata", timeMode: "cumulative",
+      label: `Strata: build up by ${name}, in stacked order`, provenance: "observed",
+      reason: `The layer is stacked by ${name}, so playback can drop each of its ${chart.groups.length} groups onto the stack in the chart's order, bottom first. The order is the chart's; the steps are not dates.` });
   }
   if (geometry === "line" && themed === "trains") {
     add({ id: "ambient-trains", kind: "none", effect: "trains", label: "Ambient: trains along the lines", provenance: "illustrative",

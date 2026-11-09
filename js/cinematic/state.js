@@ -1,4 +1,5 @@
 import { PROVENANCE_STATUSES, normalizeTiming } from "./clock.js?v=0.1.0";
+import { normalizeSequence } from "./temporal-adapter.js?v=0.4.0-sequence";
 
 // null and "" are "not set", not 0: a saved spec re-normalized must keep an unset opacity unset.
 const finite = (value, fallback = null) => value !== null && value !== "" && Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -30,6 +31,8 @@ export function normalizeCinematicSpec(input = {}) {
         kind,
         // A Scenario sweep's number of steps (0 = every distinct value).
         steps: kind === "number" ? Math.max(0, Math.min(5000, Math.round(finite(layer.temporal.steps, 200)))) : 0,
+        // A Sequence (a text field's values in a listed or A–Z order) or a sweep's step labels.
+        ...normalizeSequence({ ...layer.temporal, kind }),
         startField: kind === "none" ? null : layer.temporal.startField,
         groupField: string(layer.temporal.groupField) || null,
         featureIdField: string(layer.temporal.featureIdField) || null,
