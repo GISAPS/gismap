@@ -17,6 +17,35 @@ const areaFill = (color, outline = "#b84427") => ({
  */
 export const POPULAR_SERVICES = [
   {
+    id: "pge-akm-electric", slug: "pge-electric", provider: "GIS Analytics",
+    title: "Electric Grid Layers", category: "Utility", serviceType: "feature",
+    description: "Current Electric Grid",
+    whyUseful: "Overview of Electric Grid GIS Data",
+    url: "https://citdevwork.nonprod.pge.com/arcgis/rest/services/Asset_Base/FeatureServer",
+    },
+  {
+    id: "pge-akm-electric-gmwork", slug: "pge-electric-gmwork", provider: "GIS Analytics",
+    title: "Electric Grid Layers", category: "Utility", serviceType: "feature",
+    description: "Current Electric Grid",
+    whyUseful: "Overview of Electric Grid GIS Data",
+    url: "https://citdevwork.nonprod.pge.com/arcgis/rest/services/electric_assets_gmwork/FeatureServer",
+    },
+  {
+    id: "pge-akm-gas-gmwork", slug: "pge-gas-dist", provider: "GIS Analytics",
+    title: "Gas Distribution Layers", category: "Utility", serviceType: "feature",
+    description: "Current Gas Distribution",
+    whyUseful: "GIS of Gas Distribution Data",
+    url: "https://citdevwork.nonprod.pge.com/arcgis/rest/services/GDistMain/FeatureServer",
+    },
+  {
+    id: "pge-akm-gas-gmwork", slug: "pge-gas-trans", provider: "GIS Analytics",
+    title: "Gas Distribution Layers", category: "Utility", serviceType: "map-image",
+    description: "Current Gas Transmission",
+    whyUseful: "GIS of Gas Transmission GIS Data",
+    url: "https://citdevwork.nonprod.pge.com/arcgis/rest/services/GTrans/MapServer",
+    },
+
+  {
     id: "esri-usa-wildfires", slug: "usa-wildfires", provider: "Esri Disaster Response",
     title: "USA Wildfires", category: "Wildfires", serviceType: "feature",
     description: "Current wildfire incidents and daily fire perimeter data for the United States.",
@@ -209,18 +238,7 @@ export const POPULAR_SERVICES = [
     tags: ["USGS", "earthquake", "GeoJSON", "live feed", "global"],
     lastChecked: null, featured: true, refreshInterval: 5,
   },
-  {
-    id: "esri-world-countries", slug: "world-countries-generalized", provider: "Esri",
-    title: "World countries — generalized", category: "Census / demographics", serviceType: "feature",
-    description: "Generalized country boundaries from an ArcGIS feature service.",
-    whyUseful: "Use lightweight country polygons as geographic context or as a simple FeatureServer example.",
-    url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Countries_(Generalized)/FeatureServer/0",
-    sourceOrganization: "Esri",
-    sourcePage: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Countries_(Generalized)/FeatureServer/0",
-    licenseOrTerms: "Review the service item, metadata, and Esri terms before reuse.",
-    tags: ["countries", "boundaries", "world", "FeatureServer"],
-    lastChecked: null, featured: false,
-  },
+
 ];
 
 export const EXAMPLE_CATEGORIES = [

@@ -1,10 +1,10 @@
 // The product's confirmed name, GISMap Online, for every default that shows it.
 // A self-hosted installation's own applicationName wins (installation-config.js).
 export const BRAND = Object.freeze({
-  name: "GISMap Online",
-  url: "https://gismap.online/",
+  name: "GISMap Internal",
+  url: "https://gisanalytics.utility.pge.com/webmaps/gismap/",
   logo: "assets/gis-map-online-mark-v2.png",
-  alternateName: Object.freeze(["GIS Map Online", "GISMap"]),
+  alternateName: Object.freeze(["GIS Map Internal", "GISMap"]),
 });
 
 /** The configured application name, or the default. */

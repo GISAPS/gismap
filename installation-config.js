@@ -8,6 +8,6 @@
  * the same identity.
  */
 globalThis.GISMAP_INSTALLATION = Object.freeze({
-  applicationName: "GISMap Online",
+  applicationName: "GISMap Internal",
   logoUrl: "./assets/gis-map-online-mark-v2.png",
 });
