@@ -1,5 +1,5 @@
 // The Map assistant: a chat with the AI model the user configured (Ollama, OpenAI,
-// Anthropic or an OpenAI-compatible endpoint) that can build maps, briefings, tours
+// Anthropic, Amazon Bedrock or an OpenAI-compatible endpoint) that can build maps, briefings, tours
 // and field tasks through tools. GISMap Online calls the model itself, so the
 // model's instructions are simply the system message sent with every turn: written
 // here from the app's own contracts and the live map state. Nothing is registered
@@ -177,6 +177,28 @@ export function toProviderRequest(provider, { model, system, messages, textTools
     }
     return { path: "/messages", body: { model, max_tokens: 2048, system, messages: converted, ...(tools ? { tools: tools.map((tool) => ({ name: tool.name, description: tool.description, input_schema: tool.parameters })) } : {}) } };
   }
+  if (provider === "bedrock") {
+    // Amazon Bedrock's Converse API: one request shape for every model family on Bedrock.
+    // Roles must alternate, so neighbours with the same role (tool results, text-tool results) share one message.
+    const converted = [];
+    for (const message of messages) {
+      let role = message.role;
+      let content;
+      if (role === "tool") {
+        role = "user";
+        content = [{ toolResult: { toolUseId: message.toolCallId, content: [{ text: message.content || "(empty)" }] } }];
+      } else if (role === "assistant") {
+        content = [...(message.content ? [{ text: message.content }] : []), ...(message.toolCalls || []).map((call) => ({ toolUse: { toolUseId: call.id, name: call.name, input: call.arguments || {} } }))];
+        if (!content.length) content = [{ text: "…" }];
+      } else {
+        content = [{ text: message.content || "…" }];
+      }
+      const last = converted.at(-1);
+      if (last?.role === role) last.content.push(...content);
+      else converted.push({ role, content });
+    }
+    return { path: `/model/${encodeURIComponent(model)}/converse`, body: { system: [{ text: system }], messages: converted, inferenceConfig: { maxTokens: 2048 }, ...(tools ? { toolConfig: { tools: tools.map((tool) => ({ toolSpec: { name: tool.name, description: tool.description, inputSchema: { json: tool.parameters } } })) } } : {}) } };
+  }
   const definitions = tools ? tools.map((tool) => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } })) : null;
   if (provider === "ollama") {
     const converted = messages.map((message) => {
@@ -202,6 +224,10 @@ export function fromProviderResponse(provider, payload, { textTools = false } = 
   if (provider === "anthropic") {
     content = (payload?.content || []).filter((item) => item.type === "text").map((item) => item.text).join("\n");
     toolCalls = (payload?.content || []).filter((item) => item.type === "tool_use").map((item) => ({ id: item.id, name: item.name, arguments: parseArguments(item.input) }));
+  } else if (provider === "bedrock") {
+    const blocks = payload?.output?.message?.content || [];
+    content = blocks.filter((item) => typeof item.text === "string").map((item) => item.text).join("\n");
+    toolCalls = blocks.filter((item) => item.toolUse).map(({ toolUse }) => ({ id: toolUse.toolUseId || callId(), name: toolUse.name, arguments: parseArguments(toolUse.input) }));
   } else if (provider === "ollama") {
     content = payload?.message?.content || "";
     toolCalls = (payload?.message?.tool_calls || []).map((call) => ({ id: call.id || callId(), name: call.function?.name, arguments: parseArguments(call.function?.arguments) }));

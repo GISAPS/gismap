@@ -4912,6 +4912,7 @@ export class UIController {
       ollama: ["http://localhost:11434", "llama3.2"],
       openai: ["https://api.openai.com/v1", "gpt-6-astra"],
       anthropic: ["https://api.anthropic.com/v1", "claude-sonnet-5"],
+      bedrock: ["https://bedrock-runtime.us-east-1.amazonaws.com", "anthropic.claude-sonnet-5-5"],
       "openai-compatible": ["", ""],
     };
     const readForm = () => ({
@@ -4984,7 +4985,7 @@ export class UIController {
     this.openDialog({
       eyebrow: "AI adapter",
       title: "Configure intelligence provider",
-      content: `<label class="field"><span>Provider</span><select id="ai-provider"><option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
+      content: `<label class="field"><span>Provider</span><select id="ai-provider"><option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="bedrock" ${provider === "bedrock" ? "selected" : ""}>Amazon Bedrock</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
         <label class="field"><span>Endpoint</span><input id="ai-endpoint" type="url" value="${escapeHtml(config.endpoint || defaults[provider][0])}" /></label>
         <label class="field"><span>Model</span><input id="ai-model" list="ollama-models" value="${escapeHtml(config.model || defaults[provider][1])}" /><datalist id="ollama-models"></datalist><small id="ai-model-hint">Use the complete Ollama tag, including a suffix such as <code>:27b</code>.</small></label>
         <label class="field"><span>API token <small>online providers only</small></span><input id="ai-token" type="password" autocomplete="off" /></label>
@@ -5012,7 +5013,9 @@ export class UIController {
         ? 'Use the complete Ollama tag, including a suffix such as <code>:27b</code>.'
         : providerInput.value === "openai"
           ? "Enter an OpenAI API model identifier available to this API key. OpenAI uses the Responses API."
-          : "Enter the model identifier accepted by this provider.";
+          : providerInput.value === "bedrock"
+            ? "Enter a Bedrock model ID or inference profile ID (such as <code>us.</code> or <code>global.</code> prefixed) enabled in this region. Put your region in the endpoint and paste a Bedrock API key as the token."
+            : "Enter the model identifier accepted by this provider.";
       this.dialog.querySelector("#ai-connection-status").hidden = true;
     };
     providerInput.addEventListener("change", syncProviderForm);
