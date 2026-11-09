@@ -7,6 +7,7 @@ const PROVIDER_DEFAULTS = {
   ollama: { endpoint: "http://localhost:11434", model: "llama3.2" },
   openai: { endpoint: "https://api.openai.com/v1", model: "gpt-6-astra" },
   anthropic: { endpoint: "https://api.anthropic.com/v1", model: "claude-sonnet-5" },
+  bedrock: { endpoint: "https://bedrock-runtime.us-east-1.amazonaws.com", model: "anthropic.claude-sonnet-5-5" },
   "openai-compatible": { endpoint: "", model: "" },
 };
 
@@ -106,7 +107,7 @@ async function responseError(response, provider) {
   let detail = "";
   try {
     const payload = await response.json();
-    detail = payload?.error?.message || (typeof payload?.error === "string" ? payload.error : "") || payload?.message || "";
+    detail = payload?.error?.message || (typeof payload?.error === "string" ? payload.error : "") || payload?.message || payload?.Message || "";
   } catch {
     // Some gateways return an empty or non-JSON error response.
   }
@@ -252,6 +253,22 @@ export class AIController {
         });
         if (!response.ok) throw new Error(await responseError(response, "OpenAI"));
         text = getOpenAIResponseText(await response.json());
+      } else if (this.config.provider === "bedrock") {
+        const response = await fetch(`${this.config.endpoint}/model/${encodeURIComponent(this.config.model)}/converse`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({
+            system: [{ text: system }],
+            messages: [{ role: "user", content: [{ text: messages[1].content }] }],
+            inferenceConfig: { maxTokens: 1200 },
+          }),
+        });
+        if (!response.ok) throw new Error(await responseError(response, "Amazon Bedrock"));
+        const payload = await response.json();
+        text = (payload.output?.message?.content ?? []).map((item) => item.text).filter(Boolean).join("\n");
       } else {
         const response = await fetch(`${this.config.endpoint}/chat/completions`, {
           method: "POST",
@@ -291,7 +308,7 @@ export class AIController {
         ? await this.#fetchOllama(`${endpoint}${path}`, options, endpoint, 300000)
         : await fetch(`${endpoint}${path}`, options);
       if (!response.ok) {
-        const message = await responseError(response, provider === "ollama" ? "Ollama" : "The AI provider");
+        const message = await responseError(response, provider === "ollama" ? "Ollama" : provider === "bedrock" ? "Amazon Bedrock" : "The AI provider");
         return { error: message, status: response.status };
       }
       return { reply: fromProviderResponse(provider, await response.json(), { textTools }) };

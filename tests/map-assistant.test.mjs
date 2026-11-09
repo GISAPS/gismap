@@ -61,6 +61,16 @@ test("conversations translate to Ollama, OpenAI-style and Anthropic requests", (
   assert.deepEqual(anthropic.body.messages[2].content.map((block) => block.tool_use_id), ["c1", "c2"]);
   assert.ok(anthropic.body.tools[0].input_schema);
 
+  const bedrock = toProviderRequest("bedrock", { model: "us.anthropic.claude-sonnet-5-5", system: "SYS", messages: conversation });
+  assert.equal(bedrock.path, "/model/us.anthropic.claude-sonnet-5-5/converse");
+  assert.deepEqual(bedrock.body.system, [{ text: "SYS" }]);
+  assert.deepEqual(bedrock.body.messages[0], { role: "user", content: [{ text: "Map corn sales" }] });
+  assert.deepEqual(bedrock.body.messages[1].content[0], { toolUse: { toolUseId: "c1", name: "inspect_source", input: { url: CORN } } });
+  assert.equal(bedrock.body.messages.length, 3, "both tool results go back in one user message");
+  assert.deepEqual(bedrock.body.messages[2].content.map((block) => block.toolResult.toolUseId), ["c1", "c2"]);
+  assert.equal(bedrock.body.toolConfig.tools.length, ASSISTANT_TOOLS.length);
+  assert.ok(bedrock.body.toolConfig.tools[0].toolSpec.inputSchema.json);
+
   const text = toProviderRequest("ollama", { model: "qwen", system: "SYS", messages: conversation, textTools: true });
   assert.equal(text.body.tools, undefined);
   assert.deepEqual(text.body.messages[3], { role: "user", content: "Result of inspect_source: {\"fields\":[]}" });
@@ -77,6 +87,9 @@ test("replies come back as text and tool calls, whatever the provider", () => {
   const anthropic = fromProviderResponse("anthropic", { content: [{ type: "text", text: "Adding it." }, { type: "tool_use", id: "t", name: "add_layer", input: { url: CORN } }] });
   assert.equal(anthropic.content, "Adding it.");
   assert.deepEqual(anthropic.toolCalls, [{ id: "t", name: "add_layer", arguments: { url: CORN } }]);
+  const bedrock = fromProviderResponse("bedrock", { output: { message: { role: "assistant", content: [{ text: "Adding it." }, { toolUse: { toolUseId: "b", name: "add_layer", input: { url: CORN } } }] } }, stopReason: "tool_use" });
+  assert.equal(bedrock.content, "Adding it.");
+  assert.deepEqual(bedrock.toolCalls, [{ id: "b", name: "add_layer", arguments: { url: CORN } }]);
 });
 
 test("a model without tool support can still call tools in fenced blocks", () => {

@@ -2,10 +2,10 @@
 // They use the same loading path as "Add ArcGIS REST service" and `?layer=`
 // links (loadLayer), and change layers only through the map controller, so the
 // project, share links and Smart images all see the result.
-import { SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
+import { SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.71.0-subsurface";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
 import { GisMapError, layerLoadError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
-import { featureLayerUrl } from "./field-task-share.js?v=0.70.3-geology";
+import { featureLayerUrl } from "./field-task-share.js?v=0.71.0-subsurface";
 
 const trimUrl = (value) => String(value || "").trim().replace(/\/+$/, "").replace(/\/query$/i, "").toLowerCase();
 const READ_ONLY_WHERE = /;|--|\/\*|\b(drop|delete|insert|update|alter|exec|execute|merge|truncate|create)\b/i;
@@ -66,6 +66,7 @@ export function createLayersApi({ mapController, loadLayer, state = null, events
       where: config.definitionExpression || null,
       renderer: config.rendererSpec || (config.styled ? { type: "arcgis", json: config.renderer } : { type: "service" }),
       spatialChart: config.spatialChart || null,
+      subsurface: config.subsurface || null,
       animatedEffect: config.animatedEffect || null,
       scene3d: config.scene3d || null,
       visibleAtCurrentScale: scale.visibleAtCurrentScale,
@@ -108,6 +109,7 @@ export function createLayersApi({ mapController, loadLayer, state = null, events
       state?.dispatch?.("layer:style", { layerId: uid, style: spec }, { undoable: false });
     }
     if (options.spatialChart !== undefined) await mapController.setSpatialChart(uid, options.spatialChart);
+    if (options.subsurface !== undefined) await mapController.setSubsurface(uid, options.subsurface);
     if (options.animatedEffect !== undefined) await mapController.setLayerEffect(uid, options.animatedEffect);
   }
 
@@ -154,7 +156,7 @@ export function createLayersApi({ mapController, loadLayer, state = null, events
     if (!layer) throw new GisMapError("LAYER_LOAD_FAILED", "The service did not provide a layer to add.", { details: { url: clean } });
     if (options.signal?.aborted) { mapController.removeLayer(layer.uid); throw new DOMException("The layer was not added.", "AbortError"); }
     try {
-      await applyOptions(layer, { outFields: options.outFields, renderer: options.renderer, spatialChart: options.spatialChart }, { adding: true });
+      await applyOptions(layer, { outFields: options.outFields, renderer: options.renderer, spatialChart: options.spatialChart, subsurface: options.subsurface }, { adding: true });
     } catch (error) {
       // Adding is all or nothing: a layer whose style failed is taken off again.
       (added || []).forEach((item) => mapController.removeLayer(item.uid));

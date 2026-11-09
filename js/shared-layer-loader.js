@@ -15,6 +15,7 @@ export async function loadSharedLayer(mapController, config) {
     if (config.renderer) mapController.restoreRenderer(added[0], config.renderer);
     if (config.spatialChart && added.length !== 1) throw new Error("A shared 3D spatial chart cannot be applied to multiple service layers.");
     if (config.spatialChart) await mapController.setSpatialChart(added[0], config.spatialChart);
+    if (config.subsurface && added.length === 1) await mapController.setSubsurface(added[0], config.subsurface);
     await applyAnimatedEffect(mapController, added.length === 1 ? added[0] : null, config.animatedEffect);
     return added;
   }
@@ -25,6 +26,7 @@ export async function loadSharedLayer(mapController, config) {
     if (!mapController.getLayerConfig(added)?.renderer) throw new Error("The requested layer style could not be restored.");
   }
   if (config.spatialChart) await mapController.setSpatialChart(added, config.spatialChart);
+  if (config.subsurface) await mapController.setSubsurface(added, config.subsurface);
   if (config.definitionExpression && mapController.getLayerConfig(added)?.definitionExpression !== config.definitionExpression) throw new Error("The requested layer filter could not be restored.");
   await applyAnimatedEffect(mapController, added, config.animatedEffect);
   return [added];

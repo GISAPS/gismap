@@ -6,12 +6,13 @@
 // Older app links (`#map=z…` holding the compact share payload) still open; they
 // decode to map-v1 too. Pure functions only, so headless callers can build links.
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
-import { MAP_SPEC_JSON_LIMIT, QR_SAFE_LENGTH, readShare } from "./map-share.js?v=0.70.3-geology";
-import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
+import { MAP_SPEC_JSON_LIMIT, QR_SAFE_LENGTH, readShare } from "./map-share.js?v=0.71.0-subsurface";
+import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, SHARE_LIMITS, sanitizeSharedResourceUrl } from "./share.js?v=0.71.0-subsurface";
 import { validateRendererSpec } from "./renderer-spec.js?v=0.29.0";
 import { normalizeBriefing, validateBriefing } from "./briefing-document.js?v=0.70.4-sequence";
 import { SCENE3D_TYPES, normalizeScene3d, scene3dTypeFor } from "./scene3d.js?v=0.1.0";
-import { CINEMATIC_EFFECT_TYPES, normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.70.3-geology";
+import { normalizeSubsurface, normalizeUnderground } from "./subsurface.js?v=0.71.0-subsurface";
+import { CINEMATIC_EFFECT_TYPES, normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.71.0-subsurface";
 import { INTERFACE_SKINS } from "./skin-catalog.js?v=0.57.0-skins2";
 import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { AGGREGATIONS, CHART_TYPES, normalizeChartStyle } from "./charting-tools.js?v=0.68.0-charts1";
@@ -22,8 +23,8 @@ import { SPATIAL_OPERATION_IDS, SPATIAL_OPERATIONS } from "./spatial-analysis.js
 
 export { MAP_SPEC_JSON_LIMIT };
 
-const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "layers", "legend", "briefing", "analysis", "charts"]);
-const LAYER_KEYS = new Set(["url", "type", "title", "where", "renderer", "spatialChart", "animatedEffect", "scene3d", "opacity", "visible", "ignoreServiceScaleRange", "popup", "outFields", "refreshInterval"]);
+const TOP_LEVEL = new Set(["$schema", "version", "title", "description", "basemap", "skin", "camera", "underground", "layers", "legend", "briefing", "analysis", "charts"]);
+const LAYER_KEYS = new Set(["url", "type", "title", "where", "renderer", "spatialChart", "subsurface", "animatedEffect", "scene3d", "opacity", "visible", "ignoreServiceScaleRange", "popup", "outFields", "refreshInterval"]);
 // A chart panel is a definition only: which layer, which fields, how it looks.
 // Its numbers are computed from the layer when the link opens.
 const CHART_KEYS = new Set(["type", "title", "layer", "dimension", "measure", "aggregation", "scope", "placement", "size", "style"]);
@@ -66,6 +67,11 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
   if (input.skin !== undefined) {
     if (SKINS.has(input.skin)) spec.skin = input.skin;
     else issue("warning", "INVALID_SPEC", "skin", `Unknown skin "${input.skin}"; the current look is kept.`, `Use one of: ${[...SKINS].join(", ")}.`);
+  }
+  // The underground view: true, or { enabled, groundOpacity }.
+  if (input.underground !== undefined && input.underground !== null) {
+    if (typeof input.underground === "boolean" || typeof input.underground === "object") spec.underground = normalizeUnderground(input.underground);
+    else issue("warning", "INVALID_SPEC", "underground", "underground must be true, false or { enabled, groundOpacity }; it was ignored.");
   }
   // Camera: fit the layers (the default), or an exact view.
   const camera = input.camera;
@@ -130,6 +136,15 @@ export function validateMapSpec(input, { allowHttp = false } = {}) {
       const modes = ["attribute-extrusion", "temporal-strata", "stacked-footprints", "exploded-timeline"];
       if (!chart || typeof chart !== "object" || chart.type !== "spatial-3d-chart" || !modes.includes(chart.mode) || JSON.stringify(chart).length > 12000) issue("warning", "INVALID_SPEC", `${path}.spatialChart`, "spatialChart must be a bounded spatial-3d-chart configuration; it was ignored.");
       else layer.spatialChart = structuredClone(chart);
+    }
+    if (raw.subsurface !== undefined && raw.subsurface !== null) {
+      // Field names are checked when the layer loads and its fields are known.
+      try {
+        if (JSON.stringify(raw.subsurface).length > 4000) throw new Error("it is too large");
+        layer.subsurface = normalizeSubsurface(raw.subsurface);
+      } catch (error) {
+        issue("warning", "INVALID_SPEC", `${path}.subsurface`, `subsurface is not usable (${error.message}); the layer is drawn on the surface.`);
+      }
     }
     if (raw.animatedEffect !== undefined && raw.animatedEffect !== null) {
       const effect = normalizeLayerEffect(raw.animatedEffect);
@@ -314,6 +329,7 @@ export function mapSpecFromSharePayload(payload, options = {}) {
     ...(shared.title ? { title: shared.title } : {}),
     ...(shared.basemap ? { basemap: shared.basemap } : {}),
     ...(shared.skin ? { skin: shared.skin } : {}),
+    ...(shared.underground ? { underground: shared.underground } : {}),
     camera: shared.camera ? { center: shared.camera.center, zoom: shared.camera.zoom, heading: shared.camera.heading, tilt: shared.camera.tilt } : { fit: "layers" },
     layers: shared.layers.map((layer) => ({
       url: layer.url,
@@ -322,6 +338,7 @@ export function mapSpecFromSharePayload(payload, options = {}) {
       ...(layer.definitionExpression ? { where: layer.definitionExpression } : {}),
       ...(layer.renderer ? { renderer: { type: "arcgis", json: layer.renderer } } : {}),
       ...(layer.spatialChart ? { spatialChart: layer.spatialChart } : {}),
+      ...(layer.subsurface ? { subsurface: layer.subsurface } : {}),
       ...(layer.animatedEffect ? { animatedEffect: layer.animatedEffect } : {}),
       ...(layer.scene3d ? { scene3d: layer.scene3d } : {}),
       ...(Number.isFinite(layer.opacity) ? { opacity: layer.opacity } : {}),
@@ -416,6 +433,7 @@ export function mapSpecFromShareParameters(shared) {
     else if (layer.renderer) entry.renderer = { type: "arcgis", json: layer.renderer };
     if (layer.animatedEffect) entry.animatedEffect = layer.animatedEffect;
     if (layer.spatialChart) entry.spatialChart = layer.spatialChart;
+    if (layer.subsurface) entry.subsurface = layer.subsurface;
     spec.layers.push(entry);
   }
   return spec;

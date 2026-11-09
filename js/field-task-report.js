@@ -2,7 +2,7 @@
 // steps, features, report, photos and a data table) and a CSV of the same
 // record, built on the device that holds the task.
 import { PDF_COLORS, PdfDocument, brandedMapImage, dataUrlBytes, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.69.1-pdflinks";
-import { addressPlace, taskSteps, withFocus } from "./field-task-share.js?v=0.70.3-geology";
+import { addressPlace, taskSteps, withFocus } from "./field-task-share.js?v=0.71.0-subsurface";
 
 const STATUS = { draft: "Draft", sent: "Sent", assigned: "To complete", "in-progress": "In progress", completed: "Completed", returned: "Report received", shared: "Shared" };
 const MAX_PHOTO_SIDE = 1280;

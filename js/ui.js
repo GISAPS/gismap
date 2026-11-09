@@ -5,21 +5,21 @@ import { renderNotesHub } from "./notes-hub.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteFilters } from './map-note-filters.js?v=0.4.1';
 import { openDataMapNotesPanel } from "./data-map-notes-panel.js?v=0.55.0-fieldwork1";
 import { refreshMapNoteWorkflow } from "./map-note-workflow-ui.js?v=0.1.0";
-import { noteFeatureReference } from './map-note-feature.js?v=0.70.3-geology';
-import { openMapNotesPanel } from "./map-notes-panel.js?v=0.70.3-geology";
+import { noteFeatureReference } from './map-note-feature.js?v=0.71.0-subsurface';
+import { openMapNotesPanel } from "./map-notes-panel.js?v=0.71.0-subsurface";
 import { refreshNoteRelationships } from "./note-relationships-ui.js?v=0.1.0";
 import { googleMapsLinkForChapter } from "./google-maps-link.js?v=0.53.0";
-import { POPULAR_SERVICES } from "./catalog.js?v=0.70.3-geology";
+import { POPULAR_SERVICES } from "./catalog.js?v=0.71.0-subsurface";
 import { plainText } from "./layer-insight.js?v=0.50.1";
 import { detectCoordinateColumns, googleSheetCsvUrl, isSpreadsheetName, readSpreadsheet, rowsToGeoJson } from "./spreadsheet-import.js?v=0.65.8-made-with";
 import { MapAssistantPanel } from "./assistant-panel.js?v=0.68.0-charts1";
 import { createAssistantTools, summarizeMapState } from "./map-assistant.js?v=0.68.0-charts1";
-import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.18.2";
-import { createShareUrl, parseShareParameters } from "./share.js?v=0.70.3-geology";
-import { mapSpecFromShareParameters } from "./map-spec.js?v=0.70.3-geology";
-import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.70.3-geology";
+import { ENTERPRISE_CATALOGS, EnterpriseCatalog, normalizeArcGisDirectoryUrl } from "./enterprise-catalog.js?v=0.71.0-subsurface";
+import { createShareUrl, parseShareParameters } from "./share.js?v=0.71.0-subsurface";
+import { mapSpecFromShareParameters } from "./map-spec.js?v=0.71.0-subsurface";
+import { createShareLink, hasDataFilter, readBriefingFile } from "./map-share.js?v=0.71.0-subsurface";
 import { createEmbedIframe, createEmbedUrl } from "./embed-share.js?v=0.65.0-paths";
-import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.70.3-geology";
+import { briefingLayerRef, findBriefingLayer } from "./briefing-api.js?v=0.71.0-subsurface";
 import { createEmbeddedTourUrl } from "./tour-share.js?v=0.54.0-unified4";
 import { markdownToPlainText, renderMarkdown } from "./markdown.js?v=0.18.2";
 import { formatAttributeValue } from "./attribute-format.js?v=0.18.2";
@@ -33,11 +33,11 @@ import { bindMobileSheetResize } from "./mobile-sheet-resize.js?v=0.52.7";
 import { BRAND } from "./brand.js";
 import { BRAND_LOGO, PdfDocument, brandedMapImage, brandedQrCanvas, imageToJpeg, loadBrandLogo, printPalette, qrAsset } from "./pdf-document.js?v=0.69.1-pdflinks";
 import { DEFAULT_PAGE_FRAME, IMAGE_ANCHORS, MAP_TEMPLATES, getTemplate, loadImage, renderTemplate, templateCompact, templateMapAspect } from "./map-templates.js?v=0.54.0-print";
-import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.70.3-geology";
+import { featureLayerUrl, locationUrl } from "./field-task-share.js?v=0.71.0-subsurface";
 import { dockIcon } from "./dock-icons.js?v=0.24.0";
 import { serviceNameFromUrl } from "./service-name.js?v=0.26.0";
 import { decodeQrFromImage, describeGisMapLink, gisMapLinkFrom, openGisMapLink } from "./qr-import.js?v=0.25.2";
-import { BriefingSlides } from "./briefing-slides.js?v=0.70.3-geology";
+import { BriefingSlides } from "./briefing-slides.js?v=0.71.0-subsurface";
 import { addSlide, createSlide, isRoutineField, matchesFilter, normalizeBriefing, normalizeFilter } from "./briefing-document.js?v=0.70.4-sequence";
 import { conditionComplete, conditionLabel, conditionToFilter } from "./briefing-conditions.js?v=0.1.0";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
@@ -45,17 +45,18 @@ import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
 import { aiDescriptionPrompt, applyAiDescriptions, describeWhere, generateBriefing, readAiDescriptions, rendererTheme } from "./briefing-generator.js?v=0.60.0-media1";
 import { briefingFileStem } from "./briefing-pdf.js?v=0.69.1-pdflinks";
 import { RAMPS, rampColors, compileRenderer } from "./renderer-spec.js?v=0.29.1";
-import { listedOrder, spatialChartColor, spatialChartGroupColor, spreadColors } from "./spatial-chart.js?v=0.70.4-legend";
+import { bindSubsurfaceControls, canDrawBelowGround, subsurfaceControlsMarkup } from "./subsurface-controls.js?v=0.71.0-subsurface";
+import { listedOrder, spatialChartColor, spatialChartGroupColor, spreadColors } from "./spatial-chart.js?v=0.71.0-subsurface";
 import { saveEngine } from "./engine-preference.js?v=0.52.1";
 import { BASEMAPS } from "./basemap-catalog.js?v=0.53.0-gallery1";
-import { CartographyLab } from "./cartography-lab.js?v=0.70.3-geology";
+import { CartographyLab } from "./cartography-lab.js?v=0.71.0-subsurface";
 import { CONTEXT_ACTIONS, createSuggestionPreferences, deriveWorkspace, executeContextAction, suggestionKey, summarizeFeature } from "./contextual-workspace.js?v=6";
-import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.70.3-geology";
+import { BRIEFING_WALKTHROUGH_STEPS, CINEMATIC_WALKTHROUGH_STEPS, HISTORICAL_QUAKES_BRIEFING_TUTORIAL_STEPS, createExampleWalkthroughSteps, startWorkspaceWalkthrough, waitForWalkthroughTarget } from "./workspace-walkthrough.js?v=0.71.0-subsurface";
 import { HISTORICAL_QUAKES_SOURCE, HISTORICAL_QUAKES_WHERE, createHistoricalQuakesExampleBriefing } from "./example-hazards-briefing.js?v=0.62.3-briefing-slide-engines";
-import { CinematicModeController } from "./cinematic/mode.js?v=0.70.4-sequence";
-import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.70.3-geology";
+import { CinematicModeController } from "./cinematic/mode.js?v=0.71.0-subsurface";
+import { CINEMATIC_EFFECTS, CINEMATIC_EFFECT_CATEGORIES, suggestEffect } from "./cinematic/cinematic-effects.js?v=0.71.0-subsurface";
 import { PROVENANCE_STATUSES } from "./cinematic/clock.js?v=0.1.0";
-import { recommendAnimations } from "./cinematic/recommend.js?v=0.70.4-sequence";
+import { recommendAnimations } from "./cinematic/recommend.js?v=0.71.0-subsurface";
 
 // What each provenance label tells a viewer about a track's displayed progression.
 const PROVENANCE_HELP = Object.freeze({
@@ -67,7 +68,7 @@ const PROVENANCE_HELP = Object.freeze({
 });
 import { numericFieldCandidates, temporalFieldCandidates, textFieldCandidates } from "./cinematic/temporal-adapter.js?v=0.4.0-sequence";
 import { buildClipPackage, clipToCinematicSpec, createCinematicClip, exportCinematicClip, normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.70.4-sequence";
-import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.70.3-geology";
+import { availableVideoFormats, cameraAt, CLIP_FRAME_RATES, clipFrameCount, exportCinematicVideo, observationIndexAt, renderClipPoster } from "./cinematic/clip-export.js?v=0.71.0-subsurface";
 import { CHART_PANEL_PLACEMENTS, CHART_TYPES, PRESENTATION_TARGETS, chartFields, chartOption, createChartSpec, displayChartRows, loadECharts, queryChart, recommendCharts, renderChartFallback, rowsAsCsv } from "./charting-tools.js?v=0.68.0-charts1";
 import { MapChartOverlayController } from "./map-chart-tools.js?v=0.68.0-charts1";
 import { readTextBoxEditor, textBoxEditorMarkup, textBoxRunMarkup, textBoxSummary } from "./text-box-editor.js?v=0.65.0-paths";
@@ -135,6 +136,10 @@ const escapeHtml = (value) =>
     "'": "&#39;",
   })[char]);
 
+/** A map-link issue's message and hint, with a link to open a layer's server directly when it failed to load. */
+const specIssueMarkup = (issue) =>
+  `<p>${escapeHtml(issue.message)}</p>${issue.hint ? `<small>${escapeHtml(issue.hint)}</small>` : ""}${/^https?:\/\//i.test(issue.link || "") ? ` <a href="${escapeHtml(issue.link)}" target="_blank" rel="noopener noreferrer">Open the server ↗</a>` : ""}`;
+
 export class UIController {
   constructor(events, mapController, projectManager, authController, aiController, toolManager, exportController, applicationRuntime, panelManager, mobilePanelManager) {
     Object.assign(this, { events, mapController, projectManager, authController, aiController, toolManager, exportController, applicationRuntime, panelManager, mobilePanelManager });
@@ -142,7 +147,7 @@ export class UIController {
     this.searchResults = [];
     this.searchTimer = null;
     this.searchRequestId = 0;
-    this.lastPlaceLabel = "";
+    this.lastPlace = null;
     this.searchSelection = -1;
     this.lastInsight = null;
     this.intelligenceInsight = null;
@@ -582,6 +587,20 @@ export class UIController {
         this.toast(input.checked ? "3D buildings on." : "3D buildings off.");
       }),
     );
+    document.querySelectorAll("[data-underground-toggle]").forEach((input) =>
+      input.addEventListener("change", async () => {
+        try {
+          await this.mapController.setUndergroundView({ ...this.mapController.getUndergroundView(), enabled: input.checked });
+          this.toast(input.checked ? "Underground view on: the ground is faded so what lies below it shows." : "Underground view off.");
+        } catch (error) {
+          input.checked = false;
+          this.error(error.message);
+        }
+      }),
+    );
+    document.querySelectorAll("[data-underground-opacity]").forEach((input) =>
+      input.addEventListener("change", () => void Promise.resolve(this.mapController.setUndergroundView({ enabled: true, groundOpacity: Number(input.value) / 100 })).catch((error) => this.error(error.message))),
+    );
     document.querySelectorAll("[data-ground-picker]").forEach((select) =>
       select.addEventListener("change", () => {
         this.mapController.setGround(select.value);
@@ -720,7 +739,7 @@ export class UIController {
     const placeInput = document.querySelector("#place-query");
     document.querySelector("#place-search").addEventListener("submit", (event) => this.#search(event));
     placeInput.addEventListener("input", () => {
-      this.lastPlaceLabel = "";
+      this.lastPlace = null;
       this.#schedulePlaceSearch(placeInput.value);
     });
     document.querySelector("#recent-places-list").addEventListener("click", (event) => {
@@ -2464,6 +2483,7 @@ export class UIController {
       camera: this.mapController.getViewState(),
       engine: this.mapController.getEngineId(),
       ground: this.mapController.getGroundId(),
+      underground: this.mapController.getUndergroundView?.(),
       layers,
       textBoxes: this.mapController.getTextBoxes?.() ?? [],
     });
@@ -3829,6 +3849,17 @@ export class UIController {
     return groups.map((group) => `<optgroup label="${escapeHtml(group)}">${options.filter((entry) => entry.group === group).map((entry) => `<option value="${escapeHtml(entry.id)}"${entry.id === wanted ? " selected" : ""}>${escapeHtml(entry.label)}</option>`).join("")}</optgroup>`).join("");
   }
 
+  /** The Map menu's underground view controls, as the map has it. */
+  #syncUndergroundControls() {
+    if (!this.mapController.getCapabilities().includes("subsurface")) return;
+    const view = this.mapController.getUndergroundView();
+    document.querySelectorAll("[data-underground-toggle]").forEach((input) => { input.checked = view.enabled; });
+    document.querySelectorAll("[data-underground-opacity]").forEach((input) => {
+      input.value = String(Math.round(view.groundOpacity * 100));
+      input.closest("[data-underground-opacity-field]")?.toggleAttribute("hidden", !view.enabled);
+    });
+  }
+
   #groundOptionsMarkup() {
     const { selected, options } = this.mapController.getGroundOptions();
     return options.map((option) => `<option value="${escapeHtml(option.id)}"${option.id === selected ? " selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
@@ -3864,11 +3895,19 @@ export class UIController {
         element.hidden = !available;
       }
     });
+    this.#syncUndergroundControls();
   }
 
   #bindMapMenu() {
     this.#syncMapMenu();
     ["map:ready", "map:basemap-changed", "map:ground-changed"].forEach((topic) => this.events.subscribe(topic, () => this.#syncMapMenu()));
+    this.events.subscribe("map:underground-changed", (view) => {
+      this.#syncUndergroundControls();
+      if (this.projectManager?.current) {
+        this.projectManager.current.underground = { enabled: view?.enabled === true, groundOpacity: view?.groundOpacity };
+        this.projectManager.persistCurrentIfSaved?.();
+      }
+    });
     this.events.subscribe("map:basemap-changed", () => {
       try {
         const { selected, options } = this.mapController.getBasemapOptions();
@@ -4627,30 +4666,70 @@ export class UIController {
       ? ENTERPRISE_CATALOGS.find((item) => item.id === catalogIdOrDefinition)
       : catalogIdOrDefinition;
     if (!definition) throw new Error("That ArcGIS service directory is not configured.");
-    const catalog = new EnterpriseCatalog(definition);
+    await this.#serviceDirectoryDialog({ eyebrow: definition.version, title: definition.title, servers: [{ catalog: new EnterpriseCatalog(definition), folder: "" }] });
+  }
+
+  /**
+   * Opens the layer picker for ?layer= links that name an ArcGIS services
+   * directory or folder: [{ rootUrl, folder, title }]. Several servers share one
+   * picker that starts with a list of them. `issues` are the link's other
+   * layers that failed, listed above the services.
+   */
+  async openServiceDirectories(directories, { issues = [] } = {}) {
+    const servers = directories.map(({ rootUrl, folder = "", title }) => ({
+      catalog: new EnterpriseCatalog({ rootUrl }),
+      folder,
+      label: title || `${new URL(rootUrl).hostname}${folder ? ` · ${folder}` : ""}`,
+    }));
+    // The link's title= heads the picker; servers with different titles share a plain heading.
+    const titles = [...new Set(directories.map((item) => item.title).filter(Boolean))];
+    const title = titles.length === 1 ? titles[0] : servers.length === 1 ? `${new URL(directories[0].rootUrl).hostname} services` : "ArcGIS services";
+    const notice = issues.length ? `<div class="warning-box"><strong>${issues.length === 1 ? "A layer in this link" : `${issues.length} layers in this link`} could not be shown</strong>${issues.map(specIssueMarkup).join("")}</div>` : "";
+    await this.#serviceDirectoryDialog({ eyebrow: "ArcGIS services directory", title, servers, notice });
+  }
+
+  async #serviceDirectoryDialog({ eyebrow, title, servers, notice = "" }) {
     this.openDialog({
-      eyebrow: definition.version,
-      title: definition.title,
+      eyebrow,
+      title,
       content: '<div class="loading-row"><span></span> Reading service directory…</div>',
     });
+    const session = this.dialogSession;
+    const content = document.querySelector("#dialog-content");
 
-    const render = async (folder = "") => {
-      const content = document.querySelector("#dialog-content");
+    const listServers = () => {
+      content.innerHTML = `${notice}<div class="enterprise-list">${servers.map((server, index) => `<button class="enterprise-row" data-directory-server="${index}"><span><strong>${escapeHtml(server.label)}</strong><small>${escapeHtml(server.catalog.definition.rootUrl)}${server.folder ? `/${escapeHtml(server.folder)}` : ""}</small></span><b>→</b></button>`).join("")}</div>
+        <p class="form-note">This link names ${servers.length} ArcGIS server directories. Open one to choose its layers.</p>`;
+      content.querySelectorAll("[data-directory-server]").forEach((button) => {
+        const index = Number(button.dataset.directoryServer);
+        button.addEventListener("click", () => render(index, servers[index].folder));
+      });
+    };
+
+    const render = async (serverIndex, folder = "") => {
+      const { catalog } = servers[serverIndex];
+      const { rootUrl } = catalog.definition;
       content.innerHTML = '<div class="loading-row"><span></span> Reading service directory…</div>';
       try {
         const listing = await catalog.browse(folder);
+        if (this.dialogSession !== session) return;
         const parent = listing.folder.includes("/")
           ? listing.folder.split("/").slice(0, -1).join("/")
           : "";
-        content.innerHTML = `<div class="catalog-path"><button data-enterprise-folder="${escapeHtml(parent)}" ${listing.folder ? "" : "disabled"}>← Back</button><code>/${escapeHtml(listing.folder)}</code></div>
+        // At a server's top, Back returns to the list of servers when the link named several.
+        const back = listing.folder
+          ? `<button data-enterprise-folder="${escapeHtml(parent)}">← Back</button>`
+          : `<button data-directory-servers ${servers.length > 1 ? "" : "disabled"}>← Back</button>`;
+        content.innerHTML = `${notice}<div class="catalog-path">${back}<code>/${escapeHtml(listing.folder)}</code></div>
           <div class="enterprise-list">
             ${listing.folders.map((name) => `<button class="enterprise-row" data-enterprise-folder="${escapeHtml(name)}"><span><strong>${escapeHtml(name.split("/").pop())}</strong><small>Folder</small></span><b>→</b></button>`).join("")}
             ${listing.services.map((service) => `<div class="enterprise-row"><span><strong>${escapeHtml(service.name.split("/").pop())}</strong><small>${escapeHtml(service.type)}</small></span><button data-enterprise-service="${escapeHtml(service.url)}" data-service-type="${escapeHtml(service.serviceType)}">Add</button></div>`).join("")}
           </div>
           ${!listing.folders.length && !listing.services.length ? '<div class="empty-state">This folder is empty.</div>' : ""}
-          <p class="form-note">Services are discovered live from <code>${escapeHtml(definition.rootUrl)}</code>. Availability and access are controlled by the service owner.</p>`;
+          <p class="form-note">Services are discovered live from <code>${escapeHtml(rootUrl)}</code>. Availability and access are controlled by the service owner.</p>`;
+        content.querySelector("[data-directory-servers]")?.addEventListener("click", listServers);
         content.querySelectorAll("[data-enterprise-folder]").forEach((button) =>
-          button.addEventListener("click", () => render(button.dataset.enterpriseFolder)),
+          button.addEventListener("click", () => render(serverIndex, button.dataset.enterpriseFolder)),
         );
         content.querySelectorAll("[data-enterprise-service]").forEach((button) =>
           button.addEventListener("click", async () => {
@@ -4672,10 +4751,12 @@ export class UIController {
           }),
         );
       } catch (error) {
-        content.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}<br />The server may not allow cross-origin browser access.</div>`;
+        if (this.dialogSession !== session) return;
+        content.innerHTML = `${notice}<div class="empty-state">${escapeHtml(error.message)}<br />The server may not allow cross-origin browser access. <a href="${escapeHtml(rootUrl)}${folder ? `/${escapeHtml(folder)}` : ""}" target="_blank" rel="noopener noreferrer">Open the server ↗</a></div>`;
       }
     };
-    await render();
+    if (servers.length === 1) await render(0, servers[0].folder);
+    else listServers();
   }
 
   #customToolDialog() {
@@ -4899,6 +4980,7 @@ export class UIController {
       ollama: ["http://localhost:11434", "llama3.2"],
       openai: ["https://api.openai.com/v1", "gpt-6-astra"],
       anthropic: ["https://api.anthropic.com/v1", "claude-sonnet-5"],
+      bedrock: ["https://bedrock-runtime.us-east-1.amazonaws.com", "anthropic.claude-sonnet-5-5"],
       "openai-compatible": ["", ""],
     };
     const readForm = () => ({
@@ -4971,7 +5053,7 @@ export class UIController {
     this.openDialog({
       eyebrow: "AI adapter",
       title: "Configure intelligence provider",
-      content: `<label class="field"><span>Provider</span><select id="ai-provider"><option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
+      content: `<label class="field"><span>Provider</span><select id="ai-provider"><option value="ollama" ${provider === "ollama" ? "selected" : ""}>Ollama (local)</option><option value="openai" ${provider === "openai" ? "selected" : ""}>OpenAI</option><option value="anthropic" ${provider === "anthropic" ? "selected" : ""}>Anthropic Claude</option><option value="bedrock" ${provider === "bedrock" ? "selected" : ""}>Amazon Bedrock</option><option value="openai-compatible" ${provider === "openai-compatible" ? "selected" : ""}>OpenAI-compatible endpoint</option></select></label>
         <label class="field"><span>Endpoint</span><input id="ai-endpoint" type="url" value="${escapeHtml(config.endpoint || defaults[provider][0])}" /></label>
         <label class="field"><span>Model</span><input id="ai-model" list="ollama-models" value="${escapeHtml(config.model || defaults[provider][1])}" /><datalist id="ollama-models"></datalist><small id="ai-model-hint">Use the complete Ollama tag, including a suffix such as <code>:27b</code>.</small></label>
         <label class="field"><span>API token <small>online providers only</small></span><input id="ai-token" type="password" autocomplete="off" /></label>
@@ -4999,7 +5081,9 @@ export class UIController {
         ? 'Use the complete Ollama tag, including a suffix such as <code>:27b</code>.'
         : providerInput.value === "openai"
           ? "Enter an OpenAI API model identifier available to this API key. OpenAI uses the Responses API."
-          : "Enter the model identifier accepted by this provider.";
+          : providerInput.value === "bedrock"
+            ? "Enter a Bedrock model ID or inference profile ID (such as <code>us.</code> or <code>global.</code> prefixed) enabled in this region. Put your region in the endpoint and paste a Bedrock API key as the token."
+            : "Enter the model identifier accepted by this provider.";
       this.dialog.querySelector("#ai-connection-status").hidden = true;
     };
     providerInput.addEventListener("change", syncProviderForm);
@@ -8600,6 +8684,7 @@ export class UIController {
     if (shared.kind === "briefing-document") return this.#openSharedBriefingDocument(shared);
     if (shared.basemap) this.mapController.setBasemap(shared.basemap);
     if (shared.ground) this.mapController.setGround(shared.ground);
+    if (shared.underground) await Promise.resolve(this.mapController.setUndergroundView(shared.underground)).catch(() => {});
     const added = [];
     for (const config of shared.layers) {
       try {
@@ -8917,7 +9002,6 @@ export class UIController {
     if (!result) return;
     const input = document.querySelector("#place-query");
     input.value = "";
-    this.lastPlaceLabel = result.label;
     this.#clearSearchResults();
     this.#rememberPlace(result);
     input.blur();
@@ -8925,9 +9009,16 @@ export class UIController {
   }
 
   async #goToPlace(place) {
+    // The place's name labels bookmarks only while the view stays where the search landed.
+    const visit = { label: place.label };
+    this.lastPlace = visit;
     try {
       await this.mapController.goToSearchResult(place);
+      if (this.lastPlace !== visit) return;
+      const { center, zoom } = this.mapController.getViewState();
+      Object.assign(visit, { center, zoom });
     } catch (error) {
+      if (this.lastPlace === visit) this.lastPlace = null;
       // A newer camera move interrupting this one is expected, not a failure.
       if (error?.name !== "AbortError") this.error(error.message);
     }
@@ -8975,7 +9066,6 @@ export class UIController {
   async #goToRecentPlace(index) {
     const place = this.#readRecentPlaces()[index];
     if (!place) return;
-    this.lastPlaceLabel = place.label;
     this.#rememberPlace(place);
     await this.#goToPlace({ ...place, extent: place.extent || undefined });
   }
@@ -8993,8 +9083,10 @@ export class UIController {
 
   async #addBookmark() {
     const [longitude, latitude] = this.mapController.getViewState().center;
-    const name = document.querySelector("#place-query").value.trim() || this.lastPlaceLabel || `View at ${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const typed = document.querySelector("#place-query").value.trim();
+    const placeLabel = this.#viewIsAtLastPlace() ? this.lastPlace.label : "";
     const address = await this.mapController.reverseGeocode({ longitude, latitude }).catch(() => null);
+    const name = typed || placeLabel || address?.address || `View at ${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
     this.projectManager.addBookmark({
       name,
       description: "",
@@ -9006,6 +9098,17 @@ export class UIController {
       lingerSeconds: 4,
       layerVisibility: this.mapController.getLayers().map((layer) => ({ key: this.#atlasLayerKey(layer), visible: layer.visible })),
     });
+  }
+
+  /** Whether the view is still about where the last place search left it: no farther than a view's width away, and not zoomed well out. */
+  #viewIsAtLastPlace() {
+    const place = this.lastPlace;
+    const { center, zoom } = this.mapController.getViewState();
+    if (!place?.center || !center || !Number.isFinite(place.zoom) || !Number.isFinite(zoom)) return false;
+    if (zoom < place.zoom - 1.5) return false;
+    const degreesAcross = 360 / 2 ** place.zoom * 4;
+    const east = (center[0] - place.center[0]) * Math.cos((center[1] * Math.PI) / 180);
+    return Math.hypot(east, center[1] - place.center[1]) < degreesAcross / 2;
   }
 
   #bookmarkManagerDialog() {
@@ -9390,12 +9493,17 @@ export class UIController {
     const effectControls = effectsAvailable
       ? `<fieldset class="feedback-settings layer-effect"><legend>Animated effect</legend><div class="field-grid"><label class="field"><span>Effect</span><select data-layer-effect>${this.#cinematicEffectOptions(savedEffect?.type || "none", suggestedEffect)}</select></label><label class="field"><span>Visual style</span><select data-layer-effect-style${savedEffect ? "" : " disabled"}><option value="soft"${savedEffect?.style === "soft" ? " selected" : ""}>Soft glow</option><option value="balanced"${!savedEffect?.style || savedEffect.style === "balanced" ? " selected" : ""}>Balanced</option><option value="crisp"${savedEffect?.style === "crisp" ? " selected" : ""}>Crisp</option><option value="vivid"${savedEffect?.style === "vivid" ? " selected" : ""}>Vivid</option></select></label><label class="field"><span>Effect colour</span><input type="color" data-layer-effect-color value="${escapeHtml(savedEffect?.color || CINEMATIC_EFFECTS[savedEffect?.type === "auto" ? suggestedEffect : savedEffect?.type]?.color || "#ff8136")}"${savedEffect ? "" : " disabled"}></label><label class="opacity-row"><span>Effect opacity</span><input type="range" data-layer-effect-opacity min="0.05" max="1" step="0.05" value="${savedEffect?.opacity ?? 1}"${savedEffect ? "" : " disabled"}><output data-layer-effect-opacity-output>${Math.round((savedEffect?.opacity ?? 1) * 100)}%</output></label><label class="opacity-row"><span>Intensity</span><input type="range" data-layer-effect-intensity min="0.25" max="2" step="0.25" value="${savedEffect?.intensity ?? 1}"${savedEffect ? "" : " disabled"} aria-label="Effect intensity"><output data-layer-effect-intensity-output>${Number(savedEffect?.intensity ?? 1).toFixed(2).replace(/\.00$/, "")}×</output></label><label class="opacity-row"><span>Motion speed</span><input type="range" data-layer-effect-speed min="0.1" max="3" step="0.1" value="${savedEffect?.speed ?? 1}"${savedEffect ? "" : " disabled"}><output data-layer-effect-speed-output>${Number(savedEffect?.speed ?? 1).toFixed(1)}×</output></label><label class="opacity-row"><span>Symbol density</span><input type="range" data-layer-effect-density min="0.25" max="2.5" step="0.05" value="${savedEffect?.density ?? 1}"${savedEffect ? "" : " disabled"}><output data-layer-effect-density-output>${Number(savedEffect?.density ?? 1).toFixed(2).replace(/0$/, "")}×</output></label></div><p class="form-note" data-layer-effect-note>${escapeHtml(effectNote(savedEffect?.type || "none"))}</p></fieldset>`
       : `<fieldset class="feedback-settings layer-effect"><legend>Animated effect</legend><p class="form-note">${layer.geometryType ? "Animated effects need the MapLibre engine (Display settings → Map engine)." : "Animated effects need a layer with features."}</p></fieldset>`;
+    // Below ground: pipes, tunnels, wells and rock units drawn under the surface (js/subsurface.js).
+    const belowControls = canDrawBelowGround(layer, this.mapController.getCapabilities())
+      ? `<fieldset class="feedback-settings"><legend>Below ground</legend>${subsurfaceControlsMarkup(layer, layerConfig.subsurface || null)}</fieldset>`
+      : "";
     // Ranked styles computed from the field's values (renderer-spec.js suggestRenderers).
     const canSuggest = fields.length && layer.queryable;
     const styleOptions = canSuggest
       ? `<section class="style-options" aria-label="Style options"><div class="style-options__head"><strong>Style options</strong><button type="button" class="link-button" data-suggest-styles>Suggest styles for this field</button></div><div class="field-grid"><label class="field"><span>Suggestion field</span><select data-suggestion-field>${fieldOptions(fields, "No fields available", currentField || preferredNumericField?.name)}</select></label><label class="field"><span>Colour range</span><select data-style-ramp>${Object.keys(RAMPS).map((name) => `<option value="${name}">${escapeHtml(name.replaceAll("-", " "))}</option>`).join("")}</select></label></div><div class="style-options__list" data-style-options-list aria-live="polite"></div></section>`
       : "";
-    pane.innerHTML = `<div class="workspace-tool"><p class="eyebrow">Layer presentation</p><h3>Style ${escapeHtml(layer.title || "layer")}</h3>${styleOptions}<div class="field-grid">${rendererControls}<label class="field" data-single-color><span>Symbol color</span><input data-symbol-color type="color" value="#1b7f6a" /></label><label class="field"><span>Outline</span><input data-symbol-outline type="color" value="#ffffff" /></label><label class="field"><span>Size / width</span><input data-symbol-size type="number" min="0.5" max="40" step="0.5" value="9" /></label></div>${pointSymbolControls}<section data-class-editor hidden><h4>Classes and colors</h4><div class="field-grid"><label class="field"><span>Palette</span><select data-class-ramp>${Object.keys(RAMPS).map((name) => `<option value="${name}">${escapeHtml(name.replaceAll("-", " "))}</option>`).join("")}</select></label><label class="display-checkbox"><input type="checkbox" data-class-reverse> Reverse palette</label></div><p class="form-note">Colors can be changed individually. Apply symbology to update the map.</p><div data-class-list aria-live="polite"></div></section>${polygonControls}${extrusionControls}${effectControls}<p class="form-note">Class previews use up to 20,000 loaded values matching the layer filter. Renderer settings are stored with the project.</p><div class="workspace-tool__actions"><button type="button" class="button--primary" data-apply-symbology>Apply symbology</button></div></div>`;
+    pane.innerHTML = `<div class="workspace-tool"><p class="eyebrow">Layer presentation</p><h3>Style ${escapeHtml(layer.title || "layer")}</h3>${styleOptions}<div class="field-grid">${rendererControls}<label class="field" data-single-color><span>Symbol color</span><input data-symbol-color type="color" value="#1b7f6a" /></label><label class="field"><span>Outline</span><input data-symbol-outline type="color" value="#ffffff" /></label><label class="field"><span>Size / width</span><input data-symbol-size type="number" min="0.5" max="40" step="0.5" value="9" /></label></div>${pointSymbolControls}<section data-class-editor hidden><h4>Classes and colors</h4><div class="field-grid"><label class="field"><span>Palette</span><select data-class-ramp>${Object.keys(RAMPS).map((name) => `<option value="${name}">${escapeHtml(name.replaceAll("-", " "))}</option>`).join("")}</select></label><label class="display-checkbox"><input type="checkbox" data-class-reverse> Reverse palette</label></div><p class="form-note">Colors can be changed individually. Apply symbology to update the map.</p><div data-class-list aria-live="polite"></div></section>${polygonControls}${extrusionControls}${belowControls}${effectControls}<p class="form-note">Class previews use up to 20,000 loaded values matching the layer filter. Renderer settings are stored with the project.</p><div class="workspace-tool__actions"><button type="button" class="button--primary" data-apply-symbology>Apply symbology</button></div></div>`;
+    bindSubsurfaceControls(pane, { uid, mapController: this.mapController, toast: (message) => this.toast(message), error: (message) => this.error(message) });
     const effectSelect = pane.querySelector("[data-layer-effect]");
     const effectIntensity = pane.querySelector("[data-layer-effect-intensity]");
     const effectControlsInputs = [...pane.querySelectorAll("[data-layer-effect-style], [data-layer-effect-color], [data-layer-effect-opacity], [data-layer-effect-intensity], [data-layer-effect-speed], [data-layer-effect-density]")];
@@ -10095,7 +10203,7 @@ export class UIController {
 
   /** Lists what a map spec or link could not do, so a person (or an agent reading describe()) can fix it. */
   showSpecIssues(issues = []) {
-    const rows = issues.map((issue) => `<li class="spec-issue spec-issue--${issue.level}"><strong>${escapeHtml(issue.code || issue.level)}</strong> <code>${escapeHtml(issue.path || "")}</code><p>${escapeHtml(issue.message)}</p>${issue.hint ? `<small>${escapeHtml(issue.hint)}</small>` : ""}</li>`).join("");
+    const rows = issues.map((issue) => `<li class="spec-issue spec-issue--${issue.level}"><strong>${escapeHtml(issue.code || issue.level)}</strong> <code>${escapeHtml(issue.path || "")}</code>${specIssueMarkup(issue)}</li>`).join("");
     this.openDialog({
       eyebrow: "Map link",
       title: "Some of this map could not be shown",
@@ -10240,7 +10348,7 @@ export class UIController {
         { label: "Import observation", primary: true, handler: async (event) => {
           const button = event.currentTarget; button.disabled = true;
           try {
-            const { FieldSessionController } = await import("./field-session-store.js?v=0.70.3-geology");
+            const { FieldSessionController } = await import("./field-session-store.js?v=0.71.0-subsurface");
             const field = this.fieldSessionController ||= new FieldSessionController(this.projectManager, this.events);
             await field.importBundle(bundle);
             this.dialog.close();

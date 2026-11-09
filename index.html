@@ -73,7 +73,7 @@
     <link rel="preconnect" href="https://js.arcgis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="./css/app.css?v=0.70.4-legend" />
+    <link rel="stylesheet" href="./css/app.css?v=0.71.0-subsurface" />
     <link rel="stylesheet" href="./css/fieldwork.css?v=0.66.1-finish2" />
     <!-- three.js for point clouds, models and 3D animation; loaded only when a 3D layer is added. -->
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
@@ -159,6 +159,8 @@
               <label class="menu__field"><span>Basemap</span><select data-basemap-picker></select></label>
               <label class="menu__field" data-requires-capability="ground"><span>Terrain surface</span><select data-ground-picker><option value="world-elevation">World elevation</option><option value="world-topobathymetry">Elevation + bathymetry</option><option value="flat">Flat ground</option></select></label>
               <label class="menu__toggle" data-requires-capability="buildings-3d"><input type="checkbox" data-buildings-toggle checked /><span>3D buildings</span></label>
+              <label class="menu__toggle" data-requires-capability="subsurface" title="Fade the ground to see pipes, tunnels, wells and rock drawn below it (Style › Below ground)"><input type="checkbox" data-underground-toggle /><span>Underground view</span></label>
+              <label class="menu__field" data-requires-capability="subsurface" data-underground-opacity-field hidden><span>Ground showing</span><input type="range" min="0" max="100" step="5" value="45" data-underground-opacity aria-label="How much of the ground shows in the underground view" /></label>
               <hr />
               <button type="button" data-widget="basemapGallery">Basemap gallery</button>
             </div>
@@ -550,6 +552,6 @@
     </section>
     <noscript>GISMap Online is a geospatial application and needs JavaScript. Without it, a map can still be described as a link: see <a href="./llms.txt">/llms.txt</a> and the <a href="./guides/ai-agents/">guide for AI agents</a>.</noscript>
 <script src="./installation-config.js"></script>
-<script type="module" src="./js/app.js?v=0.70.4-sequence"></script>
+<script type="module" src="./js/app.js?v=0.71.0-subsurface"></script>
   </body>
 </html>

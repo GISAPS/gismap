@@ -79,6 +79,7 @@ export function parseShareParameters(search, catalog = [], options = {}) {
       if (item.where || entry.where) layer.where = item.where || entry.where;
       if (Number.isFinite(item.opacity ?? entry.opacity)) layer.opacity = item.opacity ?? entry.opacity;
       if (item.spatialChart || entry.spatialChart) layer.spatialChart = structuredClone(item.spatialChart || entry.spatialChart);
+      if (item.subsurface || entry.subsurface) layer.subsurface = structuredClone(item.subsurface || entry.subsurface);
       layers.push(layer);
     }
   }

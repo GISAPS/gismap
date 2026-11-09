@@ -2,10 +2,10 @@
 // rebuild the view travels in the URL fragment (never sent to a server):
 // layers with their styles and filters, basemap, skin, camera and, for a
 // briefing, its slides. Small enough links also fit in a QR code.
-import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.70.3-geology";
+import { normalizeLayerEffect } from "./cinematic/cinematic-effects.js?v=0.71.0-subsurface";
 import { decodePayload, encodePayload } from "./link-codec.js?v=0.21.0";
 import { normalizeBriefing } from "./briefing-document.js?v=0.70.4-sequence";
-import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.70.3-geology";
+import { SHARE_BASEMAPS, SHARE_LAYER_TYPES, sanitizeSharedResourceUrl } from "./share.js?v=0.71.0-subsurface";
 import { normalizeSkin } from "./skin-catalog.js?v=0.57.0-skins2";
 import { decodeBriefing } from "./briefing-share.js?v=0.60.0-media1";
 import { normalizeTextBoxes } from "./text-boxes.js?v=0.65.0-paths";
@@ -74,6 +74,7 @@ export function packLayer(config = {}) {
     w: hasDataFilter(config.definitionExpression) ? text(config.definitionExpression, 2000) : null,
     r: renderer,
     q: chartJson ? config.spatialChart : null,
+    z: config.subsurface && JSON.stringify(config.subsurface).length <= MAX_SPATIAL_CHART ? config.subsurface : null,
     e: normalizeLayerEffect(config.animatedEffect),
     v: config.scene3d && JSON.stringify(config.scene3d).length <= MAX_SPATIAL_CHART ? config.scene3d : null,
     o: Number.isFinite(config.opacity) && config.opacity < 1 ? round(config.opacity, 2) : null,
@@ -94,6 +95,7 @@ function unpackLayer(layer, options) {
     definitionExpression: text(layer.w, 2000) || undefined,
     renderer,
     spatialChart,
+    subsurface: layer.z && typeof layer.z === "object" && !Array.isArray(layer.z) && JSON.stringify(layer.z).length <= MAX_SPATIAL_CHART ? layer.z : undefined,
     animatedEffect: normalizeLayerEffect(layer.e) || undefined,
     scene3d: layer.v && typeof layer.v === "object" && !Array.isArray(layer.v) && JSON.stringify(layer.v).length <= MAX_SPATIAL_CHART ? layer.v : undefined,
     opacity: Number.isFinite(layer.o) ? Math.min(1, Math.max(0, layer.o)) : undefined,
@@ -121,7 +123,7 @@ function unpackCamera(camera) {
  * are kept; local files cannot travel in a link). For a briefing, `primary` is
  * the index of the briefing's layer within `layers`.
  */
-export function serializeShare({ kind = "map", title = "", skin, basemap, camera, layers = [], primary = 0, briefing = null, selection = null, useAll = false, engine = null, ground = null, textBoxes = [] }) {
+export function serializeShare({ kind = "map", title = "", skin, basemap, camera, layers = [], primary = 0, briefing = null, selection = null, useAll = false, engine = null, ground = null, underground = null, textBoxes = [] }) {
   const labels = kind === "map" ? normalizeTextBoxes(textBoxes).slice(0, MAX_TEXT_BOXES) : [];
   if (!KINDS.has(kind)) throw new Error(`Unknown link type: ${kind}.`);
   const remote = layers.filter((layer) => layer?.url && !layer.local);
@@ -143,6 +145,8 @@ export function serializeShare({ kind = "map", title = "", skin, basemap, camera
     c: packCamera(camera),
     e: ["arcgis", "maplibre"].includes(engine) ? engine : null,
     g: ["flat", "world-elevation", "world-topobathymetry"].includes(ground) ? ground : null,
+    // The underground view, as its ground opacity (0–1) when it is on.
+    U: underground?.enabled ? round(Math.min(1, Math.max(0, Number(underground.groundOpacity) || 0)), 2) || 0.01 : null,
     L: remote.map(packLayer),
     x: labels.length ? labels : null,
   };
@@ -169,6 +173,7 @@ export function readShare(payload, options = {}) {
     camera: unpackCamera(payload.c),
     engine: ["arcgis", "maplibre"].includes(payload.e) ? payload.e : null,
     ground: ["flat", "world-elevation", "world-topobathymetry"].includes(payload.g) ? payload.g : null,
+    underground: Number.isFinite(payload.U) ? { enabled: true, groundOpacity: Math.min(1, Math.max(0, payload.U)) } : null,
     layers,
     textBoxes,
   };

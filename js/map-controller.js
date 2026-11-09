@@ -1,8 +1,8 @@
 // Stable application-facing map facade. It owns engine selection and the
 // higher-level workflows that can be expressed with provider-neutral
 // primitives. Renderer adapters stay focused on drawing and interaction.
-import { createEngine, getEngineDefinition, listEngines } from "./engines/engine-registry.js?v=0.70.3-geology";
-import { MAP_CONTROLLER_METHODS, METHOD_CAPABILITIES, unsupported } from "./engines/engine-interface.js?v=0.62.4-silent-engine-handoff";
+import { createEngine, getEngineDefinition, listEngines } from "./engines/engine-registry.js?v=0.71.0-subsurface";
+import { MAP_CONTROLLER_METHODS, METHOD_CAPABILITIES, unsupported } from "./engines/engine-interface.js?v=0.71.0-subsurface";
 import { GisMapError } from "./gismap-errors.js?v=0.54.0-print";
 import { TextBoxLayer } from "./text-boxes.js?v=0.65.0-paths";
 import { LayerLabeler, normalizeLabeling } from "./layer-labels.js?v=0.65.0-paths";
@@ -68,6 +68,7 @@ export class MapController {
     this.initialBasemapId = null;
     this.defaultBasemapId = null;
     this.groundId = "world-elevation";
+    this.underground = { enabled: false, groundOpacity: 0.45 };
     this.geoParquetSources = new Map();
     this.carriedLayerFields = new Map();
     this.textBoxes = new TextBoxLayer({
@@ -130,6 +131,7 @@ export class MapController {
     const view = this.getViewState();
     const basemap = this.getBasemapId();
     const ground = this.getGroundId();
+    const underground = this.getUndergroundView();
     const drawings = this.getDrawings();
     const drawingsStyle = this.engine.getDrawingsStyle?.() ?? null;
     const previousEngine = this.engine;
@@ -157,10 +159,12 @@ export class MapController {
         if (config.rendererSpec) await Promise.resolve(this.applyRendererSpec(layer.uid, config.rendererSpec)).catch(() => {});
         if (config.ignoreServiceScaleRange) await Promise.resolve(this.ignoreScaleRange(layer.uid, true)).catch(() => {});
         if (config.animatedEffect && this.getCapabilities().includes("three-3d")) await Promise.resolve(this.setLayerEffect(layer.uid, config.animatedEffect)).catch(() => {});
+        if (config.subsurface && this.getCapabilities().includes("subsurface")) await Promise.resolve(this.setSubsurface(layer.uid, config.subsurface)).catch(() => {});
         layers.push({ from: config.uid, to: layer.uid, layer, config });
       }
       if (drawingsStyle && Object.keys(drawingsStyle).length) await Promise.resolve(engine.setDrawingsStyle?.(drawingsStyle)).catch(() => {});
       if (drawings.length) await this.setDrawings(drawings).catch(() => {});
+      if (underground.enabled) await Promise.resolve(this.setUndergroundView(underground)).catch(() => {});
       await this.restoreView(view);
       this.events?.publish?.("layers:reset", {});
       this.textBoxes.reattach();
@@ -330,6 +334,18 @@ export class MapController {
 
   getGroundId() {
     return typeof this.engine?.getGroundId === "function" ? this.engine.getGroundId() : this.groundId;
+  }
+
+  /** The underground view on engines that draw below ground; others keep the choice so projects save it unchanged. */
+  setUndergroundView(input) {
+    const value = typeof input === "boolean" ? { enabled: input } : input || {};
+    this.underground = { enabled: value.enabled === true, groundOpacity: Number.isFinite(Number(value.groundOpacity)) ? Math.min(1, Math.max(0, Number(value.groundOpacity))) : this.underground.groundOpacity };
+    if (typeof this.engine?.setUndergroundView === "function") return this.engine.setUndergroundView(this.underground);
+    return { ...this.underground };
+  }
+
+  getUndergroundView() {
+    return typeof this.engine?.getUndergroundView === "function" ? this.engine.getUndergroundView() : { ...this.underground };
   }
 
   getGroundOptions() {

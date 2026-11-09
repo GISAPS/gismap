@@ -1,13 +1,14 @@
 import { initializeStudioTabs } from "./studio-tabs.js?v=0.55.0-fieldwork1";
+import { bindSubsurfaceControls, canDrawBelowGround, subsurfaceControlsMarkup } from "./subsurface-controls.js?v=0.71.0-subsurface";
 // The Cartography Lab (Tools › Cartography Lab): one panel that combines a
 // layer's colour, 3D height and filter, previews them on the map, saves the
 // combination as a reusable layer style (js/layer-style.js), and makes an
 // interactive map link, briefing slides or a tour from it.
 import { RAMPS } from "./renderer-spec.js?v=0.29.1";
-import { SPATIAL_CHART_TYPE, listedOrder } from "./spatial-chart.js?v=0.70.4-legend";
+import { SPATIAL_CHART_TYPE, listedOrder } from "./spatial-chart.js?v=0.71.0-subsurface";
 import { createFilterBuilder } from "./filter-builder.js?v=0.1.0";
 import { conditionsToWhere } from "./filter-sql.js?v=0.1.0";
-import { describeLayerStyle, layerStyleFileName, layerStyleRankField } from "./layer-style.js?v=0.70.3-geology";
+import { describeLayerStyle, layerStyleFileName, layerStyleRankField } from "./layer-style.js?v=0.71.0-subsurface";
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const NUMERIC = /^(?:small-integer|integer|single|double|long|esriFieldTypeSmallInteger|esriFieldTypeInteger|esriFieldTypeSingle|esriFieldTypeDouble|number)$/i;
@@ -75,6 +76,7 @@ export class CartographyLab {
     const polygon = /polygon/i.test(layer.geometryType || "");
     const point = /point/i.test(layer.geometryType || "");
     const can3d = polygon && this.host.mapController.getCapabilities().includes("spatial-chart-3d");
+    const below = canDrawBelowGround(layer, this.host.mapController.getCapabilities());
     const renderer = info.renderer || { type: "service" };
     const chart = info.spatialChart || null;
     const colorMode = ({ simple: "single", categories: "categories", choropleth: "classes", "graduated-symbols": "size", heatmap: "heatmap" })[renderer.type] || "service";
@@ -102,7 +104,8 @@ export class CartographyLab {
         <button type="button" data-studio-tab="color">Color</button>
         <button type="button" data-studio-tab="height"${chart ? "" : " disabled"} title="Switch to 3D chart to edit height">Height</button>
         <button type="button" data-studio-tab="filter">Filter</button>
-        <button type="button" data-studio-tab="effects">Effects</button>
+        <button type="button" data-studio-tab="effects">Effects</button>${below ? `
+        <button type="button" data-studio-tab="below" title="Draw pipes, tunnels, wells or rock units below the ground">Below</button>` : ""}
       </nav>
       <section class="cartography-lab__step" data-studio-pane="color" aria-labelledby="lab-colour">
         <h4 id="lab-colour"><span>1</span> Colour</h4>
@@ -145,6 +148,11 @@ export class CartographyLab {
         <h4 id="lab-look"><span data-lab-look-step>3</span> Look</h4>
         <label class="opacity-row"><span>Opacity</span><input type="range" min="0.1" max="1" step="0.05" data-lab-opacity value="${escapeHtml(info.opacity ?? 1)}"><output>${Math.round((info.opacity ?? 1) * 100)}%</output></label>
       </section>
+${below ? `
+      <section class="cartography-lab__step" data-studio-pane="below" aria-labelledby="lab-below">
+        <h4 id="lab-below">Below ground</h4>
+        ${subsurfaceControlsMarkup(layer, info.subsurface || null)}
+      </section>` : ""}
       <div class="cartography-lab__actions"><label class="display-checkbox"><input type="checkbox" data-lab-live checked> Live preview</label><button type="button" class="button--primary" data-lab-apply>Apply style</button><span class="form-note" data-lab-status aria-live="polite"></span></div>
 
       <section class="cartography-lab__step" aria-labelledby="lab-saved">
@@ -177,6 +185,8 @@ export class CartographyLab {
     });
     this.styleTabs = initializeStudioTabs(pane, { id: "layer-style" });
     this.#bind();
+    // Below ground applies as it changes, apart from Apply style.
+    bindSubsurfaceControls(pane, { uid: layer.uid, mapController: this.host.mapController, toast: (message) => this.host.toast(message), error: (message) => this.host.error(message) });
     this.#sync();
     this.#renderStyles();
   }

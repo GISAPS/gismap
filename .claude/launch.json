@@ -1,6 +1,45 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "gismap", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8765"], "port": 8765 }
+    {
+      "name": "gismap",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "gismap-charts",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8771"
+      ],
+      "port": 8771
+    },
+    {
+      "name": "gismap-forest",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8779"
+      ],
+      "port": 8779
+    },
+    {
+      "name": "gismap-bedrock",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8783"
+      ],
+      "port": 8783
+    }
   ]
 }

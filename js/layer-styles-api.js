@@ -2,7 +2,7 @@
 // kept with the project and in a library in this browser, applied through the
 // layers API so a style looks the same however it is applied.
 import { GisMapError, toGisMapError } from "./gismap-errors.js?v=0.54.0-print";
-import { LAYER_STYLE_TYPE, LAYER_STYLE_VERSION, layerStyleBriefing, layerStyleFromLayer, layerStyleMapSpec, mergeLayerStyles, normalizeLayerStyle, stylesForSource } from "./layer-style.js?v=0.70.3-geology";
+import { LAYER_STYLE_TYPE, LAYER_STYLE_VERSION, layerStyleBriefing, layerStyleFromLayer, layerStyleMapSpec, mergeLayerStyles, normalizeLayerStyle, stylesForSource } from "./layer-style.js?v=0.71.0-subsurface";
 
 const LIBRARY_KEY = "gismap-online:layer-styles:v1";
 

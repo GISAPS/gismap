@@ -1,5 +1,5 @@
 import { createSlide, normalizeBriefing } from "./briefing-document.js?v=0.70.4-sequence";
-import { normalizeSpatialChart, spatialChartAxis } from "./spatial-chart.js?v=0.70.4-legend";
+import { normalizeSpatialChart, spatialChartAxis } from "./spatial-chart.js?v=0.71.0-subsurface";
 
 const MAX_NEW_SLIDES = 5;
 

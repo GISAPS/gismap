@@ -2,7 +2,7 @@
 // Rules only (no AI): geometry, field names/types and the layer's title. A
 // Timeline is offered only when a real date field exists; without one the
 // suggestions are Ambient loops or a Scenario sweep, never an invented date.
-import { CINEMATIC_EFFECTS, effectFields, suggestEffect, valueField } from "./cinematic-effects.js?v=0.70.3-geology";
+import { CINEMATIC_EFFECTS, effectFields, suggestEffect, valueField } from "./cinematic-effects.js?v=0.71.0-subsurface";
 import { numericFieldCandidates, temporalFieldCandidates } from "./temporal-adapter.js?v=0.4.0-sequence";
 
 const geometryOf = (layer) => (/point/i.test(layer?.geometryType || "") ? "point" : /line/i.test(layer?.geometryType || "") ? "line" : /polygon/i.test(layer?.geometryType || "") ? "polygon" : "");
