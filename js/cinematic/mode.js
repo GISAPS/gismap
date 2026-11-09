@@ -1,6 +1,6 @@
 import { createCinematicTimeline } from "./timeline-controller.js?v=0.1.0";
-import { normalizeTemporalFeatures, observedFeaturesAt, parsePlaybackValue, temporalModelInExtent } from "./temporal-adapter.js?v=0.3.1";
-import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.2.9-strata";
+import { normalizeTemporalFeatures, observedFeaturesAt, parsePlaybackValue, temporalModelInExtent } from "./temporal-adapter.js?v=0.4.0-sequence";
+import { exportCinematicSpec, importCinematicSpec } from "./state.js?v=0.70.4-sequence";
 import { CINEMATIC_EFFECTS, NATIVE_EFFECTS, effectFields, effectRanges, resolveEffect, resolveQuality } from "./cinematic-effects.js?v=0.71.0-subsurface";
 import { PROVENANCE_STATUSES, createEffectsClock, normalizeTiming } from "./clock.js?v=0.1.0";
 import { setEffectClock } from "./effects-three.js?v=0.71.0-subsurface";
@@ -68,14 +68,20 @@ export class CinematicModeController {
     if (this.layers.has(layer.uid)) throw new Error(`${layer.title} is already a track in this scene.`);
     const loaded = featuresByLayer[config.layerRef] ? { features: featuresByLayer[config.layerRef], truncated: false } : await this.#queryAll(layer, config.temporal.startField);
     const { features } = loaded;
+    // A listed Sequence with no list of its own takes the order of the layer's 3D chart on that field.
+    const chart = layer.spatialChart;
+    if (config.temporal.order === "listed" && !config.temporal.values?.length && chart?.groupBy === config.temporal.startField && chart.groups?.length) config.temporal.values = chart.groups.map(String);
     const model = normalizeTemporalFeatures(features, {
       kind: config.temporal.kind || "time",
       steps: config.temporal.steps || 0,
       timeField: config.temporal.startField,
       groupField: config.temporal.groupField,
       objectIdField: config.temporal.featureIdField || layer.objectIdField,
+      order: config.temporal.order || null,
+      values: config.temporal.values || [],
+      labelField: config.temporal.labelField || "",
     });
-    if (!model.ticks.length) throw new Error(config.temporal.kind === "number" ? `No numeric values were found in ${config.temporal.startField} of ${layer.title}.` : config.temporal.kind === "none" ? `${layer.title} has no features to animate.` : `No valid timestamped observations were found in ${layer.title}.`);
+    if (!model.ticks.length) throw new Error(config.temporal.order ? `No values of ${config.temporal.startField} in ${layer.title} are in the chosen order.` : config.temporal.kind === "number" ? `No numeric values were found in ${config.temporal.startField} of ${layer.title}.` : config.temporal.kind === "none" ? `${layer.title} has no features to animate.` : `No valid timestamped observations were found in ${layer.title}.`);
     const previousOpacity = Number.isFinite(Number(layer.opacity)) ? Number(layer.opacity) : 1;
     const effectRange = effectRanges(features, effectFields(layer.fields || [], features[0]?.attributes || features[0]?.properties));
     this.layers.set(layer.uid, { layer, config, model, effectRange, truncated: loaded.truncated, effectUid: `cinematic:${this.spec.cinematic.id}:${layer.uid}`, previousOpacity, previousFilter: await attempt(() => this.mapController.getFeatureFilter(layer.uid)) });
@@ -108,9 +114,9 @@ export class CinematicModeController {
    * Add another layer to the scene as a track: Ambient (always shown, its
    * effect looping) or stepping on the same timeline as the lead track.
    */
-  async addTrack({ layerRef, kind = "none", startField = null, steps, effect = "auto" } = {}) {
+  async addTrack({ layerRef, kind = "none", startField = null, steps, order, values, labelField, effect = "auto" } = {}) {
     if (!this.spec) throw new Error("Start Cinematic mode first.");
-    const next = importCinematicSpec({ ...this.spec.cinematic, layers: [...this.spec.cinematic.layers, { layerRef, temporal: { kind, startField, steps }, animation: { effect: { type: effect, intensity: 1 } } }] });
+    const next = importCinematicSpec({ ...this.spec.cinematic, layers: [...this.spec.cinematic.layers, { layerRef, temporal: { kind, startField, steps, order, values, labelField }, animation: { effect: { type: effect, intensity: 1 } } }] });
     const config = next.cinematic.layers.at(-1);
     await this.#loadLayer(config);
     this.spec.cinematic.layers.push(config);
@@ -204,6 +210,8 @@ export class CinematicModeController {
         const activeModel = this.localModels.get(layer.uid) || model;
         const effect = this.#effectFor(layer, config);
         return { uid: layer.uid, title: layer.title, ticks: activeModel.ticks, invalid: model.invalid, timeField: config.temporal.startField,
+          // A Sequence's or labelled sweep's name for each step value.
+          labels: model.labels || null, order: config.temporal.order || null, labelField: config.temporal.labelField || null,
           kind: config.temporal.kind || "time", ambient: this.#ambient(entry), effectType: config.animation.effect?.type || "none",
           timing: { ...config.animation.timing }, visible: config.animation.visible !== false, color: config.animation.effect?.color || null, provenance: config.provenance?.status || "illustrative",
           effect, effectNote: CINEMATIC_EFFECTS[effect]?.note || "", loadedCount: model.observations.length + model.invalid.length, truncated,

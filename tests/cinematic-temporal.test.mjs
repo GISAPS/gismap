@@ -61,3 +61,52 @@ test("Scenario sweeps bin many distinct values into quantile steps", () => {
   const exact = normalizeTemporalFeatures(features, { timeField: "acres", objectIdField: "OBJECTID", kind: "number" });
   assert.equal(exact.ticks.length, 1000);
 });
+
+const rocks = [
+  { attributes: { OBJECTID: 1, AGE: "Norian", MA: 227, ERA: "Triassic" } },
+  { attributes: { OBJECTID: 2, AGE: "Statherian", MA: 1800, ERA: "Paleoproterozoic" } },
+  { attributes: { OBJECTID: 3, AGE: "Holocene", MA: 0.0117, ERA: "Quaternary" } },
+  { attributes: { OBJECTID: 4, AGE: "Norian", MA: 227, ERA: "Triassic" } },
+  { attributes: { OBJECTID: 5, AGE: "Unlisted", MA: null, ERA: "" } },
+];
+
+test("a listed Sequence steps a text field in the given order and names each step", () => {
+  const model = normalizeTemporalFeatures(rocks, { kind: "number", timeField: "AGE", objectIdField: "OBJECTID", order: "listed", values: ["Statherian", "Norian", "Holocene"], steps: 2 });
+  assert.deepEqual(model.ticks, [1, 2, 3], "every value is a step, even past the sweep's step count");
+  assert.deepEqual(model.labels, { 1: "Statherian", 2: "Norian", 3: "Holocene" });
+  assert.deepEqual(observedFeatureIdsAt(model, 2, { timeMode: "cumulative" }), [1, 2, 4]);
+  assert.deepEqual(model.invalid, [{ index: 4, reason: "invalid-time" }], "a value outside the order is left out, not guessed");
+  assert.throws(() => normalizeTemporalFeatures(rocks, { kind: "number", timeField: "AGE", objectIdField: "OBJECTID", order: "listed" }), /no listed order for AGE/);
+});
+
+test("an A to Z Sequence sorts the values itself, numbers in text by value", () => {
+  const model = normalizeTemporalFeatures(rocks, { kind: "number", timeField: "AGE", objectIdField: "OBJECTID", order: "alphabetical" });
+  assert.deepEqual(Object.values(model.labels), ["Holocene", "Norian", "Statherian", "Unlisted"]);
+  const units = normalizeTemporalFeatures([{ attributes: { OBJECTID: 1, U: "Unit 10" } }, { attributes: { OBJECTID: 2, U: "unit 9" } }], { kind: "number", timeField: "U", objectIdField: "OBJECTID", order: "alphabetical" });
+  assert.deepEqual(Object.values(units.labels), ["unit 9", "Unit 10"]);
+});
+
+test("a number sweep can name its steps from a text field on the same rows", () => {
+  const model = normalizeTemporalFeatures(rocks.slice(0, 4), { kind: "number", timeField: "MA", objectIdField: "OBJECTID", labelField: "ERA" });
+  assert.deepEqual(model.ticks, [0.0117, 227, 1800]);
+  assert.deepEqual(model.labels, { 0.0117: "Quaternary", 227: "Triassic", 1800: "Paleoproterozoic" });
+  // Binned into quantile steps, a step takes the label of the row whose own value it is.
+  const binned = normalizeTemporalFeatures([1, 2, 3, 4].map((value) => ({ attributes: { OBJECTID: value, V: value, NAME: `n${value}` } })), { kind: "number", timeField: "V", objectIdField: "OBJECTID", labelField: "NAME", steps: 2 });
+  assert.deepEqual(binned.ticks, [2, 4]);
+  assert.deepEqual(binned.labels, { 2: "n2", 4: "n4" });
+  assert.equal(normalizeTemporalFeatures(rocks, { kind: "number", timeField: "MA", objectIdField: "OBJECTID" }).labels, null);
+});
+
+test("Sequence and label settings survive the saved scene, only on number playback", () => {
+  const spec = importCinematicSpec({ cinematic: { layers: [{ layerRef: "rocks", temporal: { kind: "number", startField: "AGE", order: "listed", values: ["Statherian", "Norian", "Norian", ""], labelField: "ERA" } }] } });
+  const temporal = spec.cinematic.layers[0].temporal;
+  assert.equal(temporal.order, "listed");
+  assert.deepEqual(temporal.values, ["Statherian", "Norian"]);
+  assert.equal(temporal.labelField, undefined, "a Sequence is its own label");
+  const sweep = importCinematicSpec({ cinematic: { layers: [{ layerRef: "rocks", temporal: { kind: "number", startField: "MA", labelField: "ERA", order: "sideways" } }] } }).cinematic.layers[0].temporal;
+  assert.equal(sweep.labelField, "ERA");
+  assert.equal(sweep.order, undefined);
+  const timeline = importCinematicSpec({ cinematic: { layers: [{ layerRef: "rocks", temporal: { startField: "observed_at", order: "listed", labelField: "ERA" } }] } }).cinematic.layers[0].temporal;
+  assert.equal(timeline.order, undefined);
+  assert.equal(timeline.labelField, undefined);
+});

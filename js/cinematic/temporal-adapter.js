@@ -19,6 +19,31 @@ export function numericFieldCandidates(layer) {
     .map((field) => ({ name: field.name, label: field.alias || field.name, type: field.type || "unknown" }));
 }
 
+/** Text fields a Sequence can step through in order (not IDs, numbers or dates). */
+export function textFieldCandidates(layer) {
+  return (layer?.fields || []).filter((field) => /^(?:esriFieldType)?string$/i.test(String(field.type || "")) && field.name !== layer?.objectIdField && !/(?:^|_)(?:guid|globalid|uuid)$/i.test(field.name) && !dateLike(field))
+    .map((field) => ({ name: field.name, label: field.alias || field.name, type: field.type || "string" }));
+}
+
+const SEQUENCE_ORDERS = ["listed", "alphabetical"];
+const MAX_SEQUENCE_VALUES = 1000;
+const cleanField = (value) => (typeof value === "string" ? value.trim().slice(0, 160) : "");
+
+/**
+ * The Sequence and label settings of a playback's `temporal`, normalized:
+ * `order` ("listed" with its `values`, or "alphabetical") steps through a text
+ * field's values; `labelField` names each step of a number sweep from a text
+ * field on the same row. Only a "number" playback has them.
+ */
+export function normalizeSequence(temporal = {}) {
+  if (temporal?.kind !== "number") return {};
+  const order = SEQUENCE_ORDERS.includes(temporal.order) ? temporal.order : null;
+  const values = order === "listed" && Array.isArray(temporal.values)
+    ? [...new Set(temporal.values.filter((value) => value != null && value !== "").map((value) => String(value).slice(0, 500)))].slice(0, MAX_SEQUENCE_VALUES) : [];
+  const labelField = order ? "" : cleanField(temporal.labelField);
+  return { ...(order ? { order } : {}), ...(values.length ? { values } : {}), ...(labelField ? { labelField } : {}) };
+}
+
 /** A playback value by kind: epoch ms for "time", the number for "number", 0 for "none". */
 export function parsePlaybackValue(value, kind = "time") {
   if (kind === "none") return 0;
@@ -69,13 +94,21 @@ function firstAtLeast(sorted, value) {
  * feature at once, effects loop). Rows lacking a valid value or stable object
  * ID are reported, never guessed.
  */
-export function normalizeTemporalFeatures(features = [], { timeField, groupField = "", objectIdField, kind = "time", steps = 0 } = {}) {
+export function normalizeTemporalFeatures(features = [], { timeField, groupField = "", objectIdField, kind = "time", steps = 0, order = null, values = [], labelField = "" } = {}) {
   if (kind !== "none" && !timeField) throw new Error(kind === "number" ? "Choose a numeric field." : "Choose a timestamp field.");
   if (!objectIdField) throw new Error("This layer needs a stable object ID field for cinematic playback.");
+  if (order === "listed" && !values.length) throw new Error(`There is no listed order for ${timeField}. Stack the layer as a 3D chart by ${timeField}, or step through it A to Z.`);
+  const attributesOf = (feature) => feature?.attributes || {};
+  // A Sequence plays a text field's values by their position in the order: 1, 2, 3 …
+  const sequence = kind === "number" && (order === "listed" || order === "alphabetical");
+  const ranks = !sequence ? null : new Map((order === "listed" ? values.map(String)
+    : [...new Set(features.map((feature) => attributesOf(feature)[timeField]).filter((value) => value != null && value !== "").map(String))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })))
+    .map((value, index) => [value, index + 1]));
   const invalid = [];
   const observations = [];
   features.forEach((feature, index) => {
-    const time = parsePlaybackValue(feature?.attributes?.[timeField], kind);
+    const raw = attributesOf(feature)[timeField];
+    const time = sequence ? ranks.get(String(raw ?? "")) ?? null : parsePlaybackValue(raw, kind);
     const id = observationId(feature, index, objectIdField);
     if (time == null || id == null) {
       invalid.push({ index, reason: time == null ? "invalid-time" : "missing-id" });
@@ -87,7 +120,8 @@ export function normalizeTemporalFeatures(features = [], { timeField, groupField
   });
   // A Scenario sweep over many distinct values plays in `steps` quantile steps:
   // each record joins the first step value at or above its own, so "up to" stays true.
-  if (kind === "number" && steps > 0) {
+  // A Sequence plays every value in its order.
+  if (kind === "number" && steps > 0 && !sequence) {
     const breaks = quantileSteps(observations.map((item) => item.time), steps);
     if (breaks) for (const item of observations) { item.value = item.time; item.time = breaks[firstAtLeast(breaks, item.time)]; }
   }
@@ -95,6 +129,8 @@ export function normalizeTemporalFeatures(features = [], { timeField, groupField
   const ticks = [...new Set(observations.map((item) => item.time))];
   return {
     kind,
+    ...(sequence ? { order } : {}),
+    labels: sequence ? Object.fromEntries([...ranks].filter(([, rank]) => ticks.includes(rank)).map(([value, rank]) => [rank, value])) : kind === "number" && labelField ? stepLabels(observations, labelField, attributesOf) : null,
     timeField: kind === "none" ? null : timeField,
     groupField: groupField || null,
     objectIdField,
@@ -104,6 +140,27 @@ export function normalizeTemporalFeatures(features = [], { timeField, groupField
     end: ticks.at(-1) ?? null,
     invalid,
   };
+}
+
+/**
+ * Each step's label from a text field on its rows: the label of a row whose own
+ * value is the step (a binned step may hold several), the most common one when
+ * rows disagree. Steps whose rows have no label are left out.
+ */
+function stepLabels(observations, labelField, attributesOf) {
+  const counts = new Map();
+  for (const item of observations) {
+    const label = attributesOf(item.feature)[labelField];
+    if (label == null || label === "") continue;
+    const exact = item.value === undefined || item.value === item.time;
+    const tally = counts.get(item.time) || new Map();
+    const entry = tally.get(String(label)) || { exact: 0, all: 0 };
+    entry.all += 1;
+    if (exact) entry.exact += 1;
+    tally.set(String(label), entry);
+    counts.set(item.time, tally);
+  }
+  return Object.fromEntries([...counts].map(([time, tally]) => [time, [...tally].sort((a, b) => b[1].exact - a[1].exact || b[1].all - a[1].all)[0][0]]));
 }
 
 /**

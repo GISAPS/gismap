@@ -32,3 +32,12 @@ test("every suggestion explains itself and names what it shows", () => {
   }
   assert.match(recommendAnimations(parcels).find((item) => item.effect === "reveal").reason, /not a date/);
 });
+
+test("a layer stacked as a 3D chart is offered a Sequence in the chart's order, as a Strata build-up", () => {
+  const geology = { title: "Arizona rock units by age", geometryType: "polygon", fields: [{ name: "OBJECTID", type: "esriFieldTypeOID" }, { name: "AGE_MAX", type: "esriFieldTypeString" }, { name: "Shape__Area", type: "esriFieldTypeDouble" }],
+    spatialChart: { mode: "temporal-strata", groupBy: "AGE_MAX", groups: ["Statherian", "Norian", "Holocene"], order: "listed" } };
+  const [first] = recommendAnimations(geology);
+  assert.equal(first.id, "sequence-strata");
+  assert.deepEqual({ kind: first.kind, order: first.order, field: first.field, effect: first.effect, timeMode: first.timeMode }, { kind: "number", order: "listed", field: "AGE_MAX", effect: "strata", timeMode: "cumulative" });
+  assert.ok(!ids(recommendAnimations({ ...geology, spatialChart: null })).includes("sequence-strata"));
+});

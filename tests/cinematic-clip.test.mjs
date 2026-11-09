@@ -200,3 +200,12 @@ test("a Clip keeps each track's timing, visibility and provenance", () => {
   assert.deepEqual([layer.provenance.status, layer.animation.visible, layer.animation.timing.cycleSeconds, layer.animation.timing.policy], ["modeled", false, 6, "pingPong"]);
   assert.deepEqual(clip.range, { start: "", end: "" }, "an Ambient Clip has no invented dates");
 });
+
+test("a Clip keeps a Sequence's order and a sweep's label field", () => {
+  const sequence = { ...cinematic, clock: { durationSeconds: 20 }, layers: [{ layerRef: "rocks", temporal: { kind: "number", startField: "AGE", order: "listed", values: ["Statherian", "Norian"] } }] };
+  const clip = normalizeCinematicClip(createCinematicClip({ cinematic: sequence, observationTimes: [1, 2] }));
+  const temporal = clip.tracks.find((track) => track.type === "temporalLayer").temporal;
+  assert.equal(temporal.order, "listed");
+  assert.deepEqual(temporal.values, ["Statherian", "Norian"]);
+  assert.deepEqual(clipToCinematicSpec(clip).cinematic.layers[0].temporal.values, ["Statherian", "Norian"]);
+});

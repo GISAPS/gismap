@@ -1,7 +1,7 @@
 // The briefing document: an ordered set of slides kept in the project under
 // presentation.briefing. Pure functions only, so the app, custom tools and
 // agents all edit the same JSON the same way.
-import { normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.3.10-strata";
+import { normalizeCinematicClip } from "./cinematic/clip-model.js?v=0.70.4-sequence";
 
 export const BRIEFING_SCHEMA_VERSION = 1;
 export const MAX_SLIDES = 60;

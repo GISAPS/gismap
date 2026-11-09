@@ -1,6 +1,6 @@
 // Counts are snapshots of the loaded selection, not the entire source.
 import { atlasGeometry, atlasIntersects } from "./briefing-grid-geometry.js?v=0.1.0";
-import { MAX_SLIDES, addSlide, createSlide, normalizeBriefing } from './briefing-document.js?v=0.61.0-briefing-player';
+import { MAX_SLIDES, addSlide, createSlide, normalizeBriefing } from './briefing-document.js?v=0.70.4-sequence';
 
 /** A map extent ({xmin, ymin, xmax, ymax, spatialReference}) as [west, south, east, north] degrees; Web Mercator is converted. */
 export function extentToBounds(extent) {
